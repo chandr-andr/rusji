@@ -15,6 +15,17 @@ fn get_config_in_json() -> std::io::Result<Value> {
     Ok(app_config)
 }
 
+pub fn get_all_jira_companies() -> std::io::Result<Vec<String>> {
+    let app_config = get_config_in_json()?;
+    let mut companies_vec: Vec<String> = Vec::new();
+    if let Value::Object(companies) = app_config {
+        for (company_name, _) in companies {
+            companies_vec.push(company_name)
+        }
+    }
+    Ok(companies_vec)
+}
+
 pub fn add_new_jira_project(reg: &RegisterJira) -> std::io::Result<()> {
     let mut app_config = get_config_in_json()?;
 

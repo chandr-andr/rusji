@@ -11,3 +11,4 @@ term_size = "*"
 clap = { version = "4.0", features = ["derive"] }
 home = "*"
 serde_json = "1.0.89"
+cursive = "0.20"
