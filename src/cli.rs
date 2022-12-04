@@ -22,24 +22,18 @@ pub struct RegisterJira {
     #[arg(short, long)]
     pub password: String,
     #[arg(short, long)]
-    pub company_name: Option<String>
+    pub company_name: String
 }
 
 impl RegisterJira {
     pub fn make_tuple_of_struct(&self) -> Vec<(String, &String)> {
-        let mut args = vec![
+        let args = vec![
             ("link".to_string(), &self.link),
             ("username".to_string(), &self.username),
             ("password".to_string(), &self.password),
+            ("company_name".to_string(), &self.company_name),
         ];
-        match &self.company_name {
-            Some(company_name) => {
-                let company_name_tuple = ("company_name".to_string(), company_name);
-                args.push(company_name_tuple);
-                args
-            },
-            None => args
-        }
+        args
     }
 }
 

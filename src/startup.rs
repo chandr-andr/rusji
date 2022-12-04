@@ -23,8 +23,8 @@ fn create_new_app_config(path: &str) -> std::io::Result<()> {
     let default_config_structure =
 r#"
 {
-    "Jira": {
-        "Companies": []
+    "jira": {
+        "companies": []
     }
 }
 "#;

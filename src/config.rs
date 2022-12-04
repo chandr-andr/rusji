@@ -2,6 +2,16 @@ use crate::utils::*;
 use serde_json::{Value, Map};
 use crate::cli::RegisterJira;
 
+enum AvailableComplanies {
+    Local,
+    Jira,
+}
+
+pub fn get_config_in_str() -> std::io::Result<String> {
+    let path_to_app_config = build_app_config_path()?;
+    std::fs::read_to_string(&path_to_app_config)
+}
+
 fn get_config_in_json() -> std::io::Result<Value> {
     let path_to_app_config = build_app_config_path()?;
 
@@ -13,17 +23,6 @@ fn get_config_in_json() -> std::io::Result<Value> {
         serde_json::from_str::<Value>(&text)?
     };
     Ok(app_config)
-}
-
-pub fn get_all_jira_companies() -> std::io::Result<Vec<String>> {
-    let app_config = get_config_in_json()?;
-    let mut companies_vec: Vec<String> = Vec::new();
-    if let Value::Object(companies) = app_config {
-        for (company_name, _) in companies {
-            companies_vec.push(company_name)
-        }
-    }
-    Ok(companies_vec)
 }
 
 pub fn add_new_jira_project(reg: &RegisterJira) -> std::io::Result<()> {

@@ -1,58 +1,45 @@
 use cursive::Cursive;
+use cursive::view::Resizable;
 use cursive::views::{
-    Button,
-    Dialog,
-    DummyView,
-    EditView,
     LinearLayout,
     SelectView,
+    BoxedView,
+    Panel,
+    ScrollView,
 };
-use crate::config::get_all_jira_companies;
 
 
 pub fn start_screen() -> std::io::Result<()> {
     let mut cursive = cursive::default();
-    let mut start_screen_select = SelectView::<String>::new()
-        .on_submit(on_submit_start_screen);
 
-    start_screen_select.add_all_str(
-        vec!["Jira", "Quit"],
-    );
+    let screen_id = cursive.add_active_screen();
 
-    cursive.add_layer(Dialog::around(LinearLayout::horizontal()
-        .child(start_screen_select)
-        .child(DummyView)));
+    let projects_view = build_projects_view();
+    let projects_view2 = build_projects_view();
+
+    let left_layout = LinearLayout::vertical()
+        .child(Panel::new(projects_view.full_width().full_height()))
+        .child(Panel::new(projects_view2.full_width().full_height()));
+
+    let main_layout = LinearLayout::vertical()
+        .child(left_layout.max_width(30).min_height(1000));
+
+    cursive.add_layer(main_layout.full_screen());
 
     cursive.run();
 
     Ok(())
 }
 
-fn make_main_page(cursive: &mut Cursive) {
-    cursive.pop_layer();
-    let all_companies = get_all_jira_companies();
-    match all_companies {
-        Ok(companies) => {
-            let mut select = SelectView::<String>::new()
-                .on_submit(on_submit);
+fn build_projects_view() -> BoxedView {
+    let mut select_projects_view = SelectView::<String>::new()
+        .on_submit(on_submit_start_screen);
 
-            for company_name in companies {
-                select.add_item_str(company_name)
-            }
-            cursive.add_layer(Dialog::around(LinearLayout::horizontal()
-                .child(select)
-                .child(DummyView))
-                .title("Select a company"));
-        },
-        Err(err) => {
-            cursive.pop_layer();
-            cursive.add_layer(Dialog::text(format!("Error: {}", err)));
-        }
-    }
-}
+    select_projects_view.add_all_str(
+        vec!["Jira", "Quit"],
+    );
 
-fn show_all_company_projects(cursive: &mut Cursive, company_name: &'static str) {
-
+    BoxedView::new(Box::new(ScrollView::new(select_projects_view)))
 }
 
 // fn delete_name(s: &mut Cursive) {
@@ -90,18 +77,13 @@ fn show_all_company_projects(cursive: &mut Cursive, company_name: &'static str) 
 //         }));
 // }
 
-fn on_submit(s: &mut Cursive, name: &str) {
-    s.pop_layer();
-    s.add_layer(Dialog::text(format!("Name: {}\nAwesome: yes", name))
-        .title(format!("{}'s info", name))
-        .button("Back", make_main_page));
-}
+// fn on_submit(s: &mut Cursive, name: &str) {
+//     s.pop_layer();
+//     s.add_layer(Dialog::text(format!("Name: {}\nAwesome: yes", name))
+//         .title(format!("{}'s info", name))
+//         .button("Back", make_main_page));
+// }
 
-fn on_submit_start_screen(cursive: &mut Cursive, action: &str) {
-    cursive.pop_layer();
-    if action == "Jira" {
-        make_main_page(cursive)
-    } else {
-        Cursive::quit(cursive);
-    }
+fn on_submit_start_screen(cursive: &mut Cursive, action: &String) {
+    Cursive::quit(cursive);
 }
