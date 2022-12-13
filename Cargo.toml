@@ -14,4 +14,4 @@ serde_json = "1.0.89"
 serde = { version = "*", features = ["derive"] }
 cursive = "0.20"
 base64 = "0.13.1"
-
+cursive-aligned-view = "0.6.0"
