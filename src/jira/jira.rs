@@ -1,6 +1,6 @@
 use serde_json::{Value};
 use serde::{Deserialize, Serialize};
-use std::io::{Result};
+use std::io::Result;
 use crate::cli::RegisterJira;
 use base64;
 

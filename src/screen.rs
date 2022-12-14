@@ -3,7 +3,8 @@ use cursive::views::{
     LinearLayout,
     SelectView,
 };
-use crate::jira_views::make_jira_screen;
+use crate::jira::screen::make_jira_screen;
+
 
 
 pub fn start_screen() {

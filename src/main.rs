@@ -12,7 +12,10 @@ pub use crate::config::*;
 pub use crate::jira::*;
 
 fn main() {
-    start_screen();
+    let config = Config::new().unwrap();
+    println!("{:?}", config);
+    println!("{:?}", config.companies_names());
+    // start_screen();
     // let is_startup_success = startup();
     // parse_args();
 }

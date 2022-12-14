@@ -1,10 +1,54 @@
 use crate::utils::*;
+use std::io::{Result, ErrorKind, Error};
 use serde_json::{Value, Map};
+use serde::{Deserialize, Serialize};
 use crate::cli::RegisterJira;
 
-enum AvailableComplanies {
-    Local,
-    Jira,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Jira {
+    url: String,
+    encoded_creds: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Company {
+    company_name: String,
+    jira: Option<Jira>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Config{
+    companies: Vec<Company>,
+}
+
+impl Config {
+    /// Creates new instance of Config.
+    /// Basic usage:
+    ///
+    /// ```
+    /// let config = Config::new();
+    /// ```
+    pub fn new() -> Result<Self> {
+        let app_config = std::fs::read_to_string(build_app_config_path()?)?;
+        match serde_json::from_str::<Config>(&app_config) {
+            Ok(config) => Ok(config),
+            Err(_) => Err(
+                Error::new(
+                    ErrorKind::Other,
+                    "Can't read config! Is it correct?",
+                ),
+            ),
+        }
+    }
+
+    /// Returns vector with names of the companies.
+    pub fn companies_names(&self) -> Vec<String> {
+        let mut companies_names = Vec::<String>::new();
+        for company in &self.companies {
+            companies_names.push(company.company_name.clone());
+        }
+        companies_names
+    }
 }
 
 pub fn get_config_in_str() -> std::io::Result<String> {

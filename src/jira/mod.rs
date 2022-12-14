@@ -1,4 +1,4 @@
 pub mod jira;
-pub mod jira_views;
+pub mod screen;
 
 pub use jira::Company;
