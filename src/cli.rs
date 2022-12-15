@@ -1,5 +1,4 @@
 use clap::{arg, Args, Parser, Subcommand};
-use crate::config::add_new_jira_project;
 
 
 #[derive(Parser, Debug)]
@@ -34,19 +33,5 @@ impl RegisterJira {
             ("company_name".to_string(), &self.company_name),
         ];
         args
-    }
-}
-
-pub fn parse_args() {
-    let cli = Cli::parse();
-
-    match &cli.command {
-        Commands::RegisterJira(reg) => {
-            match add_new_jira_project(reg) {
-                Ok(_) => (),
-                Err(err) => println!("{:?}", err)
-            };
-            println!("CMD - {:?}", reg.link)
-        }
     }
 }

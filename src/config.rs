@@ -1,12 +1,11 @@
 use crate::utils::*;
 use std::io::{Result, ErrorKind, Error};
-use serde_json::{Value, Map};
 use serde::{Deserialize, Serialize};
-use crate::cli::RegisterJira;
 use home::home_dir;
 use crate::constance::*;
 extern crate base64;
 
+/// Structure for main information about a jira company.
 #[derive(Serialize, Deserialize, Debug)]
 struct Jira {
     url: String,
@@ -14,11 +13,23 @@ struct Jira {
 }
 
 impl Jira {
-    fn new(url: String, encoded_creds: String) -> Self {
+    /// Creates new instance of Jira.
+    /// #### Base usage:
+    ///
+    /// ```
+    /// let jira = Jira::new(
+    ///     "url_to_jira".to_string(),
+    ///     "username".to_string(),
+    ///     "password".to_string(),
+    /// );
+    /// ```
+    fn new(url: String, username: String, password: String) -> Self {
+        let encoded_creds = base64::encode(format!("{}:{}", username, password));
         Jira { url, encoded_creds }
     }
 }
 
+/// Structure for Jira company.
 #[derive(Serialize, Deserialize, Debug)]
 struct Company {
     company_name: String,
@@ -31,6 +42,7 @@ impl Company {
     }
 }
 
+/// Main structure for app config.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config{
     companies: Vec<Company>,
@@ -71,7 +83,10 @@ impl Config {
         companies_names
     }
 
-    /// Adds new company to config.
+    /// Adds new company to the config.
+    /// Creates new instance of `Jira` and `Company`
+    /// structures.
+    /// Then serialize our new config to json and write it in file.
     pub fn add_new_company(
         &mut self,
         url: &str,
@@ -79,8 +94,11 @@ impl Config {
         username: &str,
         password: &str,
     )-> Result<()> {
-        let encoded_creds = base64::encode(format!("{}:{}", username, password));
-        let jira_data = Jira::new(url.to_string(), encoded_creds);
+        let jira_data = Jira::new(
+            url.to_string(),
+            username.to_string(),
+            password.to_string(),
+        );
         let company_data = Company::new(company_name.to_string(), jira_data);
         self.companies.push(company_data);
         std::fs::write(
@@ -104,47 +122,6 @@ impl Config {
 pub fn get_config_in_str() -> std::io::Result<String> {
     let path_to_app_config = build_app_config_path()?;
     std::fs::read_to_string(&path_to_app_config)
-}
-
-fn get_config_in_json() -> std::io::Result<Value> {
-    let path_to_app_config = build_app_config_path()?;
-
-    let app_config = {
-        let text = std::fs::read_to_string(
-            &path_to_app_config,
-        )?;
-
-        serde_json::from_str::<Value>(&text)?
-    };
-    Ok(app_config)
-}
-
-pub fn add_new_jira_project(reg: &RegisterJira) -> std::io::Result<()> {
-    let mut app_config = get_config_in_json()?;
-
-    let companies = &app_config["Jira"]["Companies"];
-
-    match companies {
-        Value::Array(companies_map) => {
-            let mut companies_list = companies_map.clone();
-
-            let mut new_company_map: Map<String, Value> = Map::new();
-            for (key, value) in reg.make_tuple_of_struct() {
-                let value_v = value.clone();
-                new_company_map.insert(key, Value::String(value_v));
-            }
-            companies_list.push(Value::Object(new_company_map));
-            app_config["Jira"]["Companies"] = Value::Array(companies_list);
-        },
-        _ => (),
-    }
-
-    let app_config_str = app_config.to_string();
-
-    let config_path = build_app_config_path()?;
-    std::fs::write(config_path, app_config_str)?;
-
-    Ok(())
 }
 
 pub fn build_full_app_path() -> Result<String> {

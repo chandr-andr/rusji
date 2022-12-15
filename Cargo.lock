@@ -469,6 +469,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusji"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "clap",
+ "cursive",
+ "cursive-aligned-view",
+ "home",
+ "ncurses",
+ "serde",
+ "serde_json",
+ "term_size",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -612,21 +627,6 @@ name = "unicode-width"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
-
-[[package]]
-name = "universal_task_tracker"
-version = "0.1.0"
-dependencies = [
- "base64",
- "clap",
- "cursive",
- "cursive-aligned-view",
- "home",
- "ncurses",
- "serde",
- "serde_json",
- "term_size",
-]
 
 [[package]]
 name = "version_check"

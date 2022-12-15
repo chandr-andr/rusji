@@ -13,9 +13,7 @@ pub use crate::jira::*;
 
 fn main() {
     let config = Config::new().unwrap();
-    println!("{:?}", config);
-    println!("{:?}", config.companies_names());
-    // start_screen();
+    start_screen(config);
     // let is_startup_success = startup();
     // parse_args();
 }
