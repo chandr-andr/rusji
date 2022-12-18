@@ -7,7 +7,7 @@ extern crate base64;
 
 /// Structure for main information about a jira company.
 #[derive(Serialize, Deserialize, Debug)]
-struct Jira {
+pub struct Jira {
     url: String,
     encoded_creds: String,
 }
@@ -26,6 +26,14 @@ impl Jira {
     fn new(url: String, username: String, password: String) -> Self {
         let encoded_creds = base64::encode(format!("{}:{}", username, password));
         Jira { url, encoded_creds }
+    }
+
+    pub fn get_url(&self) -> &str {
+        self.url.as_str()
+    }
+
+    pub fn get_encoded_creds(&self) -> &str {
+        self.encoded_creds.as_str()
     }
 }
 
@@ -107,6 +115,33 @@ impl Config {
         )
     }
 
+    /// Deletes exist company.
+    pub fn delete_company(&mut self, company_name: &str) -> Result<()> {
+        let mut to_remove_company_idx = usize::default();
+        let mut idx = 0;
+        for company in &self.companies {
+            if company.company_name == company_name {
+                to_remove_company_idx = idx;
+            }
+            idx += 1;
+        }
+
+        self.companies.remove(to_remove_company_idx);
+        std::fs::write(
+            &self.config_path,
+            serde_json::to_string_pretty(&self)?,
+        )
+    }
+
+    pub fn get_jira_by_company(&self, company_name: &str) -> Result<&Jira> {
+        for company in &self.companies {
+            if company.company_name == company_name {
+                return Ok(&company.jira);
+            }
+        }
+        Err(Error::new(ErrorKind::Other, "Not found!"))
+    }
+
     fn get_config_path() -> Result<String> {
         match build_full_app_path() {
             Ok(path) => Ok(
@@ -117,11 +152,6 @@ impl Config {
             Err(err) => Err(err),
         }
     }
-}
-
-pub fn get_config_in_str() -> std::io::Result<String> {
-    let path_to_app_config = build_app_config_path()?;
-    std::fs::read_to_string(&path_to_app_config)
 }
 
 pub fn build_full_app_path() -> Result<String> {

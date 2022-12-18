@@ -11,9 +11,9 @@ pub use crate::screen::*;
 pub use crate::config::*;
 pub use crate::jira::*;
 
+use crate::jira::requests_client;
+
 fn main() {
     let config = Config::new().unwrap();
     start_screen(config);
-    // let is_startup_success = startup();
-    // parse_args();
 }
