@@ -14,7 +14,7 @@ use cursive::{
 };
 use cursive::align;
 use crate::Config;
-use super::requests_client::JiraData;
+use super::{requests_client::JiraData, jira::Jira};
 
 const INNER_VIEW_ALIGN: align::Align = align::Align {
     h: align::HAlign::Center,
@@ -25,6 +25,7 @@ const INNER_VIEW_ALIGN: align::Align = align::Align {
 struct CursiveJiraData<'a> {
     config: Config,
     jira_data: JiraData<'a>,
+    company_name: String,
 }
 
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
@@ -52,6 +53,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let c_jira_data = CursiveJiraData {
         jira_data: jira_data,
         config: config,
+        company_name: company_name.to_string(),
     };
     cursive.set_user_data(c_jira_data);
 }
@@ -89,7 +91,7 @@ fn make_actions_something_layer() -> LinearLayout {
 fn make_projects_view(jira_data: &JiraData) -> Dialog {
     let mut inner_projects_view = SelectView::<String>::new()
         .align(INNER_VIEW_ALIGN)
-        .on_submit(on_select_project);
+        .on_submit(show_tasks);
 
     let projects_names = jira_data.get_projects_names();
     inner_projects_view.add_all_str(
@@ -134,18 +136,25 @@ fn make_actions_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
 }
 
 fn make_something_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
-    let mut inner_something_view = SelectView::<String>::new()
+    let inner_something_view = SelectView::<String>::new()
         .align(INNER_VIEW_ALIGN)
         .with_name("tasks_view");
     ScrollView::new(inner_something_view).full_height()
 }
 
-fn on_select_project(cursive: &mut Cursive, action: &String) {
-    let mut view: ViewRef<TextView> = cursive.find_name("info_view").unwrap();
-    view.set_content("YES!")
-}
-
-fn show_tasks(cursive: &mut Cursive, project: &String) {
+fn show_tasks(cursive: &mut Cursive, project_name: &str) {
     let mut tasks_view: ViewRef<SelectView> = cursive.find_name("tasks_view").unwrap();
-    let mut c_jira_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+    let c_jira_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+    let encoded_creds = c_jira_data
+        .config
+        .get_jira_by_company(&c_jira_data.company_name)
+        .unwrap()
+        .get_encoded_creds();
+    c_jira_data
+        .jira_data
+        .update_tasks(project_name, encoded_creds)
+        .unwrap();
+    let project_tasks = c_jira_data.jira_data.get_tasks_names_by_project(project_name);
+    tasks_view.clear();
+    tasks_view.add_all_str(project_tasks);
 }
