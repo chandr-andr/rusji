@@ -9,18 +9,23 @@ use cursive::{
         DummyView,
         NamedView, Dialog,
     },
-    view::{Resizable, Nameable},
-    Cursive,
+    view::{Resizable, Nameable, ViewWrapper, Finder},
+    Cursive, View,
 };
 use cursive::align;
+use cursive_markup;
 use crate::Config;
-use super::{requests_client::JiraData, jira::Jira};
+use super::{requests_client::JiraData};
 
-const INNER_VIEW_ALIGN: align::Align = align::Align {
+const INNER_CENTER_TOP_VIEW_ALIGN: align::Align = align::Align {
     h: align::HAlign::Center,
     v: align::VAlign::Top,
 };
 
+const INNER_LEFT_TOP_VIEW_ALIGN: align::Align = align::Align {
+    h: align::HAlign::Left,
+    v: align::VAlign::Top,
+};
 
 struct CursiveJiraData<'a> {
     config: Config,
@@ -90,7 +95,7 @@ fn make_actions_something_layer() -> LinearLayout {
 
 fn make_projects_view(jira_data: &JiraData) -> Dialog {
     let mut inner_projects_view = SelectView::<String>::new()
-        .align(INNER_VIEW_ALIGN)
+        .align(INNER_CENTER_TOP_VIEW_ALIGN)
         .on_submit(show_tasks);
 
     let projects_names = jira_data.get_projects_names();
@@ -108,27 +113,53 @@ fn make_projects_view(jira_data: &JiraData) -> Dialog {
         )
 }
 
-fn make_tasks_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
-    let mut inner_tasks_view = SelectView::<String>::new()
-        .align(INNER_VIEW_ALIGN);
-    inner_tasks_view.add_all_str(
-        vec!["Project1", "Project2", "Project3", "Project4"]
-    );
-    ScrollView::new(inner_tasks_view.with_name("tasks_view")).full_height()
+fn make_tasks_view() -> Dialog {
+    let inner_tasks_view = SelectView::<String>::new()
+        .align(INNER_LEFT_TOP_VIEW_ALIGN);
+
+    Dialog::new()
+        .title("Choose issue")
+        .padding_lrtb(1, 1, 1, 1)
+        .content(
+        ScrollView::new(
+            inner_tasks_view
+                .with_name("tasks_view")
+            ).full_height()
+        )
 }
 
-fn make_info_view() -> ScrollView<NamedView<TextView>> {
-    let mut inner_info_view = TextView::new("")
-        .align(INNER_VIEW_ALIGN);
+fn make_info_view() -> Dialog {
+    let summary_inner_info_view = TextView::new("")
+        .align(INNER_CENTER_TOP_VIEW_ALIGN)
+        .with_name("summary_task_view");
+    let summary_dialog = Dialog::new()
+        .title("Задача")
+        .padding_lrtb(1, 1, 1, 1)
+        .content(summary_inner_info_view);
 
-    inner_info_view.set_content("CONTENT");
+    let description_inner_info_view = TextView::new("")
+        .align(INNER_CENTER_TOP_VIEW_ALIGN)
+        .with_name("description_task_view");
+    let description_dialog = Dialog::new()
+        .title("Описание")
+        .padding_lrtb(1, 1, 1, 1)
+        .content(description_inner_info_view);
 
-    ScrollView::new(inner_info_view.with_name("info_view"))
+    let info_layout = LinearLayout::vertical()
+        .child(summary_dialog)
+        .child(DummyView)
+        .child(description_dialog);
+
+    Dialog::new()
+        .title("Main information about task")
+        .content(
+            ScrollView::new(info_layout.with_name("info_view"))
+        )
 }
 
 fn make_actions_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
     let mut inner_actions_view = SelectView::<String>::new()
-        .align(INNER_VIEW_ALIGN);
+        .align(INNER_CENTER_TOP_VIEW_ALIGN);
 
     inner_actions_view.add_all_str(vec!["Action1", "Action2", "Action3", "Action4"]);
 
@@ -137,7 +168,7 @@ fn make_actions_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
 
 fn make_something_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
     let inner_something_view = SelectView::<String>::new()
-        .align(INNER_VIEW_ALIGN)
+        .align(INNER_CENTER_TOP_VIEW_ALIGN)
         .with_name("tasks_view");
     ScrollView::new(inner_something_view).full_height()
 }
@@ -145,16 +176,25 @@ fn make_something_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
 fn show_tasks(cursive: &mut Cursive, project_name: &str) {
     let mut tasks_view: ViewRef<SelectView> = cursive.find_name("tasks_view").unwrap();
     let c_jira_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+
     let encoded_creds = c_jira_data
         .config
         .get_jira_by_company(&c_jira_data.company_name)
         .unwrap()
         .get_encoded_creds();
+
     c_jira_data
         .jira_data
         .update_tasks(project_name, encoded_creds)
         .unwrap();
-    let project_tasks = c_jira_data.jira_data.get_tasks_names_by_project(project_name);
+
+    let project_tasks = c_jira_data
+        .jira_data
+        .get_tasks_names_by_project(project_name)
+        .unwrap();
+
     tasks_view.clear();
     tasks_view.add_all_str(project_tasks);
+
+    cursive.focus_name("tasks_view").unwrap();
 }

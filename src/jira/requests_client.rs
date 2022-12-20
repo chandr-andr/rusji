@@ -1,26 +1,48 @@
-use std::io::{Result, Error, ErrorKind};
-use serde::{Deserialize, Serialize};
+use std::io::{Result as ioResult, Error, ErrorKind};
+use serde::{Deserialize, Serialize, Deserializer};
 use reqwest::blocking::{Client, Response};
-use reqwest::Result as reqwest_Result;
-use serde_json;
+use serde_json::{self};
 use url::Url;
 
-
-/// JiraTaskFields holds all necessary fields
-/// to describe a task.
-#[derive(Serialize, Deserialize, Debug)]
-struct JiraTaskFields {
-    description: String,
-    summary: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 struct JiraTask {
-    id: usize,
+    id: String,
     #[serde(alias = "self")]
     link: String,
     key: String,
-    fields: JiraTaskFields,
+    description: Option<String>,
+    summary: String,
+}
+
+impl<'de> Deserialize<'de> for JiraTask {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de>
+    {
+        #[derive(Serialize, Deserialize, Debug)]
+        struct Outer {
+            id: String,
+            #[serde(alias = "self")]
+            link: String,
+            key: String,
+            fields: Inner,
+        }
+
+        #[derive(Serialize, Deserialize, Debug)]
+        struct Inner {
+            description: Option<String>,
+            summary: String,
+        }
+
+
+        let helper = Outer::deserialize(deserializer)?;
+        Ok(JiraTask {
+            id: helper.id,
+            link: helper.link,
+            key: helper.key,
+            description: helper.fields.description,
+            summary: helper.fields.summary,
+        })
+    }
 }
 
 /// JiraTask holds all necessary information
@@ -39,7 +61,23 @@ struct JiraProject {
     key: String,
     name: String,
     #[serde(skip_serializing, skip_deserializing)]
-    issues: Option<JiraIssues>,
+    tasks: Option<Vec<JiraTask>>,
+}
+
+impl JiraProject {
+
+    fn tasks_names(&self) -> Option<Vec<String>> {
+        let mut tasks_names: Vec<String> = Vec::default();
+        if let Some(tasks) = self.tasks.as_ref() {
+            for task in tasks {
+                tasks_names.push(
+                    format!(
+                        "{} -- {}", &task.key, &task.summary));
+            }
+            return Some(tasks_names)
+        }
+        None
+    }
 }
 
 /// Struct with data about company jira.
@@ -64,7 +102,7 @@ impl<'a> JiraData<'a> {
         }
     }
 
-    pub fn update_projects(&mut self, encoded_creds: &str) -> Result<()> {
+    pub fn update_projects(&mut self, encoded_creds: &str) -> ioResult<()> {
         let url = self.jira_url.join(self.get_projects_url).unwrap();
         let response = self.make_get_request(url, encoded_creds)?;
         let resp_text = response.text().unwrap();
@@ -83,36 +121,32 @@ impl<'a> JiraData<'a> {
         to_return_projects_names
     }
 
-    pub fn update_tasks(&mut self, project_name: &str, encoded_creds: &str) -> Result<()> {
+    pub fn update_tasks(&mut self, project_name: &str, encoded_creds: &str) -> ioResult<()> {
         let url = self.jira_url.join(
             &self.get_project_tasks_url.replace("PRJ", project_name),
         ).unwrap();
         let response = self.make_get_request(url, encoded_creds)?;
         let resp_text = response.text().unwrap();
-        let issues = serde_json::from_str::<JiraIssues>(resp_text.as_str())?;
+        let tasks = serde_json::from_str::<JiraIssues>(resp_text.as_str())?.issues;
         for project in self.projects.as_mut().unwrap() {
             if project.name == project_name {
-                project.issues = Some(issues);
+                project.tasks = Some(tasks);
                 return Ok(())
             }
         }
         Ok(())
     }
 
-    pub fn get_tasks_names_by_project(&self, project_name: &str) -> Vec<&str> {
-        let mut tasks_names: Vec<&str> = Vec::new();
+    pub fn get_tasks_names_by_project(&self, project_name: &str) -> Option<Vec<String>> {
         for project in self.projects.as_ref().unwrap() {
             if project.name == project_name {
-                let issue = project.issues.as_ref().unwrap();
-                for task in &issue.issues {
-                    tasks_names.push(&task.key)
-                }
+                return project.tasks_names();
             }
         }
-        tasks_names
+        None
     }
 
-    fn make_get_request(&self, url: Url, encoded_creds: &str) -> Result<Response> {
+    fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
         let response = self.client
             .get(url)
             .header("Authorization", format!("Basic {encoded_creds}"))
