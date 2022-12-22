@@ -4,18 +4,17 @@ use cursive::{
         SelectView,
         ResizedView,
         ScrollView,
-        TextView,
         ViewRef,
         DummyView,
-        NamedView, Dialog,
+        NamedView, Dialog, EditView, TextView,
     },
-    view::{Resizable, Nameable, ViewWrapper, Finder},
-    Cursive, View,
+    view::{Resizable, Nameable},
+    Cursive,
 };
 use cursive::align;
 use cursive_markup;
 use crate::Config;
-use super::{requests_client::JiraData};
+use super::{jira_data::JiraData};
 
 const INNER_CENTER_TOP_VIEW_ALIGN: align::Align = align::Align {
     h: align::HAlign::Center,
@@ -31,6 +30,18 @@ struct CursiveJiraData<'a> {
     config: Config,
     jira_data: JiraData<'a>,
     company_name: String,
+    selected_project: String,
+}
+
+impl<'a> CursiveJiraData<'a> {
+    fn new(config: Config, company_name: &str, jira_data: JiraData<'a>) -> Self {
+        CursiveJiraData {
+            jira_data: jira_data,
+            config: config,
+            company_name: company_name.to_string(),
+            selected_project: String::default(),
+        }
+    }
 }
 
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
@@ -55,11 +66,11 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
 
     cursive.add_layer(main_layer);
 
-    let c_jira_data = CursiveJiraData {
-        jira_data: jira_data,
-        config: config,
-        company_name: company_name.to_string(),
-    };
+    let c_jira_data = CursiveJiraData::new(
+        config,
+        company_name,
+        jira_data,
+    );
     cursive.set_user_data(c_jira_data);
 }
 
@@ -68,32 +79,38 @@ fn make_main_layer() -> LinearLayout {
 }
 
 fn make_tasks_projects_layer(jira_data: &JiraData) -> LinearLayout {
-    let mut tasks_projects_layer = LinearLayout::vertical();
+    let mut tasks_projects_layout = LinearLayout::vertical();
 
-    tasks_projects_layer.add_child(make_projects_view(jira_data));
-    tasks_projects_layer.add_child(DummyView);
-    tasks_projects_layer.add_child(make_tasks_view());
+    tasks_projects_layout.add_child(make_projects_view(jira_data));
+    tasks_projects_layout.add_child(DummyView);
+    tasks_projects_layout.add_child(make_tasks_view());
 
-    tasks_projects_layer
+    tasks_projects_layout
 }
 
-fn make_info_layer() -> LinearLayout {
-    let mut info_layer = LinearLayout::vertical();
+fn make_info_layer() -> NamedView<LinearLayout> {
+    let mut info_layout = LinearLayout::vertical();
 
-    info_layer.add_child(make_info_view());
+    info_layout.add_child(make_info_view("Choose task firstly", ""));
 
-    info_layer
+    info_layout.with_name("info_layout")
 }
 
 fn make_actions_something_layer() -> LinearLayout {
-    let mut info_layer = LinearLayout::vertical();
-    info_layer.add_child(make_actions_view());
-    info_layer.add_child(DummyView);
-    info_layer.add_child(make_something_view());
-    info_layer
+    let mut info_layout = LinearLayout::vertical();
+    info_layout.add_child(make_actions_view());
+    info_layout.add_child(DummyView);
+    info_layout.add_child(make_something_view());
+    info_layout
 }
 
 fn make_projects_view(jira_data: &JiraData) -> Dialog {
+    let search_view = EditView::new().on_submit(on_enter_search_project);
+
+    let search_project_dialog = Dialog::new()
+        .title("Search project by name")
+        .content(search_view);
+
     let mut inner_projects_view = SelectView::<String>::new()
         .align(INNER_CENTER_TOP_VIEW_ALIGN)
         .on_submit(show_tasks);
@@ -102,20 +119,26 @@ fn make_projects_view(jira_data: &JiraData) -> Dialog {
     inner_projects_view.add_all_str(
         projects_names,
     );
+
+    let projects_scroll_view = ScrollView::new(
+        inner_projects_view
+            .with_name("projects_view"));
+
+    let inner_projects_layout = LinearLayout::vertical()
+        .child(search_project_dialog)
+        .child(DummyView)
+        .child(projects_scroll_view);
+
     Dialog::new()
         .title("Choose project")
         .padding_lrtb(1, 1, 1, 1)
-        .content(
-            ScrollView::new(
-                inner_projects_view
-                    .with_name("projects_view"))
-                    .full_height()
-        )
+        .content(inner_projects_layout)
 }
 
 fn make_tasks_view() -> Dialog {
     let inner_tasks_view = SelectView::<String>::new()
-        .align(INNER_LEFT_TOP_VIEW_ALIGN);
+        .align(INNER_LEFT_TOP_VIEW_ALIGN)
+        .on_submit(show_info_on_select);
 
     Dialog::new()
         .title("Choose issue")
@@ -128,22 +151,24 @@ fn make_tasks_view() -> Dialog {
         )
 }
 
-fn make_info_view() -> Dialog {
-    let summary_inner_info_view = TextView::new("")
-        .align(INNER_CENTER_TOP_VIEW_ALIGN)
+fn make_info_view(summary: &str, description: &str) -> Dialog {
+    let summary_inner_info_view = cursive_markup
+        ::MarkupView
+        ::html(summary)
         .with_name("summary_task_view");
     let summary_dialog = Dialog::new()
         .title("Задача")
         .padding_lrtb(1, 1, 1, 1)
         .content(summary_inner_info_view);
 
-    let description_inner_info_view = TextView::new("")
-        .align(INNER_CENTER_TOP_VIEW_ALIGN)
+    let description_inner_info_view = cursive_markup
+        ::MarkupView
+        ::html(description)
         .with_name("description_task_view");
     let description_dialog = Dialog::new()
         .title("Описание")
         .padding_lrtb(1, 1, 1, 1)
-        .content(description_inner_info_view);
+        .content(ScrollView::new(description_inner_info_view));
 
     let info_layout = LinearLayout::vertical()
         .child(summary_dialog)
@@ -174,8 +199,10 @@ fn make_something_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
 }
 
 fn show_tasks(cursive: &mut Cursive, project_name: &str) {
+    pop_front_layout(cursive);
     let mut tasks_view: ViewRef<SelectView> = cursive.find_name("tasks_view").unwrap();
     let c_jira_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+    c_jira_data.selected_project = project_name.to_string();
 
     let encoded_creds = c_jira_data
         .config
@@ -197,4 +224,40 @@ fn show_tasks(cursive: &mut Cursive, project_name: &str) {
     tasks_view.add_all_str(project_tasks);
 
     cursive.focus_name("tasks_view").unwrap();
+}
+
+fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
+    let mut info_layout: ViewRef<LinearLayout> = cursive.find_name("info_layout").unwrap();
+    let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
+    let task_key: Vec<&str> = task_name.split(" -- ").collect();
+
+    let (summary, description) = c_jira_data
+        .jira_data
+        .get_task_description(&c_jira_data.selected_project, task_key[0]);
+
+    let new_info_view = make_info_view(summary, description);
+    info_layout.clear();
+    info_layout.add_child(new_info_view);
+}
+
+fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
+    let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
+    let fit_projects = c_jira_data
+        .jira_data
+        .find_project_by_subname(project_subname);
+
+
+    let fit_projects_select_view = SelectView::<String>::new()
+        .align(INNER_CENTER_TOP_VIEW_ALIGN)
+        .on_submit(show_tasks);
+
+    let fit_projects_dialog = Dialog::new()
+        .title("Select project")
+        .content(fit_projects_select_view.with_all_str(fit_projects));
+
+    cursive.add_layer(fit_projects_dialog);
+}
+
+fn pop_front_layout(cursive: &mut Cursive) {
+    cursive.pop_layer();
 }

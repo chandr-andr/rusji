@@ -1,5 +1,5 @@
 pub mod jira;
 pub mod screen;
-pub mod requests_client;
+pub mod jira_data;
 
 pub use jira::Company;

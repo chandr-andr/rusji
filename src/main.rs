@@ -11,7 +11,7 @@ pub use crate::screen::*;
 pub use crate::config::*;
 pub use crate::jira::*;
 
-use crate::jira::requests_client;
+use crate::jira::jira_data;
 
 fn main() {
     let config = Config::new().unwrap();
