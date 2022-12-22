@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use cursive::{
     views::{
         LinearLayout,
@@ -6,7 +8,10 @@ use cursive::{
         ScrollView,
         ViewRef,
         DummyView,
-        NamedView, Dialog, EditView, TextView,
+        NamedView,
+        Dialog,
+        EditView,
+        TextView,
     },
     view::{Resizable, Nameable},
     Cursive,
@@ -199,7 +204,7 @@ fn make_something_view() -> ResizedView<ScrollView<NamedView<SelectView>>> {
 }
 
 fn show_tasks(cursive: &mut Cursive, project_name: &str) {
-    pop_front_layout(cursive);
+    pop_front_layout(cursive, "project_search");
     let mut tasks_view: ViewRef<SelectView> = cursive.find_name("tasks_view").unwrap();
     let c_jira_data: &mut CursiveJiraData = cursive.user_data().unwrap();
     c_jira_data.selected_project = project_name.to_string();
@@ -253,11 +258,16 @@ fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
 
     let fit_projects_dialog = Dialog::new()
         .title("Select project")
-        .content(fit_projects_select_view.with_all_str(fit_projects));
+        .content(fit_projects_select_view.with_all_str(fit_projects))
+        .with_name("project_search");
 
     cursive.add_layer(fit_projects_dialog);
 }
 
-fn pop_front_layout(cursive: &mut Cursive) {
-    cursive.pop_layer();
+fn pop_front_layout(cursive: &mut Cursive, layer_name: &str) {
+    let to_pop_layer: Option<ViewRef<Dialog>> = cursive.find_name(layer_name);
+    if let Some(_) = to_pop_layer {
+        cursive.pop_layer();
+        return ();
+    }
 }
