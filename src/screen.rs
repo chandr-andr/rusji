@@ -130,13 +130,13 @@ fn add_new_company(cursive: &mut Cursive) {
         Ok(_) => {
             c_user_data.refresh_config();
             cursive.set_user_data(c_user_data);
-            succes_dialog(cursive, "Company added successfully!")
+            success_dialog(cursive, "Company added successfully!")
         },
         Err(err) => println!("{}", err),
     }
 }
 
-fn succes_dialog(cursive: &mut Cursive, success_text: &str) {
+fn success_dialog(cursive: &mut Cursive, success_text: &str) {
     cursive.pop_layer();
     cursive.add_layer(
         Dialog::new()
@@ -196,6 +196,6 @@ fn delete_company(cursive: &mut Cursive, company_name: &str) {
     let c_user_data: &mut CursiveUserData = cursive.user_data().unwrap();
     c_user_data.config.delete_company(company_name).unwrap();
     // TODO: Process Error if needed
-    succes_dialog(cursive, "Company deleted successfully!")
+    success_dialog(cursive, "Company deleted successfully!")
 
 }
