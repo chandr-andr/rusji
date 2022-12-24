@@ -12,7 +12,7 @@ use cursive::{
     view::{
         Nameable,
         ViewWrapper,
-        Resizable,
+        Resizable, Scrollable,
     },
     Cursive
 };
@@ -131,16 +131,17 @@ impl Default for TasksView {
     fn default() -> Self {
         let inner_tasks_view = SelectView::<String>::new()
             .align(INNER_LEFT_TOP_VIEW_ALIGN)
-            .on_submit(Self::show_info_on_select);
+            .on_submit(Self::show_info_on_select)
+            .with_name(TASKS_SELECT_VIEW_NAME);
 
         Self {
             inner_view: Dialog::new()
                 .title("Choose issue")
                 .padding_lrtb(1, 1, 1, 1)
                 .content(
-                    ScrollView::new(
-                        inner_tasks_view.with_name(TASKS_SELECT_VIEW_NAME),
-                    )
+                    inner_tasks_view
+                        .with_name(TASKS_SELECT_VIEW_NAME)
+                        .scrollable(),
                 ),
         }
     }
