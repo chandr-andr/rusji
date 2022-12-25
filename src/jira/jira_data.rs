@@ -155,8 +155,7 @@ impl<'a> JiraData<'a> {
 
     pub fn update_projects(&mut self, encoded_creds: &str) -> ioResult<()> {
         let url = self.jira_url.join(self.get_projects_url).unwrap();
-        let response = self.make_get_request(url, encoded_creds)?;
-        let resp_text = response.text().unwrap();
+        let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
 
         let projects = serde_json::from_str::<Vec<JiraProject>>(
             resp_text.as_str(),
@@ -280,10 +279,10 @@ mod tests {
             "key": "FRE-39",
             "fields": {
                 "description": "test description",
-                "summary": "test summary",
-                "renderedFields": {
-                    "description": "test"
-                }
+                "summary": "test summary"
+            },
+            "renderedFields": {
+                "description": "test"
             }
         }
         "#;

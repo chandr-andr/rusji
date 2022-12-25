@@ -1,8 +1,6 @@
 use cursive::{
-    views::{
-        LinearLayout,
-    },
-    view::{Resizable},
+    views::LinearLayout,
+    view::Resizable,
     Cursive,
 };
 use crate::Config;
@@ -13,10 +11,11 @@ use super::{
     }, layouts::{
         TasksProjectsLayout,
         InfoLayout, ActionsLayout,
-    }, views::{ProjectsView}
+    }, views::ProjectsView, global_callbacks::add_global_callbacks,
 };
 
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
+    add_global_callbacks(cursive);
     let config = Config::new().unwrap();
     let jira = config.get_jira_by_company(company_name).unwrap();
     let jira_data = JiraData::new(jira.get_url());
@@ -36,7 +35,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let side_width = screen_size.x * 2 / 7;
     let center_width = screen_size.x * 3 / 7;
 
-    let mut main_layer = make_main_layer();
+    let mut main_layer = LinearLayout::horizontal();
 
     let tasks_projects_layer = TasksProjectsLayout::default();
     let info_layer = InfoLayout::default();
@@ -49,8 +48,4 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     cursive.add_layer(main_layer);
 
     ProjectsView::update_projects(cursive);
-}
-
-fn make_main_layer() -> LinearLayout {
-    LinearLayout::horizontal()
 }

@@ -31,7 +31,8 @@ impl Default for ProjectsView {
             .content(
                 EditView::new()
                     .on_submit(Self::on_enter_search_project)
-            );
+            )
+            .with_name(PROJECTS_SEARCH_VIEW_NAME);
 
         let projects_scroll_view = ScrollView::new(
             SelectView::<String>::new()
@@ -84,21 +85,33 @@ impl ProjectsView {
     }
 
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
-        let cursive_data: &CursiveJiraData = cursive.user_data().unwrap();
-        let fit_projects = cursive_data
-            .jira_data
-            .find_project_by_subname(project_subname);
+        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+        let jira_data = &cursive_data.jira_data;
+        let fit_projects = jira_data.find_project_by_subname(project_subname);
 
-        let fit_projects_select_view = SelectView::<String>::new()
-            .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .on_submit(Self::pop_layout_show_tasks);
+        if fit_projects.len() == 0 {
+            cursive.add_layer(
+                Dialog::new()
+                    .title("No projects found")
+                    .button("OK", ProjectsView::pop_search_and_focus)
+            );
+        } else {
+            let fit_projects_select_view = SelectView::<String>::new()
+                .align(INNER_CENTER_TOP_VIEW_ALIGN)
+                .on_submit(Self::pop_layout_show_tasks);
 
-        let fit_projects_dialog = Dialog::new()
-            .title("Select project")
-            .content(fit_projects_select_view.with_all_str(fit_projects))
-            .with_name(PROJECTS_SEARCH_VIEW_NAME);
+            let fit_projects_dialog = Dialog::new()
+                .title("Select project")
+                .content(fit_projects_select_view.with_all_str(fit_projects));
 
-        cursive.add_layer(fit_projects_dialog);
+            cursive.add_layer(fit_projects_dialog);
+        }
+        cursive.set_user_data(cursive_data);
+    }
+
+    fn pop_search_and_focus(cursive: &mut Cursive) {
+        cursive.pop_layer();
+        cursive.focus_name(PROJECTS_SELECT_VIEW_NAME).unwrap();
     }
 
     fn show_tasks(cursive: &mut Cursive, project_name: &str) {
