@@ -6,28 +6,27 @@ use url::Url;
 
 pub(crate) struct CursiveJiraData<'a> {
     pub jira_data: JiraData<'a>,
-    pub company_name: String,
     pub selected_project: String,
     pub encoded_creds: String,
 }
 
 impl<'a> CursiveJiraData<'a> {
-    pub fn new(encoded_creds: String, company_name: &str, jira_data: JiraData<'a>) -> Self {
+    pub fn new(encoded_creds: String, jira_data: JiraData<'a>) -> Self {
         CursiveJiraData {
             encoded_creds: encoded_creds,
             jira_data: jira_data,
-            company_name: company_name.to_string(),
             selected_project: String::default(),
         }
     }
 
-    pub fn update_projects(&mut self) {
-        self.jira_data.update_projects(&self.encoded_creds).unwrap();
+    pub fn update_projects(&mut self) -> ioResult<()> {
+        self.jira_data.update_projects(&self.encoded_creds)?;
+        Ok(())
     }
 
-    pub fn update_return_projects(&mut self) -> Vec<&str> {
-        self.update_projects();
-        self.jira_data.get_projects_names()
+    pub fn update_return_projects(&mut self) -> ioResult<Vec<&str>> {
+        self.update_projects()?;
+        Ok(self.jira_data.get_projects_names())
     }
 
     pub fn update_tasks(&mut self, project_name: &str) {

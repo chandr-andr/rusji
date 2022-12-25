@@ -26,7 +26,6 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
                 .to_string();
     let cursive_data = CursiveJiraData::new(
         encoded_creds,
-        company_name,
         jira_data,
     );
     cursive.set_user_data(cursive_data);
@@ -47,5 +46,5 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
 
     cursive.add_layer(main_layer);
 
-    ProjectsView::update_projects(cursive);
+    ProjectsView::update_projects(cursive)
 }

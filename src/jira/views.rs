@@ -7,7 +7,7 @@ use cursive::{
         ViewRef,
         EditView,
         DummyView,
-
+        TextView,
     },
     view::{
         Nameable,
@@ -78,10 +78,25 @@ impl ProjectsView {
         let mut select_project_view: ViewRef<SelectView> = cursive
             .find_name(PROJECTS_SELECT_VIEW_NAME)
             .unwrap();
-        let projects = cursive_data.update_return_projects();
-        select_project_view.clear();
-        select_project_view.add_all_str(projects);
-        cursive.set_user_data(cursive_data)
+        match cursive_data.update_return_projects() {
+            Ok(projects) => {
+                select_project_view.clear();
+                select_project_view.add_all_str(projects);
+            },
+            Err(_) => {
+                let bad_view = BadConnectionView::new(
+                    "Can't get projects from Jira.",
+                    ProjectsView::pop_layer_and_update_projects,
+                );
+                cursive.add_layer(bad_view);
+            }
+        }
+        cursive.set_user_data(cursive_data);
+    }
+
+    fn pop_layer_and_update_projects(cursive: &mut Cursive) {
+        cursive.pop_layer();
+        ProjectsView::update_projects(cursive);
     }
 
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
@@ -102,7 +117,8 @@ impl ProjectsView {
 
             let fit_projects_dialog = Dialog::new()
                 .title("Select project")
-                .content(fit_projects_select_view.with_all_str(fit_projects));
+                .content(fit_projects_select_view.with_all_str(fit_projects))
+                .button("Back", ProjectsView::pop_search_and_focus);
 
             cursive.add_layer(fit_projects_dialog);
         }
@@ -111,7 +127,7 @@ impl ProjectsView {
 
     fn pop_search_and_focus(cursive: &mut Cursive) {
         cursive.pop_layer();
-        cursive.focus_name(PROJECTS_SELECT_VIEW_NAME).unwrap();
+        cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
     }
 
     fn show_tasks(cursive: &mut Cursive, project_name: &str) {
@@ -288,5 +304,41 @@ impl ViewWrapper for ActionsView {
         where
             F: FnOnce(&mut Self::V) -> R {
                 Some(f(&mut self.inner_view))
+    }
+}
+
+pub(crate) struct BadConnectionView {
+    inner_view: Dialog,
+}
+
+impl ViewWrapper for BadConnectionView {
+    type V = Dialog;
+
+    fn with_view<F, R>(&self, f: F) -> Option<R>
+        where
+            F: FnOnce(&Self::V) -> R {
+                Some(f(&self.inner_view))
+    }
+
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
+        where
+            F: FnOnce(&mut Self::V) -> R {
+                Some(f(&mut self.inner_view))
+    }
+}
+
+impl BadConnectionView {
+    pub fn new<T>(
+        error_text: &str,
+        try_again_fn: T,
+    ) -> Self
+    where T: 'static + Fn(&mut Cursive) {
+        Self {
+            inner_view:
+                Dialog::new()
+                    .title("Connection error!")
+                    .content(TextView::new(error_text))
+                    .button("Try again", try_again_fn)
+        }
     }
 }
