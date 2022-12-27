@@ -4,7 +4,7 @@ use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
 pub fn make_dark_theme() -> Theme {
     let mut palette = Palette::default();
     let colors = vec![
-        (Background, Light(Black)),
+        (Background, Dark(Black)),
         (Shadow, Dark(Black)),
         (View, Light(Black)),
         (Primary, Light(White)),
