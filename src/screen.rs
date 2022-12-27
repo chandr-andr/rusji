@@ -8,6 +8,7 @@ use cursive::views::{
 };
 use crate::Config;
 use crate::jira::screen::make_jira_screen;
+use crate::theme::make_dark_theme;
 
 struct CursiveUserData<'a> {
     config: Config,
@@ -29,6 +30,7 @@ impl<'a> CursiveUserData<'static> {
 
 pub fn start_screen(config: Config) {
     let mut cursive = cursive::default();
+    cursive.set_theme(make_dark_theme());
 
     let c_user_data = CursiveUserData::new(config);
     cursive.set_user_data(c_user_data);
