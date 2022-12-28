@@ -12,12 +12,13 @@ use cursive::{
     view::{
         Nameable,
         ViewWrapper,
-        Resizable, Scrollable,
+        Resizable,
+        Scrollable,
     },
     Cursive
 };
 
-use super::constance::{INNER_LEFT_TOP_VIEW_ALIGN, TASKS_SELECT_VIEW_NAME, INNER_CENTER_TOP_VIEW_ALIGN, PROJECTS_SELECT_VIEW_NAME, PROJECTS_SEARCH_VIEW_NAME, ACTIONS_SELECT_VIEW_NAME};
+use super::constance::{INNER_LEFT_TOP_VIEW_ALIGN, TASKS_SELECT_VIEW_NAME, INNER_CENTER_TOP_VIEW_ALIGN, PROJECTS_SELECT_VIEW_NAME, PROJECTS_SEARCH_VIEW_NAME, ACTIONS_SELECT_VIEW_NAME, TASKS_SEARCH_VIEW_NAME};
 use super::jira_data::CursiveJiraData;
 
 pub(crate) struct ProjectsView {
@@ -108,26 +109,30 @@ impl ProjectsView {
             cursive.add_layer(
                 Dialog::new()
                     .title("No projects found")
-                    .button("OK", ProjectsView::pop_search_and_focus)
+                    .button("OK", |cursive| {
+                        cursive.pop_layer();
+                        cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
+                    })
             );
         } else {
             let fit_projects_select_view = SelectView::<String>::new()
                 .align(INNER_CENTER_TOP_VIEW_ALIGN)
-                .on_submit(Self::pop_layout_show_tasks);
+                .on_submit(|cursive, project_name: &str| {
+                    cursive.pop_layer();
+                    Self::show_tasks(cursive, project_name);
+                });
 
             let fit_projects_dialog = Dialog::new()
                 .title("Select project")
                 .content(fit_projects_select_view.with_all_str(fit_projects))
-                .button("Back", ProjectsView::pop_search_and_focus);
+                .button("Back", |cursive| {
+                    cursive.pop_layer();
+                    cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
+                });
 
             cursive.add_layer(fit_projects_dialog);
         }
         cursive.set_user_data(cursive_data);
-    }
-
-    fn pop_search_and_focus(cursive: &mut Cursive) {
-        cursive.pop_layer();
-        cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
     }
 
     fn show_tasks(cursive: &mut Cursive, project_name: &str) {
@@ -145,11 +150,6 @@ impl ProjectsView {
 
         cursive.focus_name("tasks_view").unwrap();
     }
-
-    fn pop_layout_show_tasks(cursive: &mut Cursive, project_name: &str) {
-        cursive.pop_layer();
-        Self::show_tasks(cursive, project_name);
-    }
 }
 
 pub(crate) struct TasksView {
@@ -158,19 +158,24 @@ pub(crate) struct TasksView {
 
 impl Default for TasksView {
     fn default() -> Self {
+        let search_task_view = TasksView::make_task_find_dialog();
+
         let inner_tasks_view = SelectView::<String>::new()
             .align(INNER_LEFT_TOP_VIEW_ALIGN)
             .on_submit(Self::show_info_on_select)
-            .with_name(TASKS_SELECT_VIEW_NAME);
+            .with_name(TASKS_SELECT_VIEW_NAME)
+            .scrollable();
+
+        let tasks_layout = LinearLayout::vertical()
+            .child(search_task_view)
+            .child(inner_tasks_view);
 
         Self {
             inner_view: Dialog::new()
                 .title("Choose issue")
                 .padding_lrtb(1, 1, 1, 1)
                 .content(
-                    inner_tasks_view
-                        .with_name(TASKS_SELECT_VIEW_NAME)
-                        .scrollable(),
+                    tasks_layout,
                 ),
         }
     }
@@ -205,6 +210,65 @@ impl TasksView {
         let new_info_view = InfoView::new(summary, description);
         info_layout.clear();
         info_layout.add_child(new_info_view);
+    }
+
+    fn make_task_find_dialog() -> Dialog {
+        Dialog::new()
+            .title("Search task by name")
+            .content(
+                EditView::new()
+                    .on_submit(Self::on_enter_task_search)
+                    .with_name(TASKS_SEARCH_VIEW_NAME)
+            )
+    }
+
+    fn on_enter_task_search(cursive: &mut Cursive, task_subname: &str) {
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        let jira_data = &cursive_data.jira_data;
+        let fit_tasks = jira_data.find_task_by_subname(
+            task_subname,
+            &cursive_data.selected_project,
+        );
+        if fit_tasks.is_empty() {
+            TasksView::make_failed_task_search_dialog(cursive);
+        } else {
+            let fit_tasks_select_view = SelectView::<String>::new()
+                .align(INNER_CENTER_TOP_VIEW_ALIGN)
+                .on_submit(|cursive, task_name: &str| {
+                    cursive.pop_layer();
+                    TasksView::show_info_on_select(cursive, task_name);
+                });
+
+            let fit_tasks_dialog = Dialog::new()
+                .title("Select task")
+                .content(fit_tasks_select_view.with_all_str(fit_tasks))
+                .button("Back", |cursive| {
+                    cursive.pop_layer();
+                    cursive.focus_name(TASKS_SEARCH_VIEW_NAME).unwrap();
+                });
+
+            cursive.add_layer(fit_tasks_dialog);
+        }
+
+    }
+
+    fn make_failed_task_search_dialog(cursive: &mut Cursive) {
+        let not_found_task_text = TextView::new(
+            "Can't find this task fast. Do you want to search by API?",
+        );
+        let failed_task_search_dialog = Dialog::new()
+            .title("Search failed.")
+            .content(not_found_task_text)
+            .button("Search", |cursive| {
+                TasksView::make_http_task_search(cursive);
+            }
+        );
+
+        cursive.add_layer(failed_task_search_dialog);
+    }
+
+    fn make_http_task_search(cursive: &mut Cursive) {
+        todo!();
     }
 }
 

@@ -218,6 +218,28 @@ impl<'a> JiraData<'a> {
         fit_projects
     }
 
+    pub fn find_task_by_subname(
+        &self,
+        task_subname: &str,
+        selected_project: &str,
+    ) -> Vec<&str> {
+        let mut fit_tasks: Vec<&str> = Vec::new();
+        let project = self.projects.as_ref().unwrap().get(selected_project).unwrap();
+        for task_name in project.tasks.as_ref().unwrap().keys() {
+            let task_name_copy = task_name.clone();
+            let available_condition =
+                task_name.contains(task_subname)
+                || task_name.contains(task_subname.to_uppercase().as_str())
+                || task_name.contains(task_subname.to_lowercase().as_str())
+                || task_name_copy.to_lowercase().contains(task_subname)
+                || task_name_copy.to_uppercase().contains(task_subname);
+            if available_condition {
+                fit_tasks.push(task_name);
+            }
+        }
+        fit_tasks
+    }
+
     fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
         let response = self.client
             .get(url)
