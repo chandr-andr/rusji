@@ -18,7 +18,15 @@ use cursive::{
     Cursive
 };
 
-use super::constance::{INNER_LEFT_TOP_VIEW_ALIGN, TASKS_SELECT_VIEW_NAME, INNER_CENTER_TOP_VIEW_ALIGN, PROJECTS_SELECT_VIEW_NAME, PROJECTS_SEARCH_VIEW_NAME, ACTIONS_SELECT_VIEW_NAME, TASKS_SEARCH_VIEW_NAME};
+use super::constance::{
+    INNER_LEFT_TOP_VIEW_ALIGN,
+    TASKS_SELECT_VIEW_NAME,
+    INNER_CENTER_TOP_VIEW_ALIGN,
+    PROJECTS_SELECT_VIEW_NAME,
+    PROJECTS_SEARCH_VIEW_NAME,
+    ACTIONS_SELECT_VIEW_NAME,
+    TASKS_SEARCH_VIEW_NAME,
+};
 use super::jira_data::CursiveJiraData;
 
 pub(crate) struct ProjectsView {
@@ -249,7 +257,6 @@ impl TasksView {
 
             cursive.add_layer(fit_tasks_dialog);
         }
-
     }
 
     fn make_failed_task_search_dialog(cursive: &mut Cursive) {
