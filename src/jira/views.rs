@@ -25,7 +25,7 @@ use super::constance::{
     PROJECTS_SELECT_VIEW_NAME,
     PROJECTS_SEARCH_VIEW_NAME,
     ACTIONS_SELECT_VIEW_NAME,
-    TASKS_SEARCH_VIEW_NAME,
+    TASKS_SEARCH_VIEW_NAME, TASKS_HTTP_SEARCH_VIEW_NAME,
 };
 use super::jira_data::CursiveJiraData;
 
@@ -261,15 +261,33 @@ impl TasksView {
 
     fn make_failed_task_search_dialog(cursive: &mut Cursive) {
         let not_found_task_text = TextView::new(
-            "Can't find this task fast. Do you want to search by API?",
+"
+Can't find this task fast.
+Do you want to search by API?
+",
         );
+
+        let search_edit_view = EditView::new()
+            .with_name(TASKS_HTTP_SEARCH_VIEW_NAME)
+            .min_width(40);
+
+        let layout = LinearLayout::vertical()
+            .child(not_found_task_text)
+            .child(DummyView)
+            .child(TextView::new("Enter full task name or just number of task"))
+            .child(search_edit_view);
+
         let failed_task_search_dialog = Dialog::new()
-            .title("Search failed.")
-            .content(not_found_task_text)
+            .title("Search failed")
+            .content(layout)
+            .button("No", |cursive| {
+                cursive.pop_layer();
+                cursive.focus_name(TASKS_SEARCH_VIEW_NAME).unwrap();
+            })
             .button("Search", |cursive| {
                 TasksView::make_http_task_search(cursive);
             }
-        );
+            );
 
         cursive.add_layer(failed_task_search_dialog);
     }
