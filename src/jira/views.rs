@@ -25,7 +25,7 @@ use super::constance::{
     PROJECTS_SELECT_VIEW_NAME,
     PROJECTS_SEARCH_VIEW_NAME,
     ACTIONS_SELECT_VIEW_NAME,
-    TASKS_SEARCH_VIEW_NAME, TASKS_HTTP_SEARCH_VIEW_NAME,
+    TASKS_SEARCH_VIEW_NAME, TASKS_HTTP_SEARCH_VIEW_NAME, INFO_LAYOUT_VIEW_NAME,
 };
 use super::jira_data::CursiveJiraData;
 
@@ -268,6 +268,7 @@ Do you want to search by API?
         );
 
         let search_edit_view = EditView::new()
+            .on_submit(TasksView::make_http_search)
             .with_name(TASKS_HTTP_SEARCH_VIEW_NAME)
             .min_width(40);
 
@@ -283,17 +284,29 @@ Do you want to search by API?
             .button("No", |cursive| {
                 cursive.pop_layer();
                 cursive.focus_name(TASKS_SEARCH_VIEW_NAME).unwrap();
-            })
-            .button("Search", |cursive| {
-                TasksView::make_http_task_search(cursive);
-            }
-            );
+            });
 
         cursive.add_layer(failed_task_search_dialog);
     }
 
-    fn make_http_task_search(cursive: &mut Cursive) {
-        todo!();
+    fn make_http_search(cursive: &mut Cursive, task_key: &str) {
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        match cursive_data.jira_data.get_new_task(
+            task_key,
+            &cursive_data.selected_project,
+            &cursive_data.encoded_creds,
+        ) {
+            Ok((summary, desc)) => {
+                let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
+                let new_info_view = InfoView::new(summary.as_str(), desc.as_str());
+                info_layout.clear();
+                info_layout.add_child(new_info_view);
+                cursive.pop_layer();
+            },
+            Err(_) => {
+                todo!();
+            }
+        }
     }
 }
 

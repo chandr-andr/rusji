@@ -137,6 +137,7 @@ pub struct JiraData<'a>{
     client: Client,
     get_projects_url: &'a str,
     get_project_tasks_url: &'a str,
+    get_task_url: &'a str,
 }
 
 impl<'a> JiraData<'a> {
@@ -149,6 +150,7 @@ impl<'a> JiraData<'a> {
             client: client,
             get_projects_url: "/rest/api/2/project",
             get_project_tasks_url: "/rest/api/2/search?jql=project=PRJ&expand=renderedFields",
+            get_task_url: "/rest/api/2/issue/TASK?expand=renderedFields",
         }
     }
 
@@ -240,6 +242,57 @@ impl<'a> JiraData<'a> {
         fit_tasks
     }
 
+    pub fn get_new_task(&mut self, task_key: &str, selected_project: &str, encoded_creds: &str) -> ioResult<(String, String)> {
+        let mut url = self.jira_url.clone();
+        match task_key.parse::<usize>() {
+            Ok(_) => {
+                let selected_projects_key = &self
+                    .projects
+                    .as_ref()
+                    .unwrap()
+                    .get(selected_project)
+                    .unwrap()
+                    .key;
+                url = url.join(
+                    &self
+                        .get_task_url
+                        .replace(
+                            "TASK",
+                            format!("{}-{}", selected_projects_key, task_key).as_str(),
+                        ),
+                ).unwrap();
+            },
+            Err(_) => {
+                url = url.join(
+                    &self.get_task_url.replace("TASK", task_key),
+                ).unwrap();
+            }
+        }
+        let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
+        let task = serde_json::from_str::<JiraTask>(resp_text.as_str())?;
+        let return_data = (task.summary.clone(), task.description.clone());
+
+        let mut project = self
+            .projects
+            .as_mut()
+            .unwrap()
+            .get_mut(selected_project)
+            .unwrap();
+        // project.tasks.as_mut().unwrap().insert(task.key.clone(), task).unwrap();
+        match project.tasks.as_mut() {
+            Some(tasks) => {
+                tasks.insert(task.key.clone(), task);
+            },
+            None => {
+                let mut new_tasks = HashMap::<String, JiraTask>::new();
+                new_tasks.insert(task.key.clone(), task);
+                project.tasks = Some(new_tasks);
+            }
+        }
+
+        Ok(return_data)
+    }
+
     fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
         let response = self.client
             .get(url)
@@ -247,7 +300,18 @@ impl<'a> JiraData<'a> {
             .header("Content-Type", "application/json")
             .send();
         match response {
-            Ok(response) => Ok(response),
+            Ok(response) => {
+                if response.status().is_success() {
+                    Ok(response)
+                } else {
+                    Err(
+                        Error::new(
+                            ErrorKind::Other,
+                            "Bad response status",
+                        )
+                    )
+                }
+            },
             Err(err) => Err(
                 Error::new(
                     ErrorKind::Other,
@@ -295,6 +359,7 @@ mod tests {
     fn test_deserialize_task() {
         let json_task_str = r#"
         {
+            "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
             "id": "299756",
             "link": "https://jira.zxz.su/rest/api/2/issue/299756",
             "key": "FRE-39",
