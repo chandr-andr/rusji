@@ -242,7 +242,12 @@ impl<'a> JiraData<'a> {
         fit_tasks
     }
 
-    pub fn get_new_task(&mut self, task_key: &str, selected_project: &str, encoded_creds: &str) -> ioResult<(String, String)> {
+    pub fn get_new_task(
+        &mut self,
+        task_key: &str,
+        selected_project: &str,
+        encoded_creds: &str,
+    ) -> ioResult<(String, String)> {
         let mut url = self.jira_url.clone();
         match task_key.parse::<usize>() {
             Ok(_) => {
@@ -291,10 +296,6 @@ impl<'a> JiraData<'a> {
         }
 
         Ok(return_data)
-    }
-
-    pub fn get_tasks_name_with_summary(&self, tasks: Vec<&str>, project: &str) {
-        let mut result_vec: Vec<String> = Vec::new();
     }
 
     fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
