@@ -1,4 +1,7 @@
 ## **RUSJI**
+
+<img width="459" alt="Снимок экрана 2023-01-03 в 22 12 15" src="https://user-images.githubusercontent.com/62915291/210443717-7ec6826b-7727-45de-a30d-990c7a710436.png">
+
 #### Console app for integration with Jira!
 #### You can add multiple companies, choose projects, see tasks main information, and so on (**in the future**).
 
