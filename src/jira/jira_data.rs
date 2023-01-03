@@ -224,10 +224,10 @@ impl<'a> JiraData<'a> {
         &self,
         task_subname: &str,
         selected_project: &str,
-    ) -> Vec<&str> {
-        let mut fit_tasks: Vec<&str> = Vec::new();
+    ) -> Vec<String> {
+        let mut fit_tasks: Vec<String> = Vec::new();
         let project = self.projects.as_ref().unwrap().get(selected_project).unwrap();
-        for task_name in project.tasks.as_ref().unwrap().keys() {
+        for (task_name, task) in project.tasks.as_ref().unwrap().iter() {
             let task_name_copy = task_name.clone();
             let available_condition =
                 task_name.contains(task_subname)
@@ -236,7 +236,7 @@ impl<'a> JiraData<'a> {
                 || task_name_copy.to_lowercase().contains(task_subname)
                 || task_name_copy.to_uppercase().contains(task_subname);
             if available_condition {
-                fit_tasks.push(task_name);
+                fit_tasks.push(format!("{} -- {}", task_name, task.summary));
             }
         }
         fit_tasks
@@ -291,6 +291,10 @@ impl<'a> JiraData<'a> {
         }
 
         Ok(return_data)
+    }
+
+    pub fn get_tasks_name_with_summary(&self, tasks: Vec<&str>, project: &str) {
+        let mut result_vec: Vec<String> = Vec::new();
     }
 
     fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {

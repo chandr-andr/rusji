@@ -35,20 +35,22 @@ pub(crate) struct ProjectsView {
 
 impl Default for ProjectsView {
     fn default() -> Self {
-        let search_project_dialog = Dialog::new()
-            .title("Search project by name")
-            .content(
-                EditView::new()
-                    .on_submit(Self::on_enter_search_project)
-            )
-            .with_name(PROJECTS_SEARCH_VIEW_NAME);
-
         let projects_scroll_view = ScrollView::new(
             SelectView::<String>::new()
                 .align(INNER_CENTER_TOP_VIEW_ALIGN)
                 .on_submit(Self::show_tasks)
                 .with_name(PROJECTS_SELECT_VIEW_NAME)
         );
+
+        let search_project_dialog = Dialog::new()
+            .title("Search project by name")
+            .content(
+                EditView::new()
+                    .on_edit(|cursive, text, _cursor| {
+                        ProjectsView::on_enter_search_project(cursive, text)
+                    })
+            )
+            .with_name(PROJECTS_SEARCH_VIEW_NAME);
 
         let dialog = Dialog::new()
             .title("Choose project")
@@ -110,35 +112,17 @@ impl ProjectsView {
 
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+        let mut select_project_view: ViewRef<SelectView> = cursive
+            .find_name(PROJECTS_SELECT_VIEW_NAME)
+            .unwrap();
         let jira_data = &cursive_data.jira_data;
         let fit_projects = jira_data.find_project_by_subname(project_subname);
 
         if fit_projects.len() == 0 {
-            cursive.add_layer(
-                Dialog::new()
-                    .title("No projects found")
-                    .button("OK", |cursive| {
-                        cursive.pop_layer();
-                        cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
-                    })
-            );
+            select_project_view.clear();
         } else {
-            let fit_projects_select_view = SelectView::<String>::new()
-                .align(INNER_CENTER_TOP_VIEW_ALIGN)
-                .on_submit(|cursive, project_name: &str| {
-                    cursive.pop_layer();
-                    Self::show_tasks(cursive, project_name);
-                });
-
-            let fit_projects_dialog = Dialog::new()
-                .title("Select project")
-                .content(fit_projects_select_view.with_all_str(fit_projects))
-                .button("Back", |cursive| {
-                    cursive.pop_layer();
-                    cursive.focus_name(PROJECTS_SEARCH_VIEW_NAME).unwrap();
-                });
-
-            cursive.add_layer(fit_projects_dialog);
+            select_project_view.clear();
+            select_project_view.add_all_str(fit_projects);
         }
         cursive.set_user_data(cursive_data);
     }
@@ -221,72 +205,37 @@ impl TasksView {
     }
 
     fn make_task_find_dialog() -> Dialog {
+        let layout = LinearLayout::vertical()
+            .child(TextView::new("Press <Enter> if not found."))
+            .child(
+                EditView::new()
+                    .on_edit(Self::on_enter_task_search)
+                    .on_submit(Self::make_http_search)
+                    .with_name(TASKS_SEARCH_VIEW_NAME)
+            );
+
         Dialog::new()
             .title("Search task by name")
-            .content(
-                EditView::new()
-                    .on_submit(Self::on_enter_task_search)
-                    .with_name(TASKS_SEARCH_VIEW_NAME)
-            )
+            .content(layout)
     }
 
-    fn on_enter_task_search(cursive: &mut Cursive, task_subname: &str) {
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+    fn on_enter_task_search(cursive: &mut Cursive, task_subname: &str, _: usize) {
+        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+        let mut tasks_select_view: ViewRef<SelectView> = cursive
+            .find_name(TASKS_SELECT_VIEW_NAME)
+            .unwrap();
         let jira_data = &cursive_data.jira_data;
         let fit_tasks = jira_data.find_task_by_subname(
             task_subname,
             &cursive_data.selected_project,
         );
         if fit_tasks.is_empty() {
-            TasksView::make_failed_task_search_dialog(cursive);
+            tasks_select_view.clear();
         } else {
-            let fit_tasks_select_view = SelectView::<String>::new()
-                .align(INNER_CENTER_TOP_VIEW_ALIGN)
-                .on_submit(|cursive, task_name: &str| {
-                    cursive.pop_layer();
-                    TasksView::show_info_on_select(cursive, task_name);
-                });
-
-            let fit_tasks_dialog = Dialog::new()
-                .title("Select task")
-                .content(fit_tasks_select_view.with_all_str(fit_tasks))
-                .button("Back", |cursive| {
-                    cursive.pop_layer();
-                    cursive.focus_name(TASKS_SEARCH_VIEW_NAME).unwrap();
-                });
-
-            cursive.add_layer(fit_tasks_dialog);
+            tasks_select_view.clear();
+            tasks_select_view.add_all_str(fit_tasks);
         }
-    }
-
-    fn make_failed_task_search_dialog(cursive: &mut Cursive) {
-        let not_found_task_text = TextView::new(
-"
-Can't find this task fast.
-Do you want to search by API?
-",
-        );
-
-        let search_edit_view = EditView::new()
-            .on_submit(TasksView::make_http_search)
-            .with_name(TASKS_HTTP_SEARCH_VIEW_NAME)
-            .min_width(40);
-
-        let layout = LinearLayout::vertical()
-            .child(not_found_task_text)
-            .child(DummyView)
-            .child(TextView::new("Enter full task name or just number of task"))
-            .child(search_edit_view);
-
-        let failed_task_search_dialog = Dialog::new()
-            .title("Search failed")
-            .content(layout)
-            .button("No", |cursive| {
-                cursive.pop_layer();
-                cursive.focus_name(TASKS_SEARCH_VIEW_NAME).unwrap();
-            });
-
-        cursive.add_layer(failed_task_search_dialog);
+        cursive.set_user_data(cursive_data);
     }
 
     fn make_http_search(cursive: &mut Cursive, task_key: &str) {
@@ -301,10 +250,15 @@ Do you want to search by API?
                 let new_info_view = InfoView::new(summary.as_str(), desc.as_str());
                 info_layout.clear();
                 info_layout.add_child(new_info_view);
-                cursive.pop_layer();
             },
             Err(_) => {
-                todo!();
+                cursive.add_layer(
+                    Dialog::new()
+                        .title("Task not found")
+                        .button("Ok", |cursive| {
+                            cursive.pop_layer();
+                        })
+                )
             }
         }
     }
