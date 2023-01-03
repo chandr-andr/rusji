@@ -278,7 +278,7 @@ impl<'a> JiraData<'a> {
             .unwrap()
             .get_mut(selected_project)
             .unwrap();
-        // project.tasks.as_mut().unwrap().insert(task.key.clone(), task).unwrap();
+
         match project.tasks.as_mut() {
             Some(tasks) => {
                 tasks.insert(task.key.clone(), task);
