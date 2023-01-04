@@ -8,3 +8,4 @@
 ### **Why does such a project even exist?**
 I noticed that Jira responds to endpoints much faster than the browser renders a picture to me, and since I don't like to spend time (1-2 seconds) waiting for the page to be drawn, I'd rather spend more than a month writing a completely new integration with Jira
 
+If you have any ideas, contact me, please: askiselev00@gmail.com
