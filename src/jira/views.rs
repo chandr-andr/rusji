@@ -15,7 +15,7 @@ use cursive::{
         Resizable,
         Scrollable,
     },
-    Cursive
+    Cursive,
 };
 
 use super::constance::{
