@@ -1,20 +1,9 @@
 use cursive::{views::{LinearLayout, DummyView, NamedView}, view::{ViewWrapper, Nameable, Resizable}};
-use super::{views::{TasksView, ProjectsView, InfoView, ActionsView}, constance::INFO_LAYOUT_VIEW_NAME};
+use super::{views::{TasksView, ProjectsView, InfoView, ActionsView, JiraView}, constance::INFO_LAYOUT_VIEW_NAME};
 
 
 pub(crate) struct TasksProjectsLayout {
     inner_layout: LinearLayout,
-}
-
-impl Default for TasksProjectsLayout {
-    fn default() -> Self {
-        Self {
-            inner_layout: LinearLayout::vertical()
-                .child(ProjectsView::default().full_height())
-                .child(DummyView)
-                .child(TasksView::default().full_height())
-        }
-    }
 }
 
 impl ViewWrapper for TasksProjectsLayout {
@@ -29,18 +18,23 @@ impl ViewWrapper for TasksProjectsLayout {
     }
 }
 
-pub(crate) struct InfoLayout {
-    inner_layout: NamedView<LinearLayout>,
-}
-
-impl Default for InfoLayout {
+impl Default for TasksProjectsLayout {
     fn default() -> Self {
         Self {
             inner_layout: LinearLayout::vertical()
-                .child(InfoView::default())
-                .with_name(INFO_LAYOUT_VIEW_NAME)
+                .child(
+                    ProjectsView::default()
+                        .with_name(ProjectsView::view_name())
+                        .full_height()
+                )
+                .child(DummyView)
+                .child(TasksView::default().full_height())
         }
     }
+}
+
+pub(crate) struct InfoLayout {
+    inner_layout: NamedView<LinearLayout>,
 }
 
 impl ViewWrapper for InfoLayout {
@@ -55,17 +49,18 @@ impl ViewWrapper for InfoLayout {
     }
 }
 
-pub(crate) struct ActionsLayout {
-    inner_layout: LinearLayout,
-}
-
-impl Default for ActionsLayout {
+impl Default for InfoLayout {
     fn default() -> Self {
         Self {
             inner_layout: LinearLayout::vertical()
-                .child(ActionsView::default().full_height())
+                .child(InfoView::default())
+                .with_name(INFO_LAYOUT_VIEW_NAME)
         }
     }
+}
+
+pub(crate) struct ActionsLayout {
+    inner_layout: LinearLayout,
 }
 
 impl ViewWrapper for ActionsLayout {
@@ -77,5 +72,14 @@ impl ViewWrapper for ActionsLayout {
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R> where F: FnOnce(&mut Self::V) -> R {
         return Some(f(&mut self.inner_layout));
+    }
+}
+
+impl Default for ActionsLayout {
+    fn default() -> Self {
+        Self {
+            inner_layout: LinearLayout::vertical()
+                .child(ActionsView::default().full_height())
+        }
     }
 }

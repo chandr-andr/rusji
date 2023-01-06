@@ -11,7 +11,8 @@ use super::{
     }, layouts::{
         TasksProjectsLayout,
         InfoLayout, ActionsLayout,
-    }, views::ProjectsView, global_callbacks::add_global_callbacks,
+    }, global_callbacks::add_global_callbacks,
+    views::{ProjectsView, JiraView},
 };
 
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
@@ -46,5 +47,5 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
 
     cursive.add_layer(main_layer);
 
-    ProjectsView::update_projects(cursive)
+    ProjectsView::get_view(cursive).update_view_content(cursive);
 }

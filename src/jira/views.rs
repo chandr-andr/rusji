@@ -7,7 +7,7 @@ use cursive::{
         ViewRef,
         EditView,
         DummyView,
-        TextView,
+        TextView, NamedView,
     },
     view::{
         Nameable,
@@ -30,41 +30,24 @@ use super::constance::{
 };
 use super::jira_data::CursiveJiraData;
 
-pub(crate) struct ProjectsView {
-    inner_view: Dialog
+/// Trait for all Jira views.
+/// Every view must have methods that:
+/// 1) Returns the view name.
+/// 2) Returns view.
+/// 3) Updates the view content
+///    with new data that will be received internally.
+/// 4) Updates the view content with the new passed data.
+pub trait JiraView {
+    fn view_name() -> String;
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self>;
+    fn update_view_content(&self, cursive: &mut Cursive);
+    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>);
 }
 
-impl Default for ProjectsView {
-    fn default() -> Self {
-        let projects_scroll_view = ScrollView::new(
-            SelectView::<String>::new()
-                .align(INNER_CENTER_TOP_VIEW_ALIGN)
-                .on_submit(Self::show_tasks)
-                .with_name(PROJECTS_SELECT_VIEW_NAME)
-        );
-
-        let search_project_dialog = Dialog::new()
-            .title("Search project by name")
-            .content(
-                EditView::new()
-                    .on_edit(|cursive, text, _cursor| {
-                        ProjectsView::on_enter_search_project(cursive, text)
-                    })
-            )
-            .with_name(PROJECTS_SEARCH_VIEW_NAME);
-
-        let dialog = Dialog::new()
-            .title("Choose project")
-            .padding_lrtb(1, 1, 1, 1)
-            .content(
-                LinearLayout::vertical()
-                    .child(search_project_dialog)
-                    .child(DummyView)
-                    .child(projects_scroll_view)
-            );
-
-        Self { inner_view: dialog }
-    }
+/// Struct for view with Jira projects.
+/// Has inner view.
+pub(crate) struct ProjectsView {
+    inner_view: Dialog,
 }
 
 impl ViewWrapper for ProjectsView {
@@ -83,32 +66,103 @@ impl ViewWrapper for ProjectsView {
     }
 }
 
-impl ProjectsView {
-    pub fn update_projects(cursive: &mut Cursive) {
-        let mut cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+impl Default for ProjectsView {
+    fn default() -> Self {
+        let projects_scroll_view = ScrollView::new(
+            SelectView::<String>::new()
+                .align(INNER_CENTER_TOP_VIEW_ALIGN)
+                .on_submit(Self::show_tasks)
+                .with_name(Self::select_view_name())
+        );
 
-        let mut select_project_view: ViewRef<SelectView> = cursive
-            .find_name(PROJECTS_SELECT_VIEW_NAME)
-            .unwrap();
+        let search_project_dialog = Dialog::new()
+            .title("Search project by name")
+            .content(
+                EditView::new()
+                    .on_edit(|cursive, text, _cursor| {
+                        ProjectsView::on_enter_search_project(cursive, text)
+                    })
+            )
+            .with_name(Self::search_view_name());
+
+        let dialog = Dialog::new()
+            .title("Choose project")
+            .padding_lrtb(1, 1, 1, 1)
+            .content(
+                LinearLayout::vertical()
+                    .child(search_project_dialog)
+                    .child(DummyView)
+                    .child(projects_scroll_view)
+                    .with_name("InnerProjectsLayout")
+            );
+
+        Self {
+            inner_view: dialog,
+        }
+    }
+}
+
+impl JiraView for ProjectsView {
+    fn view_name() -> String {
+        String::from("ProjectsView")
+    }
+
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+
+    fn update_view_content(&self, cursive: &mut Cursive) {
+        self.update_projects(cursive)
+    }
+
+    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>) {
+
+    }
+}
+
+impl ProjectsView {
+    pub fn get_select_view(&self, cursive: &mut Cursive) -> ViewRef<LinearLayout> {
+        let a = cursive.find_name("InnerProjectsLayout");
+        match a {
+            None => {
+                println!("BAD1000!");
+                use std::{thread, time::Duration};
+                thread::sleep(Duration::from_millis(4000));
+                panic!("123");
+            },
+            Some(ss) => {
+                println!("BAD1000123123!");
+                use std::{thread, time::Duration};
+                thread::sleep(Duration::from_millis(4000));
+                panic!("123");
+                ss
+            },
+        }
+    }
+
+    pub fn get_search_view(&self, cursive: &mut Cursive) -> ViewRef<Dialog> {
+        cursive.find_name(&Self::search_view_name()).unwrap()
+    }
+
+    fn update_projects(&self, cursive: &mut Cursive) {
+        let mut select_project_view: ViewRef<LinearLayout> = self.get_select_view(cursive);
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         match cursive_data.update_return_projects() {
             Ok(projects) => {
                 select_project_view.clear();
-                select_project_view.add_all_str(projects);
+                // select_project_view.add_all_str(projects);
             },
             Err(_) => {
                 let bad_view = BadConnectionView::new(
                     "Can't get projects from Jira.",
-                    ProjectsView::pop_layer_and_update_projects,
+                    |cursive: &mut Cursive| {
+                        cursive.pop_layer();
+                        Self::get_view(cursive).update_projects(cursive)
+                    },
                 );
                 cursive.add_layer(bad_view);
             }
         }
-        cursive.set_user_data(cursive_data);
-    }
-
-    fn pop_layer_and_update_projects(cursive: &mut Cursive) {
-        cursive.pop_layer();
-        ProjectsView::update_projects(cursive);
     }
 
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
@@ -142,6 +196,14 @@ impl ProjectsView {
         tasks_view.sort();
 
         cursive.focus_name("tasks_view").unwrap();
+    }
+
+    fn select_view_name() -> String {
+        String::from("ProjectSelectView")
+    }
+
+    fn search_view_name() -> String {
+        String::from("ProjectsSearchView")
     }
 }
 
