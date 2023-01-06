@@ -23,8 +23,6 @@ use super::constance::{
     INNER_LEFT_TOP_VIEW_ALIGN,
     TASKS_SELECT_VIEW_NAME,
     INNER_CENTER_TOP_VIEW_ALIGN,
-    PROJECTS_SELECT_VIEW_NAME,
-    PROJECTS_SEARCH_VIEW_NAME,
     ACTIONS_SELECT_VIEW_NAME,
     TASKS_SEARCH_VIEW_NAME,
     INFO_LAYOUT_VIEW_NAME,
@@ -32,21 +30,24 @@ use super::constance::{
 use super::jira_data::CursiveJiraData;
 
 /// Trait for all Jira views.
-/// Every view must have methods that:
-/// 1) Returns the view name.
-/// 2) Returns view.
-/// 3) Updates the view content
-///    with new data that will be received internally.
-/// 4) Updates the view content with the new passed data.
 pub trait JiraView {
+    /// Returns name of the view.
     fn view_name() -> String;
+    /// Returns instance of class from cursive app.
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self>;
+    /// Updates view content with [`super::jira_data::JiraData`] methods.
     fn update_view_content(&mut self, cursive: &mut Cursive);
+    /// Updates view content with passed `content`.
     fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>);
+    /// Extends view content with passed `content`.
+    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>);
 }
 
 /// Struct for view with Jira projects.
+///
 /// Has inner view.
+///
+/// This view can be used as regular view because it implements ViewWrapper
 pub(crate) struct ProjectsView {
     inner_view: NamedView<Dialog>,
 }
@@ -67,15 +68,22 @@ impl ViewWrapper for ProjectsView {
     }
 
     fn wrap_call_on_any<'a>(
-            &mut self,
-            selector: &cursive::view::Selector<'_>,
-            callback: cursive::event::AnyCb<'a>,
-        ) {
-            self.with_view_mut(|v| v.call_on_any(selector, callback));
+        &mut self,
+        selector: &cursive::view::Selector<'_>,
+        callback: cursive::event::AnyCb<'a>,
+    ) {
+        self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 }
 
 impl Default for ProjectsView {
+
+    /// Creates SelectView in ScrollView,
+    ///
+    /// EditView in Dialog for search field
+    ///
+    /// and main dialog view for all views told before
+    /// with LinearLayout in content to aggregate all of this.
     fn default() -> Self {
         let projects_select_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
@@ -112,31 +120,42 @@ impl Default for ProjectsView {
 }
 
 impl JiraView for ProjectsView {
+    /// Returns string with name for `ProjectsView`.
     fn view_name() -> String {
         String::from("ProjectsView")
     }
 
+    /// Returns instance of `ProjectsView` from `Cursive` app.
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
 
+    /// Updates projects names in the view content.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
         self.update_projects(cursive)
     }
 
+    /// Sets new content to the view from passed `content`.
     fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>) {
+        let mut select_view = Self::get_view(cursive).get_select_view();
+        select_view.clear();
+        select_view.add_all_str(content);
+    }
 
+    /// Extends view content with passed `content`.
+    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>) {
+        let mut select_view = Self::get_view(cursive).get_select_view();
+        select_view.add_all_str(content);
     }
 }
 
 impl ProjectsView {
     fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        let mut dialog = self.get_dialog_view();
-        dialog.find_name(&Self::select_view_name()).unwrap()
+        self.get_dialog_view().find_name(&Self::select_view_name()).unwrap()
     }
 
-    fn get_search_view(&self, cursive: &mut Cursive) -> ViewRef<EditView> {
-        cursive.find_name(&Self::search_view_name()).unwrap()
+    fn get_search_view(&mut self) -> ViewRef<EditView> {
+        self.get_dialog_view().find_name(&Self::search_view_name()).unwrap()
     }
 
     fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
