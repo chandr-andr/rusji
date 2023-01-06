@@ -13,10 +13,11 @@ use cursive::{
         Nameable,
         ViewWrapper,
         Resizable,
-        Scrollable,
+        Scrollable, Finder,
     },
     Cursive,
 };
+use cursive::View;
 
 use super::constance::{
     INNER_LEFT_TOP_VIEW_ALIGN,
@@ -40,18 +41,18 @@ use super::jira_data::CursiveJiraData;
 pub trait JiraView {
     fn view_name() -> String;
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self>;
-    fn update_view_content(&self, cursive: &mut Cursive);
+    fn update_view_content(&mut self, cursive: &mut Cursive);
     fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>);
 }
 
 /// Struct for view with Jira projects.
 /// Has inner view.
 pub(crate) struct ProjectsView {
-    inner_view: Dialog,
+    inner_view: NamedView<Dialog>,
 }
 
 impl ViewWrapper for ProjectsView {
-    type V = Dialog;
+    type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
         where
@@ -64,15 +65,24 @@ impl ViewWrapper for ProjectsView {
             F: FnOnce(&mut Self::V) -> R {
                 Some(f(&mut self.inner_view))
     }
+
+    fn wrap_call_on_any<'a>(
+            &mut self,
+            selector: &cursive::view::Selector<'_>,
+            callback: cursive::event::AnyCb<'a>,
+        ) {
+            self.with_view_mut(|v| v.call_on_any(selector, callback));
+    }
 }
 
 impl Default for ProjectsView {
     fn default() -> Self {
+        let projects_select_view = SelectView::<String>::new()
+            .align(INNER_CENTER_TOP_VIEW_ALIGN)
+            .on_submit(Self::show_tasks)
+            .with_name(Self::select_view_name());
         let projects_scroll_view = ScrollView::new(
-            SelectView::<String>::new()
-                .align(INNER_CENTER_TOP_VIEW_ALIGN)
-                .on_submit(Self::show_tasks)
-                .with_name(Self::select_view_name())
+            projects_select_view,
         );
 
         let search_project_dialog = Dialog::new()
@@ -93,8 +103,7 @@ impl Default for ProjectsView {
                     .child(search_project_dialog)
                     .child(DummyView)
                     .child(projects_scroll_view)
-                    .with_name("InnerProjectsLayout")
-            );
+            ).with_name(Self::main_dialog_name());
 
         Self {
             inner_view: dialog,
@@ -111,7 +120,7 @@ impl JiraView for ProjectsView {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
 
-    fn update_view_content(&self, cursive: &mut Cursive) {
+    fn update_view_content(&mut self, cursive: &mut Cursive) {
         self.update_projects(cursive)
     }
 
@@ -121,36 +130,26 @@ impl JiraView for ProjectsView {
 }
 
 impl ProjectsView {
-    pub fn get_select_view(&self, cursive: &mut Cursive) -> ViewRef<LinearLayout> {
-        let a = cursive.find_name("InnerProjectsLayout");
-        match a {
-            None => {
-                println!("BAD1000!");
-                use std::{thread, time::Duration};
-                thread::sleep(Duration::from_millis(4000));
-                panic!("123");
-            },
-            Some(ss) => {
-                println!("BAD1000123123!");
-                use std::{thread, time::Duration};
-                thread::sleep(Duration::from_millis(4000));
-                panic!("123");
-                ss
-            },
-        }
+    fn get_select_view(&mut self) -> ViewRef<SelectView> {
+        let mut dialog = self.get_dialog_view();
+        dialog.find_name(&Self::select_view_name()).unwrap()
     }
 
-    pub fn get_search_view(&self, cursive: &mut Cursive) -> ViewRef<Dialog> {
+    fn get_search_view(&self, cursive: &mut Cursive) -> ViewRef<EditView> {
         cursive.find_name(&Self::search_view_name()).unwrap()
     }
 
-    fn update_projects(&self, cursive: &mut Cursive) {
-        let mut select_project_view: ViewRef<LinearLayout> = self.get_select_view(cursive);
+    fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
+    fn update_projects(&mut self, cursive: &mut Cursive) {
+        let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         match cursive_data.update_return_projects() {
             Ok(projects) => {
                 select_project_view.clear();
-                // select_project_view.add_all_str(projects);
+                select_project_view.add_all_str(projects);
             },
             Err(_) => {
                 let bad_view = BadConnectionView::new(
@@ -167,9 +166,8 @@ impl ProjectsView {
 
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
-        let mut select_project_view: ViewRef<SelectView> = cursive
-            .find_name(PROJECTS_SELECT_VIEW_NAME)
-            .unwrap();
+        let mut select_project_view: ViewRef<SelectView> = ProjectsView::get_view(cursive)
+            .get_select_view();
         let jira_data = &cursive_data.jira_data;
         let fit_projects = jira_data.find_project_by_subname(project_subname);
 
@@ -204,6 +202,10 @@ impl ProjectsView {
 
     fn search_view_name() -> String {
         String::from("ProjectsSearchView")
+    }
+
+    fn main_dialog_name() -> String {
+        String::from("ProjectDialogView")
     }
 }
 
