@@ -21,10 +21,8 @@ use cursive::View;
 
 use super::constance::{
     INNER_LEFT_TOP_VIEW_ALIGN,
-    TASKS_SELECT_VIEW_NAME,
     INNER_CENTER_TOP_VIEW_ALIGN,
     ACTIONS_SELECT_VIEW_NAME,
-    TASKS_SEARCH_VIEW_NAME,
     INFO_LAYOUT_VIEW_NAME,
 };
 use super::jira_data::CursiveJiraData;
@@ -212,9 +210,10 @@ impl ProjectsView {
     /// If search result is empty just clear view with projects
     /// else show names of suitable projects.
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
-        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+
         let mut select_project_view: ViewRef<SelectView> = ProjectsView::get_view(cursive)
             .get_select_view();
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         let jira_data = &cursive_data.jira_data;
         let fit_projects = jira_data.find_project_by_subname(project_subname);
 
@@ -224,14 +223,12 @@ impl ProjectsView {
             select_project_view.clear();
             select_project_view.add_all_str(fit_projects);
         }
-        cursive.set_user_data(cursive_data);
     }
 
     /// Adds tasks.
     fn show_tasks(cursive: &mut Cursive, project_name: &str) {
-        let mut tasks_view: ViewRef<SelectView> = cursive
-            .find_name(TASKS_SELECT_VIEW_NAME)
-            .unwrap();
+        let mut tasks_view: ViewRef<SelectView> = TasksView::get_view(cursive)
+            .get_select_view();
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         cursive_data.selected_project = project_name.to_string();
 
@@ -241,41 +238,55 @@ impl ProjectsView {
         tasks_view.add_all_str(project_tasks);
         tasks_view.sort();
 
-        cursive.focus_name("tasks_view").unwrap();
+        cursive.focus_name(&TasksView::search_view_name()).unwrap();
     }
 }
 
 pub(crate) struct TasksView {
-    inner_view: Dialog,
+    inner_view: NamedView<Dialog>,
 }
 
 impl Default for TasksView {
     fn default() -> Self {
-        let search_task_view = TasksView::make_task_find_dialog();
+        let search_task_view = {
+            let layout = LinearLayout::vertical()
+            .child(TextView::new("Press <Enter> if not found."))
+            .child(
+                EditView::new()
+                    .on_edit(|cursive: &mut Cursive, task_name: &str, _: usize| {
+                        Self::get_view(cursive).on_enter_task_search(cursive, task_name)
+                    })
+                    .on_submit(Self::make_http_search)
+                    .with_name(Self::search_view_name())
+            );
+
+            Dialog::new()
+                .title("Search task by name")
+                .content(layout)
+        };
 
         let inner_tasks_view = SelectView::<String>::new()
             .align(INNER_LEFT_TOP_VIEW_ALIGN)
             .on_submit(Self::show_info_on_select)
-            .with_name(TASKS_SELECT_VIEW_NAME)
+            .with_name(Self::select_view_name())
             .scrollable();
-
-        let tasks_layout = LinearLayout::vertical()
-            .child(search_task_view)
-            .child(inner_tasks_view);
 
         Self {
             inner_view: Dialog::new()
                 .title("Choose issue")
                 .padding_lrtb(1, 1, 1, 1)
                 .content(
-                    tasks_layout,
-                ),
+                    LinearLayout::vertical()
+                        .child(search_task_view)
+                        .child(inner_tasks_view),
+                )
+                .with_name(Self::main_dialog_name()),
         }
     }
 }
 
 impl ViewWrapper for TasksView {
-    type V = Dialog;
+    type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
         where
@@ -288,11 +299,65 @@ impl ViewWrapper for TasksView {
             F: FnOnce(&mut Self::V) -> R {
                 Some(f(&mut self.inner_view))
     }
+
+    fn wrap_call_on_any<'a>(
+        &mut self,
+        selector: &cursive::view::Selector<'_>,
+        callback: cursive::event::AnyCb<'a>,
+    ) {
+        self.with_view_mut(|v| v.call_on_any(selector, callback));
+    }
+}
+
+impl JiraView for TasksView {
+    fn view_name() -> String {
+        String::from("TasksView")
+    }
+
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+
+    fn update_view_content(&mut self, cursive: &mut Cursive) {
+
+    }
+
+    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>) {
+
+    }
+
+    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>) {
+
+    }
 }
 
 impl TasksView {
+    pub fn select_view_name() -> String {
+        String::from("TasksSelectView")
+    }
+
+    pub fn search_view_name() -> String {
+        String::from("TasksSearchName")
+    }
+
+    pub fn main_dialog_name() -> String {
+        String::from("TasksDialogName")
+    }
+
+    fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
+    pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
+        self.get_dialog_view().find_name(Self::select_view_name().as_str()).unwrap()
+    }
+
+    pub fn get_search_view(&mut self) -> ViewRef<EditView> {
+        self.get_dialog_view().find_name(Self::search_view_name().as_str()).unwrap()
+    }
+
     fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
-        let mut info_layout: ViewRef<LinearLayout> = cursive.find_name("info_layout").unwrap();
+        let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
         let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
@@ -305,26 +370,9 @@ impl TasksView {
         info_layout.add_child(new_info_view);
     }
 
-    fn make_task_find_dialog() -> Dialog {
-        let layout = LinearLayout::vertical()
-            .child(TextView::new("Press <Enter> if not found."))
-            .child(
-                EditView::new()
-                    .on_edit(Self::on_enter_task_search)
-                    .on_submit(Self::make_http_search)
-                    .with_name(TASKS_SEARCH_VIEW_NAME)
-            );
-
-        Dialog::new()
-            .title("Search task by name")
-            .content(layout)
-    }
-
-    fn on_enter_task_search(cursive: &mut Cursive, task_subname: &str, _: usize) {
+    fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
-        let mut tasks_select_view: ViewRef<SelectView> = cursive
-            .find_name(TASKS_SELECT_VIEW_NAME)
-            .unwrap();
+        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
         let jira_data = &cursive_data.jira_data;
         let fit_tasks = jira_data.find_task_by_subname(
             task_subname,

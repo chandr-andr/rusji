@@ -28,7 +28,10 @@ impl Default for TasksProjectsLayout {
                         .full_height()
                 )
                 .child(DummyView)
-                .child(TasksView::default().full_height())
+                .child(
+                    TasksView::default()
+                        .with_name(TasksView::view_name())
+                        .full_height())
         }
     }
 }
