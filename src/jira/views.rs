@@ -150,18 +150,41 @@ impl JiraView for ProjectsView {
 }
 
 impl ProjectsView {
+    /// Returns name of the view with list of projects names.
+    pub fn select_view_name() -> String {
+        String::from("ProjectSelectView")
+    }
+
+    /// Returns name of the view with search field.
+    pub fn search_view_name() -> String {
+        String::from("ProjectsSearchView")
+    }
+
+    /// Returns name of the view with main ProjectsView layout - dialog.
+    fn main_dialog_name() -> String {
+        String::from("ProjectDialogView")
+    }
+
+    /// Returns the view with list of projects names.
     fn get_select_view(&mut self) -> ViewRef<SelectView> {
         self.get_dialog_view().find_name(&Self::select_view_name()).unwrap()
     }
 
+    /// Returns the view with list of projects names.
     fn get_search_view(&mut self) -> ViewRef<EditView> {
         self.get_dialog_view().find_name(&Self::search_view_name()).unwrap()
     }
 
+    /// Returns the view with field for project search.
     fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
 
+    /// Updates the projects names in SelectView.
+    ///
+    /// Tries to get new vector of projects from JiraData.
+    /// If success clear SelectView and add new data, else add
+    /// BadConnectionView with an error message.
     fn update_projects(&mut self, cursive: &mut Cursive) {
         let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
@@ -175,7 +198,7 @@ impl ProjectsView {
                     "Can't get projects from Jira.",
                     |cursive: &mut Cursive| {
                         cursive.pop_layer();
-                        Self::get_view(cursive).update_projects(cursive)
+                        Self::get_view(cursive).update_view_content(cursive)
                     },
                 );
                 cursive.add_layer(bad_view);
@@ -183,6 +206,11 @@ impl ProjectsView {
         }
     }
 
+    /// Gets input string from EditView as `project_subname`
+    /// and tries to find suitable projects.
+    ///
+    /// If search result is empty just clear view with projects
+    /// else show names of suitable projects.
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
         let mut select_project_view: ViewRef<SelectView> = ProjectsView::get_view(cursive)
@@ -199,6 +227,7 @@ impl ProjectsView {
         cursive.set_user_data(cursive_data);
     }
 
+    /// Adds tasks.
     fn show_tasks(cursive: &mut Cursive, project_name: &str) {
         let mut tasks_view: ViewRef<SelectView> = cursive
             .find_name(TASKS_SELECT_VIEW_NAME)
@@ -213,18 +242,6 @@ impl ProjectsView {
         tasks_view.sort();
 
         cursive.focus_name("tasks_view").unwrap();
-    }
-
-    fn select_view_name() -> String {
-        String::from("ProjectSelectView")
-    }
-
-    fn search_view_name() -> String {
-        String::from("ProjectsSearchView")
-    }
-
-    fn main_dialog_name() -> String {
-        String::from("ProjectDialogView")
     }
 }
 
