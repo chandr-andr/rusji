@@ -13,7 +13,8 @@ use cursive::{
         Nameable,
         ViewWrapper,
         Resizable,
-        Scrollable, Finder,
+        Scrollable,
+        Finder,
     },
     Cursive,
 };
@@ -36,9 +37,9 @@ pub trait JiraView {
     /// Updates view content with [`super::jira_data::JiraData`] methods.
     fn update_view_content(&mut self, cursive: &mut Cursive);
     /// Updates view content with passed `content`.
-    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>);
+    fn set_view_content(&mut self, content: Vec<&str>);
     /// Extends view content with passed `content`.
-    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>);
+    fn add_content_to_view(&mut self, content: Vec<&str>);
 }
 
 /// Struct for view with Jira projects.
@@ -85,7 +86,10 @@ impl Default for ProjectsView {
     fn default() -> Self {
         let projects_select_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .on_submit(Self::show_tasks)
+            .on_submit(|cursive: &mut Cursive, selected_project: &str| {
+                Self::set_selected_project(cursive, selected_project);
+                TasksView::get_view(cursive).update_view_content(cursive);
+            })
             .with_name(Self::select_view_name());
         let projects_scroll_view = ScrollView::new(
             projects_select_view,
@@ -134,15 +138,15 @@ impl JiraView for ProjectsView {
     }
 
     /// Sets new content to the view from passed `content`.
-    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>) {
-        let mut select_view = Self::get_view(cursive).get_select_view();
+    fn set_view_content(&mut self, content: Vec<&str>) {
+        let mut select_view = self.get_select_view();
         select_view.clear();
         select_view.add_all_str(content);
     }
 
     /// Extends view content with passed `content`.
-    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>) {
-        let mut select_view = Self::get_view(cursive).get_select_view();
+    fn add_content_to_view(&mut self, content: Vec<&str>) {
+        let mut select_view = self.get_select_view();
         select_view.add_all_str(content);
     }
 }
@@ -176,6 +180,11 @@ impl ProjectsView {
     /// Returns the view with field for project search.
     fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
+    fn set_selected_project(cursive: &mut Cursive, selected_project: &str) {
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        cursive_data.selected_project = selected_project.to_string();
     }
 
     /// Updates the projects names in SelectView.
@@ -224,29 +233,17 @@ impl ProjectsView {
             select_project_view.add_all_str(fit_projects);
         }
     }
-
-    /// Adds tasks.
-    fn show_tasks(cursive: &mut Cursive, project_name: &str) {
-        let mut tasks_view: ViewRef<SelectView> = TasksView::get_view(cursive)
-            .get_select_view();
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        cursive_data.selected_project = project_name.to_string();
-
-        let project_tasks = cursive_data.update_return_tasks(project_name);
-
-        tasks_view.clear();
-        tasks_view.add_all_str(project_tasks);
-        tasks_view.sort();
-
-        cursive.focus_name(&TasksView::search_view_name()).unwrap();
-    }
 }
 
+/// View wrapper for views to work with tasks.
 pub(crate) struct TasksView {
     inner_view: NamedView<Dialog>,
 }
 
 impl Default for TasksView {
+    /// Creates Dialog with LinearLayout inside
+    /// LinearLayout consists of the view for display tasks
+    /// and the edit view to allow search throught tasks.
     fn default() -> Self {
         let search_task_view = {
             let layout = LinearLayout::vertical()
@@ -310,52 +307,87 @@ impl ViewWrapper for TasksView {
 }
 
 impl JiraView for TasksView {
+    /// Returns name of the TasksView.
     fn view_name() -> String {
         String::from("TasksView")
     }
 
+    /// Returns instance of the TasksView.
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
 
+    /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-
+        self.update_tasks(cursive)
     }
 
-    fn set_view_content(&self, cursive: &mut Cursive, content: Vec<&str>) {
-
+    /// Sets new content for SelectView in TasksView from passed `content`.
+    fn set_view_content(&mut self, content: Vec<&str>) {
+        let mut select_view = self.get_select_view();
+        select_view.clear();
+        select_view.add_all_str(content);
     }
 
-    fn add_content_to_view(&self, cursive: &mut Cursive, content: Vec<&str>) {
-
+    /// Adds new content to SelectView from passed `content`.
+    fn add_content_to_view(&mut self, content: Vec<&str>) {
+        self.get_select_view().add_all_str(content);
     }
 }
 
 impl TasksView {
+    /// Returns name of the SelectView in TasksView.
     pub fn select_view_name() -> String {
         String::from("TasksSelectView")
     }
 
+    /// Returns name of the EditView in TasksView.
     pub fn search_view_name() -> String {
         String::from("TasksSearchName")
     }
 
+    /// Returns name of the main Dialog in TasksView.
     pub fn main_dialog_name() -> String {
         String::from("TasksDialogName")
     }
 
+    /// Returns instance of the main Dialog in TasksView.
     fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
 
+    /// Returns instance of the SelectView in TasksView.
     pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
         self.get_dialog_view().find_name(Self::select_view_name().as_str()).unwrap()
     }
 
+    /// Returns instance of the EditView in TasksView.
     pub fn get_search_view(&mut self) -> ViewRef<EditView> {
         self.get_dialog_view().find_name(Self::search_view_name().as_str()).unwrap()
     }
 
+    /// Updates tasks.
+    ///
+    /// Uses JiraData instance to get updates tasks.
+    ///
+    /// After updating focus on TasksView.
+    fn update_tasks(&mut self, cursive: &mut Cursive) {
+        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        let project_tasks = cursive_data.update_return_tasks(
+            &cursive_data.selected_project.clone(),
+        );
+
+        {
+            tasks_select_view.clear();
+            tasks_select_view.add_all_str(project_tasks);
+            tasks_select_view.sort();
+        }
+
+        cursive.focus_name(&TasksView::view_name()).unwrap();
+    }
+
+    /// Shows task information in InfoView.
     fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
         let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
         let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
@@ -370,6 +402,7 @@ impl TasksView {
         info_layout.add_child(new_info_view);
     }
 
+    /// Tries to find task to display it.
     fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
@@ -387,6 +420,9 @@ impl TasksView {
         cursive.set_user_data(cursive_data);
     }
 
+    /// Makes API call to try find task that not in app.
+    ///
+    /// If task isn't found display new view with error text.
     fn make_http_search(cursive: &mut Cursive, task_key: &str) {
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         match cursive_data.jira_data.get_new_task(
