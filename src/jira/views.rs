@@ -20,24 +20,34 @@ use cursive::{
 };
 use cursive::View;
 
-use super::constance::{
+use super::{constance::{
     INNER_LEFT_TOP_VIEW_ALIGN,
     INNER_CENTER_TOP_VIEW_ALIGN,
     ACTIONS_SELECT_VIEW_NAME,
     INFO_LAYOUT_VIEW_NAME,
-};
+}, layouts::InfoLayout};
 use super::jira_data::CursiveJiraData;
 
 /// Trait for all Jira views.
 pub trait JiraView {
     /// Returns name of the view.
     fn view_name() -> String;
+
     /// Returns instance of class from cursive app.
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self>;
+
+    /// Returns name of the main dialog view.
+    fn main_dialog_name() -> String;
+
+    /// Returns instance of main dialog view.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
+
     /// Updates view content with [`super::jira_data::JiraData`] methods.
     fn update_view_content(&mut self, cursive: &mut Cursive);
+
     /// Updates view content with passed `content`.
     fn set_view_content(&mut self, content: Vec<&str>);
+
     /// Extends view content with passed `content`.
     fn add_content_to_view(&mut self, content: Vec<&str>);
 }
@@ -132,6 +142,16 @@ impl JiraView for ProjectsView {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
 
+    /// Returns name of the view with main ProjectsView layout - dialog.
+    fn main_dialog_name() -> String {
+        String::from("ProjectDialogView")
+    }
+
+     /// Returns the view with field for project search.
+     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
     /// Updates projects names in the view content.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
         self.update_projects(cursive)
@@ -162,24 +182,14 @@ impl ProjectsView {
         String::from("ProjectsSearchView")
     }
 
-    /// Returns name of the view with main ProjectsView layout - dialog.
-    fn main_dialog_name() -> String {
-        String::from("ProjectDialogView")
-    }
-
     /// Returns the view with list of projects names.
     fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        self.get_dialog_view().find_name(&Self::select_view_name()).unwrap()
+        self.get_main_dialog().find_name(&Self::select_view_name()).unwrap()
     }
 
     /// Returns the view with list of projects names.
     fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_dialog_view().find_name(&Self::search_view_name()).unwrap()
-    }
-
-    /// Returns the view with field for project search.
-    fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
-        self.find_name(&Self::main_dialog_name()).unwrap()
+        self.get_main_dialog().find_name(&Self::search_view_name()).unwrap()
     }
 
     fn set_selected_project(cursive: &mut Cursive, selected_project: &str) {
@@ -317,6 +327,16 @@ impl JiraView for TasksView {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
 
+    /// Returns name of the main Dialog in TasksView.
+    fn main_dialog_name() -> String {
+        String::from("TasksDialogName")
+    }
+
+    /// Returns instance of the main Dialog in TasksView.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
     /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
         self.update_tasks(cursive)
@@ -346,24 +366,14 @@ impl TasksView {
         String::from("TasksSearchName")
     }
 
-    /// Returns name of the main Dialog in TasksView.
-    pub fn main_dialog_name() -> String {
-        String::from("TasksDialogName")
-    }
-
-    /// Returns instance of the main Dialog in TasksView.
-    fn get_dialog_view(&mut self) -> ViewRef<Dialog> {
-        self.find_name(&Self::main_dialog_name()).unwrap()
-    }
-
     /// Returns instance of the SelectView in TasksView.
     pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        self.get_dialog_view().find_name(Self::select_view_name().as_str()).unwrap()
+        self.get_main_dialog().find_name(Self::select_view_name().as_str()).unwrap()
     }
 
     /// Returns instance of the EditView in TasksView.
     pub fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_dialog_view().find_name(Self::search_view_name().as_str()).unwrap()
+        self.get_main_dialog().find_name(Self::search_view_name().as_str()).unwrap()
     }
 
     /// Updates tasks.
@@ -472,6 +482,50 @@ impl ViewWrapper for InfoView {
         where
             F: FnOnce(&mut Self::V) -> R {
                 Some(f(&mut self.inner_view))
+    }
+}
+
+impl JiraView for InfoView {
+    /// Returns name of the InfoView.
+    fn view_name() -> String {
+        String::from("InfoView")
+    }
+
+    /// Returns the instance of the InfoView.
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+
+    /// Returns name of the main dialog.
+    fn main_dialog_name() -> String {
+        String::from("InfoViewDialog")
+    }
+
+    /// Returns the instance of the main Dialog.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(Self::main_dialog_name().as_str()).unwrap()
+    }
+
+    /// Updates view with task information.
+    ///
+    /// In fact, just recreate InfoView without data and
+    /// add it to InfoLayout.
+    fn update_view_content(&mut self, cursive: &mut Cursive) {
+        let mut layout = InfoLayout::get_layout(cursive).get_inner_layout();
+        layout.clear();
+        layout.add_child(Self::new("", ""))
+    }
+
+    /// Sets new content of the InfoView.
+    ///
+    /// In fact, we completely clear the layout and
+    /// create a completely new view, which we add
+    /// new view.
+    fn set_view_content(&mut self, content: Vec<&str>) {}
+
+    /// Does the same as `set_view_content` method.
+    fn add_content_to_view(&mut self, content: Vec<&str>) {
+
     }
 }
 

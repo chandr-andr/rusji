@@ -1,6 +1,6 @@
 use cursive::{
     views::LinearLayout,
-    view::Resizable,
+    view::{Resizable, Nameable},
     Cursive,
 };
 use crate::Config;
@@ -38,7 +38,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let mut main_layer = LinearLayout::horizontal();
 
     let tasks_projects_layer = TasksProjectsLayout::default();
-    let info_layer = InfoLayout::default();
+    let info_layer = InfoLayout::default().with_name(InfoLayout::layout_name());
     let actions_something_layer = ActionsLayout::default();
 
     main_layer.add_child(tasks_projects_layer.min_width(side_width));
