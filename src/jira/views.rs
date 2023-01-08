@@ -387,21 +387,6 @@ impl TasksView {
         cursive.focus_name(&TasksView::view_name()).unwrap();
     }
 
-    /// Shows task information in InfoView.
-    fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
-        let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
-        let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
-        let task_key: Vec<&str> = task_name.split(" -- ").collect();
-
-        let (summary, description) = c_jira_data
-            .jira_data
-            .get_task_description(&c_jira_data.selected_project, task_key[0]);
-
-        let new_info_view = InfoView::new(summary, description);
-        info_layout.clear();
-        info_layout.add_child(new_info_view);
-    }
-
     /// Tries to find task to display it.
     fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
@@ -418,6 +403,21 @@ impl TasksView {
             tasks_select_view.add_all_str(fit_tasks);
         }
         cursive.set_user_data(cursive_data);
+    }
+
+    /// Shows task information in InfoView.
+    fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
+        let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
+        let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
+        let task_key: Vec<&str> = task_name.split(" -- ").collect();
+
+        let (summary, description) = c_jira_data
+            .jira_data
+            .get_task_description(&c_jira_data.selected_project, task_key[0]);
+
+        let new_info_view = InfoView::new(summary, description);
+        info_layout.clear();
+        info_layout.add_child(new_info_view);
     }
 
     /// Makes API call to try find task that not in app.
