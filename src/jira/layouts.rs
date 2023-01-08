@@ -1,5 +1,5 @@
 use cursive::{views::{LinearLayout, DummyView, NamedView, ViewRef}, view::{ViewWrapper, Nameable, Resizable, Finder}, Cursive};
-use super::{views::{TasksView, ProjectsView, InfoView, ActionsView, JiraView}, constance::INFO_LAYOUT_VIEW_NAME};
+use super::{views::{TasksView, ProjectsView, InfoView, ActionsView, JiraView}};
 
 
 pub(crate) struct TasksProjectsLayout {

@@ -24,8 +24,7 @@ use super::{constance::{
     INNER_LEFT_TOP_VIEW_ALIGN,
     INNER_CENTER_TOP_VIEW_ALIGN,
     ACTIONS_SELECT_VIEW_NAME,
-    INFO_LAYOUT_VIEW_NAME,
-}, layouts::InfoLayout};
+}};
 use super::jira_data::CursiveJiraData;
 
 /// Trait for all Jira views.
@@ -417,17 +416,16 @@ impl TasksView {
 
     /// Shows task information in InfoView.
     fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
-        let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
-        let c_jira_data: &CursiveJiraData = cursive.user_data().unwrap();
+        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
-        let (summary, description) = c_jira_data
+        let (summary, description) = cursive_data
             .jira_data
-            .get_task_description(&c_jira_data.selected_project, task_key[0]);
+            .get_task_description(&cursive_data.selected_project, task_key[0]);
 
-        let new_info_view = InfoView::new(summary, description);
-        info_layout.clear();
-        info_layout.add_child(new_info_view);
+        let mut info_layout: ViewRef<InfoView> = InfoView::get_view(cursive);
+        info_layout.set_view_content(vec![summary, description]);
+        cursive.set_user_data(cursive_data);
     }
 
     /// Makes API call to try find task that not in app.
@@ -441,10 +439,8 @@ impl TasksView {
             &cursive_data.encoded_creds,
         ) {
             Ok((summary, desc)) => {
-                let mut info_layout: ViewRef<LinearLayout> = cursive.find_name(INFO_LAYOUT_VIEW_NAME).unwrap();
-                let new_info_view = InfoView::new(summary.as_str(), desc.as_str());
-                info_layout.clear();
-                info_layout.add_child(new_info_view);
+                let mut info_layout: ViewRef<InfoView> = InfoView::get_view(cursive);
+                info_layout.set_view_content(vec![summary.as_str(), desc.as_str()]);
             },
             Err(_) => {
                 cursive.add_layer(
@@ -460,17 +456,17 @@ impl TasksView {
 }
 
 pub(crate) struct InfoView {
-    inner_view: Dialog
+    inner_view: NamedView<Dialog>
 }
 
 impl Default for InfoView {
     fn default() -> Self {
-        InfoView::new("Choose task", "")
+        Self::new("Choose task", "")
     }
 }
 
 impl ViewWrapper for InfoView {
-    type V = Dialog;
+    type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
         where
@@ -510,10 +506,10 @@ impl JiraView for InfoView {
     ///
     /// In fact, just recreate InfoView without data and
     /// add it to InfoLayout.
-    fn update_view_content(&mut self, cursive: &mut Cursive) {
-        let mut layout = InfoLayout::get_layout(cursive).get_inner_layout();
-        layout.clear();
-        layout.add_child(Self::new("", ""))
+    fn update_view_content(&mut self, _: &mut Cursive) {
+        self.get_main_dialog().set_content(
+            Self::make_inner_view("", "")
+        );
     }
 
     /// Sets new content of the InfoView.
@@ -521,11 +517,15 @@ impl JiraView for InfoView {
     /// In fact, we completely clear the layout and
     /// create a completely new view, which we add
     /// new view.
-    fn set_view_content(&mut self, content: Vec<&str>) {}
+    fn set_view_content(&mut self, content: Vec<&str>) {
+        self.get_main_dialog().set_content(
+            Self::make_inner_view(content[0], content[1])
+        );
+    }
 
     /// Does the same as `set_view_content` method.
     fn add_content_to_view(&mut self, content: Vec<&str>) {
-
+        self.set_view_content(content)
     }
 }
 
@@ -533,14 +533,17 @@ impl InfoView {
     fn new(summary: &str, description: &str) -> Self {
         let dialog = Dialog::new()
             .title("Task information")
-            .content(
-                LinearLayout::vertical()
-                    .child(InfoView::make_summary_dialog(summary))
-                    .child(DummyView)
-                    .child(InfoView::make_description_dialog(description))
-            );
+            .content(Self::make_inner_view(summary, description))
+            .with_name(Self::main_dialog_name());
 
         Self { inner_view: dialog }
+    }
+
+    fn make_inner_view(summary: &str, description: &str) -> LinearLayout {
+        LinearLayout::vertical()
+            .child(InfoView::make_summary_dialog(summary))
+            .child(DummyView)
+            .child(InfoView::make_description_dialog(description))
     }
 
     fn make_summary_dialog(summary: &str) -> Dialog {
