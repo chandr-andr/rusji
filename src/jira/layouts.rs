@@ -1,4 +1,4 @@
-use cursive::{views::{LinearLayout, DummyView, NamedView, ViewRef}, view::{ViewWrapper, Nameable, Resizable, Finder}, Cursive};
+use cursive::{views::{LinearLayout, DummyView, NamedView}, view::{ViewWrapper, Nameable, Resizable}};
 use super::{views::{TasksView, ProjectsView, InfoView, ActionsView, JiraView}};
 
 
@@ -72,14 +72,6 @@ impl InfoLayout {
 
     pub fn inner_layout_name() -> String {
         String::from("InnerInfoLayout")
-    }
-
-    pub fn get_layout(cursive: &mut Cursive) -> ViewRef<Self> {
-        cursive.find_name(&Self::layout_name()).unwrap()
-    }
-
-    pub fn get_inner_layout(&mut self) -> ViewRef<LinearLayout> {
-        self.find_name(&Self::inner_layout_name()).unwrap()
     }
 }
 

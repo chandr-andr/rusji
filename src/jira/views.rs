@@ -262,7 +262,9 @@ impl Default for TasksView {
                     .on_edit(|cursive: &mut Cursive, task_name: &str, _: usize| {
                         Self::get_view(cursive).on_enter_task_search(cursive, task_name)
                     })
-                    .on_submit(Self::make_http_search)
+                    .on_submit(|cursive: &mut Cursive, task_key: &str| {
+                        InfoView::get_view(cursive).make_http_search(cursive, task_key)
+                    })
                     .with_name(Self::search_view_name())
             );
 
@@ -273,7 +275,9 @@ impl Default for TasksView {
 
         let inner_tasks_view = SelectView::<String>::new()
             .align(INNER_LEFT_TOP_VIEW_ALIGN)
-            .on_submit(Self::show_info_on_select)
+            .on_submit(|cursive: &mut Cursive, task_name: &str| {
+                InfoView::get_view(cursive).show_info_on_select(cursive, task_name);
+            })
             .with_name(Self::select_view_name())
             .scrollable();
 
@@ -413,46 +417,6 @@ impl TasksView {
         }
         cursive.set_user_data(cursive_data);
     }
-
-    /// Shows task information in InfoView.
-    fn show_info_on_select(cursive: &mut Cursive, task_name: &str) {
-        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
-        let task_key: Vec<&str> = task_name.split(" -- ").collect();
-
-        let (summary, description) = cursive_data
-            .jira_data
-            .get_task_description(&cursive_data.selected_project, task_key[0]);
-
-        let mut info_layout: ViewRef<InfoView> = InfoView::get_view(cursive);
-        info_layout.set_view_content(vec![summary, description]);
-        cursive.set_user_data(cursive_data);
-    }
-
-    /// Makes API call to try find task that not in app.
-    ///
-    /// If task isn't found display new view with error text.
-    fn make_http_search(cursive: &mut Cursive, task_key: &str) {
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        match cursive_data.jira_data.get_new_task(
-            task_key,
-            &cursive_data.selected_project,
-            &cursive_data.encoded_creds,
-        ) {
-            Ok((summary, desc)) => {
-                let mut info_layout: ViewRef<InfoView> = InfoView::get_view(cursive);
-                info_layout.set_view_content(vec![summary.as_str(), desc.as_str()]);
-            },
-            Err(_) => {
-                cursive.add_layer(
-                    Dialog::new()
-                        .title("Task not found")
-                        .button("Ok", |cursive| {
-                            cursive.pop_layer();
-                        })
-                )
-            }
-        }
-    }
 }
 
 pub(crate) struct InfoView {
@@ -565,6 +529,44 @@ impl InfoView {
                         .with_name("description_task_view")
                 )
             )
+    }
+
+    /// Shows task information in InfoView.
+    fn show_info_on_select(&mut self, cursive: &mut Cursive, task_name: &str) {
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        let task_key: Vec<&str> = task_name.split(" -- ").collect();
+
+        let (summary, description) = cursive_data
+            .jira_data
+            .get_task_description(&cursive_data.selected_project, task_key[0]);
+
+        self.set_view_content(vec![summary, description]);
+    }
+
+    /// Makes API call to try find task that not in app.
+    ///
+    /// If task isn't found display new view with error text.
+    fn make_http_search(&mut self, cursive: &mut Cursive, task_key: &str) {
+        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        match cursive_data.jira_data.get_new_task(
+            task_key,
+            &cursive_data.selected_project,
+            &cursive_data.encoded_creds,
+        ) {
+            Ok((summary, desc)) => {
+                self.set_view_content(vec![summary.as_str(), desc.as_str()]);
+                TasksView::get_view(cursive);
+            },
+            Err(_) => {
+                cursive.add_layer(
+                    Dialog::new()
+                        .title("Task not found")
+                        .button("Ok", |cursive| {
+                            cursive.pop_layer();
+                        })
+                )
+            }
+        }
     }
 }
 
