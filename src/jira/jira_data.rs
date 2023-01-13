@@ -1,7 +1,10 @@
-use std::{io::{Result as ioResult, Error, ErrorKind}, collections::HashMap};
-use serde::{Deserialize, Serialize, Deserializer};
 use reqwest::blocking::{Client, Response};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{self};
+use std::{
+    collections::HashMap,
+    io::{Error, ErrorKind, Result as ioResult},
+};
 use url::Url;
 
 pub(crate) struct CursiveJiraData<'a> {
@@ -30,7 +33,9 @@ impl<'a> CursiveJiraData<'a> {
     }
 
     pub fn update_tasks(&mut self, project_name: &str) {
-        self.jira_data.update_tasks(project_name, &self.encoded_creds).unwrap();
+        self.jira_data
+            .update_tasks(project_name, &self.encoded_creds)
+            .unwrap();
     }
 
     pub fn update_return_tasks(&mut self, project_name: &str) -> Vec<String> {
@@ -54,7 +59,8 @@ pub struct JiraTask {
 
 impl<'de> Deserialize<'de> for JiraTask {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         #[derive(Serialize, Deserialize, Debug)]
         struct Task {
@@ -63,8 +69,8 @@ impl<'de> Deserialize<'de> for JiraTask {
             link: String,
             key: String,
             fields: Fields,
-            #[serde(default = "default_rendered_fields", alias="renderedFields")]
-            rendered_fields: RenderedFields
+            #[serde(default = "default_rendered_fields", alias = "renderedFields")]
+            rendered_fields: RenderedFields,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -79,7 +85,7 @@ impl<'de> Deserialize<'de> for JiraTask {
 
         fn default_rendered_fields() -> RenderedFields {
             RenderedFields {
-                description: "No description".to_string()
+                description: "No description".to_string(),
             }
         }
 
@@ -99,9 +105,8 @@ impl<'de> Deserialize<'de> for JiraTask {
 /// about task to interact with it.
 #[derive(Serialize, Deserialize, Debug)]
 struct JiraIssues {
-    issues: Vec<JiraTask>
+    issues: Vec<JiraTask>,
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 struct JiraProject {
@@ -115,23 +120,20 @@ struct JiraProject {
 }
 
 impl JiraProject {
-
     fn tasks_names(&self) -> Option<Vec<String>> {
         let mut tasks_names: Vec<String> = Vec::default();
         if let Some(tasks) = self.tasks.as_ref() {
             for task in tasks.values() {
-                tasks_names.push(
-                    format!(
-                        "{} -- {}", &task.key, &task.summary));
+                tasks_names.push(format!("{} -- {}", &task.key, &task.summary));
             }
-            return Some(tasks_names)
+            return Some(tasks_names);
         }
         None
     }
 }
 
 /// Struct with data about company jira.
-pub struct JiraData<'a>{
+pub struct JiraData<'a> {
     projects: Option<HashMap<String, JiraProject>>,
     jira_url: Url,
     client: Client,
@@ -158,9 +160,7 @@ impl<'a> JiraData<'a> {
         let url = self.jira_url.join(self.get_projects_url).unwrap();
         let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
 
-        let projects = serde_json::from_str::<Vec<JiraProject>>(
-            resp_text.as_str(),
-        )?;
+        let projects = serde_json::from_str::<Vec<JiraProject>>(resp_text.as_str())?;
         let projects_field = self.make_projects_field(projects);
 
         self.projects = Some(projects_field);
@@ -176,9 +176,10 @@ impl<'a> JiraData<'a> {
     }
 
     pub fn update_tasks(&mut self, project_name: &str, encoded_creds: &str) -> ioResult<()> {
-        let url = self.jira_url.join(
-            &self.get_project_tasks_url.replace("PRJ", project_name),
-        ).unwrap();
+        let url = self
+            .jira_url
+            .join(&self.get_project_tasks_url.replace("PRJ", project_name))
+            .unwrap();
         let response = self.make_get_request(url, encoded_creds)?;
         let resp_text = response.text().unwrap();
 
@@ -207,8 +208,7 @@ impl<'a> JiraData<'a> {
         let mut fit_projects: Vec<&str> = Vec::new();
         for project_name in self.projects.as_ref().unwrap().keys() {
             let project_name_copy = project_name.clone();
-            let available_condition =
-                project_name.contains(project_subname)
+            let available_condition = project_name.contains(project_subname)
                 || project_name.contains(project_subname.to_uppercase().as_str())
                 || project_name.contains(project_subname.to_lowercase().as_str())
                 || project_name_copy.to_lowercase().contains(project_subname)
@@ -220,17 +220,17 @@ impl<'a> JiraData<'a> {
         fit_projects
     }
 
-    pub fn find_task_by_subname(
-        &self,
-        task_subname: &str,
-        selected_project: &str,
-    ) -> Vec<String> {
+    pub fn find_task_by_subname(&self, task_subname: &str, selected_project: &str) -> Vec<String> {
         let mut fit_tasks: Vec<String> = Vec::new();
-        let project = self.projects.as_ref().unwrap().get(selected_project).unwrap();
+        let project = self
+            .projects
+            .as_ref()
+            .unwrap()
+            .get(selected_project)
+            .unwrap();
         for (task_name, task) in project.tasks.as_ref().unwrap().iter() {
             let task_name_copy = task_name.clone();
-            let available_condition =
-                task_name.contains(task_subname)
+            let available_condition = task_name.contains(task_subname)
                 || task_name.contains(task_subname.to_uppercase().as_str())
                 || task_name.contains(task_subname.to_lowercase().as_str())
                 || task_name_copy.to_lowercase().contains(task_subname)
@@ -258,19 +258,17 @@ impl<'a> JiraData<'a> {
                     .get(selected_project)
                     .unwrap()
                     .key;
-                url = url.join(
-                    &self
-                        .get_task_url
-                        .replace(
-                            "TASK",
-                            format!("{}-{}", selected_projects_key, task_key).as_str(),
-                        ),
-                ).unwrap();
-            },
+                url = url
+                    .join(&self.get_task_url.replace(
+                        "TASK",
+                        format!("{}-{}", selected_projects_key, task_key).as_str(),
+                    ))
+                    .unwrap();
+            }
             Err(_) => {
-                url = url.join(
-                    &self.get_task_url.replace("TASK", task_key),
-                ).unwrap();
+                url = url
+                    .join(&self.get_task_url.replace("TASK", task_key))
+                    .unwrap();
             }
         }
         let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
@@ -287,7 +285,7 @@ impl<'a> JiraData<'a> {
         match project.tasks.as_mut() {
             Some(tasks) => {
                 tasks.insert(task.key.clone(), task);
-            },
+            }
             None => {
                 let mut new_tasks = HashMap::<String, JiraTask>::new();
                 new_tasks.insert(task.key.clone(), task);
@@ -299,7 +297,8 @@ impl<'a> JiraData<'a> {
     }
 
     fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
-        let response = self.client
+        let response = self
+            .client
             .get(url)
             .header("Authorization", format!("Basic {encoded_creds}"))
             .header("Content-Type", "application/json")
@@ -309,20 +308,10 @@ impl<'a> JiraData<'a> {
                 if response.status().is_success() {
                     Ok(response)
                 } else {
-                    Err(
-                        Error::new(
-                            ErrorKind::Other,
-                            "Bad response status",
-                        )
-                    )
+                    Err(Error::new(ErrorKind::Other, "Bad response status"))
                 }
-            },
-            Err(err) => Err(
-                Error::new(
-                    ErrorKind::Other,
-                    err.to_string(),
-                )
-            )
+            }
+            Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
         }
     }
 
@@ -347,14 +336,17 @@ impl<'a> JiraData<'a> {
     }
 
     fn get_mut_project(&mut self, project_name: &str) -> &mut JiraProject {
-        self.projects.as_mut().unwrap().get_mut(project_name).unwrap()
+        self.projects
+            .as_mut()
+            .unwrap()
+            .get_mut(project_name)
+            .unwrap()
     }
 
     fn get_task(&self, project: &'a JiraProject, task_name: &str) -> &'a JiraTask {
         project.tasks.as_ref().unwrap().get(task_name).unwrap()
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -1,16 +1,16 @@
 mod cli;
-mod startup;
-mod utils;
-mod constance;
 mod config;
-mod screen;
+mod constance;
 mod jira;
+mod screen;
+mod startup;
 mod theme;
+mod utils;
 pub use crate::cli::*;
-pub use crate::startup::*;
-pub use crate::screen::*;
 pub use crate::config::*;
 pub use crate::jira::*;
+pub use crate::screen::*;
+pub use crate::startup::*;
 
 fn main() {
     let config = Config::new().unwrap();

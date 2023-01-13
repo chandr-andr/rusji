@@ -1,14 +1,11 @@
 use std::collections::HashMap;
 
-use cursive::Cursive;
-use cursive::view::{Resizable, Nameable};
-use cursive::views::{
-    LinearLayout,
-    SelectView, DummyView, Dialog, EditView, TextView,
-};
-use crate::Config;
 use crate::jira::screen::make_jira_screen;
 use crate::theme::make_dark_theme;
+use crate::Config;
+use cursive::view::{Nameable, Resizable};
+use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use cursive::Cursive;
 
 struct CursiveUserData<'a> {
     config: Config,
@@ -37,16 +34,15 @@ pub fn start_screen(config: Config) {
 
     let c_user_data: &mut CursiveUserData = cursive.user_data().unwrap();
 
-    let mut exist_companies_select_view = SelectView::<String>::new()
-        .on_submit(on_select_company);
+    let mut exist_companies_select_view = SelectView::<String>::new().on_submit(on_select_company);
     exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
 
-    let mut delete_exist_companies_select_view = SelectView::<String>::new()
-        .on_submit(delete_company);
+    let mut delete_exist_companies_select_view =
+        SelectView::<String>::new().on_submit(delete_company);
     delete_exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
 
-    let mut add_new_company_select_view = SelectView::<String>::new()
-        .on_submit(add_new_company_screen);
+    let mut add_new_company_select_view =
+        SelectView::<String>::new().on_submit(add_new_company_screen);
     add_new_company_select_view.add_all_str(vec!["Add new company"]);
 
     let start_screen_layout = LinearLayout::vertical()
@@ -82,9 +78,7 @@ fn add_new_company_screen(cursive: &mut Cursive, _: &str) {
     let mut edit_layout = LinearLayout::vertical();
 
     for view_name in &views_names {
-        let edit_view = EditView::new()
-            .with_name(*view_name)
-            .min_width(20);
+        let edit_view = EditView::new().with_name(*view_name).min_width(20);
 
         edit_layout.add_child(TextView::new(*view_name));
         edit_layout.add_child(edit_view);
@@ -111,9 +105,8 @@ fn add_new_company(cursive: &mut Cursive) {
 
     for view_name in &c_user_data.to_find_names {
         let view_info = cursive
-            .call_on_name(view_name, |view: &mut EditView| {
-                view.get_content()
-            }).unwrap();
+            .call_on_name(view_name, |view: &mut EditView| view.get_content())
+            .unwrap();
 
         // TODO: check if all fields were filled
         // TODO: check the connection to the jira server
@@ -133,7 +126,7 @@ fn add_new_company(cursive: &mut Cursive) {
             c_user_data.refresh_config();
             cursive.set_user_data(c_user_data);
             success_dialog(cursive, "Company added successfully!")
-        },
+        }
         Err(err) => println!("{}", err),
     }
 }
@@ -145,9 +138,7 @@ fn success_dialog(cursive: &mut Cursive, success_text: &str) {
             .title("Success!")
             .content(TextView::new(success_text))
             .padding_lrtb(1, 1, 1, 1)
-            .button("OK", |cursive: &mut Cursive| {
-                set_start_screen(cursive)
-            })
+            .button("OK", |cursive: &mut Cursive| set_start_screen(cursive)),
     )
 }
 
@@ -155,16 +146,15 @@ fn success_dialog(cursive: &mut Cursive, success_text: &str) {
 pub fn set_start_screen(cursive: &mut Cursive) {
     let c_user_data: &mut CursiveUserData = cursive.user_data().unwrap();
 
-    let mut exist_companies_select_view = SelectView::<String>::new()
-        .on_submit(on_select_company);
+    let mut exist_companies_select_view = SelectView::<String>::new().on_submit(on_select_company);
     exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
 
-    let mut delete_exist_companies_select_view = SelectView::<String>::new()
-        .on_submit(delete_company);
+    let mut delete_exist_companies_select_view =
+        SelectView::<String>::new().on_submit(delete_company);
     delete_exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
 
-    let mut add_new_company_select_view = SelectView::<String>::new()
-        .on_submit(add_new_company_screen);
+    let mut add_new_company_select_view =
+        SelectView::<String>::new().on_submit(add_new_company_screen);
     add_new_company_select_view.add_all_str(vec!["Add new company"]);
 
     let start_screen_layout = LinearLayout::vertical()
@@ -199,5 +189,4 @@ fn delete_company(cursive: &mut Cursive, company_name: &str) {
     c_user_data.config.delete_company(company_name).unwrap();
     // TODO: Process Error if needed
     success_dialog(cursive, "Company deleted successfully!")
-
 }

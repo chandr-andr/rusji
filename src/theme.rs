@@ -1,5 +1,5 @@
-use cursive::theme::{Theme, BorderStyle, Palette};
 use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
+use cursive::theme::{BorderStyle, Palette, Theme};
 
 pub fn make_dark_theme() -> Theme {
     let mut palette = Palette::default();

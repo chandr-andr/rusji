@@ -1,8 +1,8 @@
-use crate::utils::*;
-use std::io::{Result, ErrorKind, Error};
-use serde::{Deserialize, Serialize};
-use home::home_dir;
 use crate::constance::*;
+use crate::utils::*;
+use home::home_dir;
+use serde::{Deserialize, Serialize};
+use std::io::{Error, ErrorKind, Result};
 extern crate base64;
 
 /// Structure for main information about a jira company.
@@ -52,7 +52,7 @@ impl Company {
 
 /// Main structure for app config.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Config{
+pub struct Config {
     companies: Vec<Company>,
     #[serde(skip_serializing, skip_deserializing)]
     config_path: String,
@@ -72,13 +72,11 @@ impl Config {
             Ok(mut config) => {
                 config.config_path = config_path;
                 Ok(config)
-            },
-            Err(_) => Err(
-                Error::new(
-                    ErrorKind::Other,
-                    "Can't read config! Is it correct?",
-                ),
-            ),
+            }
+            Err(_) => Err(Error::new(
+                ErrorKind::Other,
+                "Can't read config! Is it correct?",
+            )),
         }
     }
 
@@ -101,18 +99,11 @@ impl Config {
         company_name: &str,
         username: &str,
         password: &str,
-    )-> Result<()> {
-        let jira_data = Jira::new(
-            url.to_string(),
-            username.to_string(),
-            password.to_string(),
-        );
+    ) -> Result<()> {
+        let jira_data = Jira::new(url.to_string(), username.to_string(), password.to_string());
         let company_data = Company::new(company_name.to_string(), jira_data);
         self.companies.push(company_data);
-        std::fs::write(
-            &self.config_path,
-            serde_json::to_string_pretty(&self)?,
-        )
+        std::fs::write(&self.config_path, serde_json::to_string_pretty(&self)?)
     }
 
     /// Deletes exist company.
@@ -127,10 +118,7 @@ impl Config {
         }
 
         self.companies.remove(to_remove_company_idx);
-        std::fs::write(
-            &self.config_path,
-            serde_json::to_string_pretty(&self)?,
-        )
+        std::fs::write(&self.config_path, serde_json::to_string_pretty(&self)?)
     }
 
     pub fn get_jira_by_company(&self, company_name: &str) -> Result<&Jira> {
@@ -144,11 +132,7 @@ impl Config {
 
     fn get_config_path() -> Result<String> {
         match build_full_app_path() {
-            Ok(path) => Ok(
-                format!(
-                    "{}/{}", path, APP_CONFIG,
-                ),
-            ),
+            Ok(path) => Ok(format!("{}/{}", path, APP_CONFIG,)),
             Err(err) => Err(err),
         }
     }
@@ -157,16 +141,10 @@ impl Config {
 pub fn build_full_app_path() -> Result<String> {
     let home_dir = home_dir();
     match home_dir {
-        Some(path) => Ok(
-            format!(
-                "{}/{}", path.display(), APP_DIRECTORY,
-            ),
-        ),
-        None => Err(
-            Error::new(
-                ErrorKind::NotFound,
-                "Can't find home directory!",
-            ),
-        ),
+        Some(path) => Ok(format!("{}/{}", path.display(), APP_DIRECTORY,)),
+        None => Err(Error::new(
+            ErrorKind::NotFound,
+            "Can't find home directory!",
+        )),
     }
 }

@@ -1,30 +1,16 @@
+use cursive::View;
 use cursive::{
+    view::{Finder, Nameable, Resizable, Scrollable, ViewWrapper},
     views::{
-        Dialog,
-        SelectView,
-        ScrollView,
-        LinearLayout,
+        Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView, SelectView, TextView,
         ViewRef,
-        EditView,
-        DummyView,
-        TextView, NamedView,
-    },
-    view::{
-        Nameable,
-        ViewWrapper,
-        Resizable,
-        Scrollable,
-        Finder,
     },
     Cursive,
 };
-use cursive::View;
 
-use super::{constance::{
-    INNER_LEFT_TOP_VIEW_ALIGN,
-    INNER_CENTER_TOP_VIEW_ALIGN,
-    ACTIONS_SELECT_VIEW_NAME,
-}};
+use super::constance::{
+    ACTIONS_SELECT_VIEW_NAME, INNER_CENTER_TOP_VIEW_ALIGN, INNER_LEFT_TOP_VIEW_ALIGN,
+};
 use super::jira_data::CursiveJiraData;
 
 /// Trait for all Jira views.
@@ -64,15 +50,17 @@ impl ViewWrapper for ProjectsView {
     type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
-        where
-            F: FnOnce(&Self::V) -> R {
-                Some(f(&self.inner_view))
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::V) -> R {
-                Some(f(&mut self.inner_view))
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
     }
 
     fn wrap_call_on_any<'a>(
@@ -85,7 +73,6 @@ impl ViewWrapper for ProjectsView {
 }
 
 impl Default for ProjectsView {
-
     /// Creates SelectView in ScrollView,
     ///
     /// EditView in Dialog for search field
@@ -100,18 +87,13 @@ impl Default for ProjectsView {
                 TasksView::get_view(cursive).update_view_content(cursive);
             })
             .with_name(Self::select_view_name());
-        let projects_scroll_view = ScrollView::new(
-            projects_select_view,
-        );
+        let projects_scroll_view = ScrollView::new(projects_select_view);
 
         let search_project_dialog = Dialog::new()
             .title("Search project by name")
-            .content(
-                EditView::new()
-                    .on_edit(|cursive, text, _cursor| {
-                        ProjectsView::on_enter_search_project(cursive, text)
-                    })
-            )
+            .content(EditView::new().on_edit(|cursive, text, _cursor| {
+                ProjectsView::on_enter_search_project(cursive, text)
+            }))
             .with_name(Self::search_view_name());
 
         let dialog = Dialog::new()
@@ -121,12 +103,11 @@ impl Default for ProjectsView {
                 LinearLayout::vertical()
                     .child(search_project_dialog)
                     .child(DummyView)
-                    .child(projects_scroll_view)
-            ).with_name(Self::main_dialog_name());
+                    .child(projects_scroll_view),
+            )
+            .with_name(Self::main_dialog_name());
 
-        Self {
-            inner_view: dialog,
-        }
+        Self { inner_view: dialog }
     }
 }
 
@@ -146,8 +127,8 @@ impl JiraView for ProjectsView {
         String::from("ProjectDialogView")
     }
 
-     /// Returns the view with field for project search.
-     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+    /// Returns the view with field for project search.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
 
@@ -183,12 +164,16 @@ impl ProjectsView {
 
     /// Returns the view with list of projects names.
     fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        self.get_main_dialog().find_name(&Self::select_view_name()).unwrap()
+        self.get_main_dialog()
+            .find_name(&Self::select_view_name())
+            .unwrap()
     }
 
     /// Returns the view with list of projects names.
     fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_main_dialog().find_name(&Self::search_view_name()).unwrap()
+        self.get_main_dialog()
+            .find_name(&Self::search_view_name())
+            .unwrap()
     }
 
     fn set_selected_project(cursive: &mut Cursive, selected_project: &str) {
@@ -208,7 +193,7 @@ impl ProjectsView {
             Ok(projects) => {
                 select_project_view.clear();
                 select_project_view.add_all_str(projects);
-            },
+            }
             Err(_) => {
                 let bad_view = BadConnectionView::new(
                     "Can't get projects from Jira.",
@@ -228,9 +213,8 @@ impl ProjectsView {
     /// If search result is empty just clear view with projects
     /// else show names of suitable projects.
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
-
-        let mut select_project_view: ViewRef<SelectView> = ProjectsView::get_view(cursive)
-            .get_select_view();
+        let mut select_project_view: ViewRef<SelectView> =
+            ProjectsView::get_view(cursive).get_select_view();
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         let jira_data = &cursive_data.jira_data;
         let fit_projects = jira_data.find_project_by_subname(project_subname);
@@ -256,21 +240,19 @@ impl Default for TasksView {
     fn default() -> Self {
         let search_task_view = {
             let layout = LinearLayout::vertical()
-            .child(TextView::new("Press <Enter> if not found."))
-            .child(
-                EditView::new()
-                    .on_edit(|cursive: &mut Cursive, task_name: &str, _: usize| {
-                        Self::get_view(cursive).on_enter_task_search(cursive, task_name)
-                    })
-                    .on_submit(|cursive: &mut Cursive, task_key: &str| {
-                        InfoView::get_view(cursive).make_http_search(cursive, task_key)
-                    })
-                    .with_name(Self::search_view_name())
-            );
+                .child(TextView::new("Press <Enter> if not found."))
+                .child(
+                    EditView::new()
+                        .on_edit(|cursive: &mut Cursive, task_name: &str, _: usize| {
+                            Self::get_view(cursive).on_enter_task_search(cursive, task_name)
+                        })
+                        .on_submit(|cursive: &mut Cursive, task_key: &str| {
+                            InfoView::get_view(cursive).make_http_search(cursive, task_key)
+                        })
+                        .with_name(Self::search_view_name()),
+                );
 
-            Dialog::new()
-                .title("Search task by name")
-                .content(layout)
+            Dialog::new().title("Search task by name").content(layout)
         };
 
         let inner_tasks_view = SelectView::<String>::new()
@@ -299,15 +281,17 @@ impl ViewWrapper for TasksView {
     type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
-        where
-            F: FnOnce(&Self::V) -> R {
-                Some(f(&self.inner_view))
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::V) -> R {
-                Some(f(&mut self.inner_view))
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
     }
 
     fn wrap_call_on_any<'a>(
@@ -371,12 +355,16 @@ impl TasksView {
 
     /// Returns instance of the SelectView in TasksView.
     pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        self.get_main_dialog().find_name(Self::select_view_name().as_str()).unwrap()
+        self.get_main_dialog()
+            .find_name(Self::select_view_name().as_str())
+            .unwrap()
     }
 
     /// Returns instance of the EditView in TasksView.
     pub fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_main_dialog().find_name(Self::search_view_name().as_str()).unwrap()
+        self.get_main_dialog()
+            .find_name(Self::search_view_name().as_str())
+            .unwrap()
     }
 
     /// Updates tasks.
@@ -387,9 +375,8 @@ impl TasksView {
     fn update_tasks(&mut self, cursive: &mut Cursive) {
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        let project_tasks = cursive_data.update_return_tasks(
-            &cursive_data.selected_project.clone(),
-        );
+        let project_tasks =
+            cursive_data.update_return_tasks(&cursive_data.selected_project.clone());
 
         {
             tasks_select_view.clear();
@@ -405,10 +392,8 @@ impl TasksView {
         let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
         let jira_data = &cursive_data.jira_data;
-        let fit_tasks = jira_data.find_task_by_subname(
-            task_subname,
-            &cursive_data.selected_project,
-        );
+        let fit_tasks =
+            jira_data.find_task_by_subname(task_subname, &cursive_data.selected_project);
         if fit_tasks.is_empty() {
             tasks_select_view.clear();
         } else {
@@ -420,7 +405,7 @@ impl TasksView {
 }
 
 pub(crate) struct InfoView {
-    inner_view: NamedView<Dialog>
+    inner_view: NamedView<Dialog>,
 }
 
 impl Default for InfoView {
@@ -433,15 +418,17 @@ impl ViewWrapper for InfoView {
     type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
-        where
-            F: FnOnce(&Self::V) -> R {
-                Some(f(&self.inner_view))
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::V) -> R {
-                Some(f(&mut self.inner_view))
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
     }
 }
 
@@ -471,9 +458,8 @@ impl JiraView for InfoView {
     /// In fact, just recreate InfoView without data and
     /// add it to InfoLayout.
     fn update_view_content(&mut self, _: &mut Cursive) {
-        self.get_main_dialog().set_content(
-            Self::make_inner_view("", "")
-        );
+        self.get_main_dialog()
+            .set_content(Self::make_inner_view("", ""));
     }
 
     /// Sets new content of the InfoView.
@@ -482,9 +468,8 @@ impl JiraView for InfoView {
     /// create a completely new view, which we add
     /// new view.
     fn set_view_content(&mut self, content: Vec<&str>) {
-        self.get_main_dialog().set_content(
-            Self::make_inner_view(content[0], content[1])
-        );
+        self.get_main_dialog()
+            .set_content(Self::make_inner_view(content[0], content[1]));
     }
 
     /// Does the same as `set_view_content` method.
@@ -512,23 +497,17 @@ impl InfoView {
 
     fn make_summary_dialog(summary: &str) -> Dialog {
         Dialog::new()
-        .title("Задача")
-        .content(
-            cursive_markup::MarkupView::html(summary)
-                .with_name("summary_task_view")
-        )
+            .title("Задача")
+            .content(cursive_markup::MarkupView::html(summary).with_name("summary_task_view"))
     }
 
     fn make_description_dialog(description: &str) -> Dialog {
         Dialog::new()
             .title("Описание")
             .padding_lrtb(1, 1, 1, 1)
-            .content(
-                ScrollView::new(
-                    cursive_markup::MarkupView::html(description)
-                        .with_name("description_task_view")
-                )
-            )
+            .content(ScrollView::new(
+                cursive_markup::MarkupView::html(description).with_name("description_task_view"),
+            ))
     }
 
     /// Shows task information in InfoView.
@@ -556,23 +535,19 @@ impl InfoView {
             Ok((summary, desc)) => {
                 self.set_view_content(vec![summary.as_str(), desc.as_str()]);
                 TasksView::get_view(cursive);
-            },
-            Err(_) => {
-                cursive.add_layer(
-                    Dialog::new()
-                        .title("Task not found")
-                        .button("Ok", |cursive| {
-                            cursive.pop_layer();
-                        })
-                )
             }
+            Err(_) => cursive.add_layer(Dialog::new().title("Task not found").button(
+                "Ok",
+                |cursive| {
+                    cursive.pop_layer();
+                },
+            )),
         }
     }
 }
 
-
 pub struct ActionsView {
-    inner_view: Dialog
+    inner_view: Dialog,
 }
 
 impl Default for ActionsView {
@@ -584,9 +559,7 @@ impl Default for ActionsView {
         Self {
             inner_view: Dialog::new()
                 .title("Choose action")
-                .content(
-                    ScrollView::new(inner_action_view).full_height()
-                )
+                .content(ScrollView::new(inner_action_view).full_height()),
         }
     }
 }
@@ -595,15 +568,17 @@ impl ViewWrapper for ActionsView {
     type V = Dialog;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
-        where
-            F: FnOnce(&Self::V) -> R {
-                Some(f(&self.inner_view))
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::V) -> R {
-                Some(f(&mut self.inner_view))
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
     }
 }
 
@@ -615,30 +590,30 @@ impl ViewWrapper for BadConnectionView {
     type V = Dialog;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
-        where
-            F: FnOnce(&Self::V) -> R {
-                Some(f(&self.inner_view))
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::V) -> R {
-                Some(f(&mut self.inner_view))
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
     }
 }
 
 impl BadConnectionView {
-    pub fn new<T>(
-        error_text: &str,
-        try_again_fn: T,
-    ) -> Self
-    where T: 'static + Fn(&mut Cursive) {
+    pub fn new<T>(error_text: &str, try_again_fn: T) -> Self
+    where
+        T: 'static + Fn(&mut Cursive),
+    {
         Self {
-            inner_view:
-                Dialog::new()
-                    .title("Connection error!")
-                    .content(TextView::new(error_text))
-                    .button("Try again", try_again_fn)
+            inner_view: Dialog::new()
+                .title("Connection error!")
+                .content(TextView::new(error_text))
+                .button("Try again", try_again_fn),
         }
     }
 }

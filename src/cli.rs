@@ -1,15 +1,14 @@
 use clap::{arg, Args, Parser, Subcommand};
 
-
 #[derive(Parser, Debug)]
-struct Cli{
+struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    RegisterJira(RegisterJira)
+    RegisterJira(RegisterJira),
 }
 
 #[derive(Args, Debug)]
@@ -21,7 +20,7 @@ pub struct RegisterJira {
     #[arg(short, long)]
     pub password: String,
     #[arg(short, long)]
-    pub company_name: String
+    pub company_name: String,
 }
 
 impl RegisterJira {

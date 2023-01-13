@@ -1,8 +1,8 @@
-use serde_json::{Value};
-use serde::{Deserialize, Serialize};
-use std::io::Result;
 use crate::cli::RegisterJira;
 use base64;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::io::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Company {
@@ -57,12 +57,13 @@ impl Jira {
 
 impl JiraCompany {
     fn from_cli(reg_jira: RegisterJira) -> Self {
-        JiraCompany{
+        JiraCompany {
             link: reg_jira.link,
             company_name: reg_jira.company_name,
-            encoded_credentials: base64::encode(
-                format!("{}:{}", reg_jira.username, reg_jira.password),
-            ),
+            encoded_credentials: base64::encode(format!(
+                "{}:{}",
+                reg_jira.username, reg_jira.password
+            )),
             company_projects: None,
         }
     }
