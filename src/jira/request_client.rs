@@ -31,7 +31,7 @@ impl RequestClient {
         Self {
             client: Client::new(),
             jira_url:  Url::parse(jira_url).unwrap(),
-            request_credentials: request_credentials,
+            request_credentials,
         }
     }
 

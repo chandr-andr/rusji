@@ -20,6 +20,6 @@ pub fn make_dark_theme() -> Theme {
     Theme {
         shadow: true,
         borders: BorderStyle::Simple,
-        palette: palette,
+        palette,
     }
 }

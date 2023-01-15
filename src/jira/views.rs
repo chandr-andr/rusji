@@ -219,7 +219,7 @@ impl ProjectsView {
         let jira_data = &cursive_data.jira_data;
         let fit_projects = jira_data.find_project_by_subname(project_subname);
 
-        if fit_projects.len() == 0 {
+        if fit_projects.is_empty() {
             select_project_view.clear();
         } else {
             select_project_view.clear();

@@ -50,7 +50,7 @@ impl Company {
 }
 
 impl Jira {
-    pub fn new(json_cfg: Value) -> Self {
+    pub fn new(_json_cfg: Value) -> Self {
         todo!()
     }
 }
@@ -70,13 +70,13 @@ impl JiraCompany {
 }
 
 impl CompanyProject {
-    fn new(json_cfg: Value) -> Self {
+    fn new(_json_cfg: Value) -> Self {
         todo!()
     }
 }
 
 impl ProjectTask {
-    fn new(json_cfg: Value) -> Self {
+    fn new(_json_cfg: Value) -> Self {
         todo!();
     }
 }

@@ -15,7 +15,7 @@ struct CursiveUserData<'a> {
 impl<'a> CursiveUserData<'static> {
     fn new(config: Config) -> Self {
         CursiveUserData {
-            config: config,
+            config,
             to_find_names: Vec::default(),
         }
     }
@@ -138,7 +138,7 @@ fn success_dialog(cursive: &mut Cursive, success_text: &str) {
             .title("Success!")
             .content(TextView::new(success_text))
             .padding_lrtb(1, 1, 1, 1)
-            .button("OK", |cursive: &mut Cursive| set_start_screen(cursive)),
+            .button("OK", set_start_screen),
     )
 }
 

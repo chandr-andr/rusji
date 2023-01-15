@@ -15,14 +15,14 @@ impl ViewWrapper for TasksProjectsLayout {
     where
         F: FnOnce(&Self::V) -> R,
     {
-        return Some(f(&self.inner_layout));
+        Some(f(&self.inner_layout))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        return Some(f(&mut self.inner_layout));
+        Some(f(&mut self.inner_layout))
     }
 }
 
@@ -56,14 +56,14 @@ impl ViewWrapper for InfoLayout {
     where
         F: FnOnce(&Self::V) -> R,
     {
-        return Some(f(&self.inner_layout));
+        Some(f(&self.inner_layout))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        return Some(f(&mut self.inner_layout));
+        Some(f(&mut self.inner_layout))
     }
 }
 
@@ -98,14 +98,14 @@ impl ViewWrapper for ActionsLayout {
     where
         F: FnOnce(&Self::V) -> R,
     {
-        return Some(f(&self.inner_layout));
+        Some(f(&self.inner_layout))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        return Some(f(&mut self.inner_layout));
+        Some(f(&mut self.inner_layout))
     }
 }
 

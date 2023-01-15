@@ -1,7 +1,7 @@
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{self};
 use std::collections::HashMap;
-use std::marker::PhantomData;
+
 
 use crate::request_client::RequestClient;
 use crate::errors::RusjiResult;
@@ -14,7 +14,7 @@ pub(crate) struct CursiveJiraData {
 impl CursiveJiraData {
     pub fn new(jira_data: JiraData) -> Self {
         CursiveJiraData {
-            jira_data: jira_data,
+            jira_data,
             selected_project: String::default(),
         }
     }
