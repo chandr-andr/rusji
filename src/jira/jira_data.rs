@@ -101,6 +101,10 @@ impl<'de> Deserialize<'de> for JiraTask {
     }
 }
 
+struct JiraTaskStatus {
+
+}
+
 /// JiraIssues holds all necessary information
 /// about task to interact with it.
 #[derive(Serialize, Deserialize, Debug)]
@@ -145,11 +149,10 @@ pub struct JiraData<'a> {
 impl<'a> JiraData<'a> {
     pub fn new(jira_url: &str) -> Self {
         let jira_url = Url::parse(jira_url).unwrap();
-        let client = Client::new();
         JiraData {
             projects: None,
             jira_url: jira_url,
-            client: client,
+            client: Client::new(),
             get_projects_url: "/rest/api/2/project",
             get_project_tasks_url: "/rest/api/2/search?jql=project=PRJ&expand=renderedFields",
             get_task_url: "/rest/api/2/issue/TASK?expand=renderedFields",
