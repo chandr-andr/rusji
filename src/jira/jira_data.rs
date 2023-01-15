@@ -1,40 +1,37 @@
-use reqwest::blocking::{Client, Response};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{self};
-use std::{
-    collections::HashMap,
-    io::{Error, ErrorKind, Result as ioResult},
-};
-use url::Url;
+use std::collections::HashMap;
+use std::marker::PhantomData;
 
-pub(crate) struct CursiveJiraData<'a> {
-    pub jira_data: JiraData<'a>,
+use crate::request_client::RequestClient;
+use crate::errors::RusjiResult;
+
+pub(crate) struct CursiveJiraData {
+    pub jira_data: JiraData,
     pub selected_project: String,
-    pub encoded_creds: String,
 }
 
-impl<'a> CursiveJiraData<'a> {
-    pub fn new(encoded_creds: String, jira_data: JiraData<'a>) -> Self {
+impl CursiveJiraData {
+    pub fn new(jira_data: JiraData) -> Self {
         CursiveJiraData {
-            encoded_creds: encoded_creds,
             jira_data: jira_data,
             selected_project: String::default(),
         }
     }
 
-    pub fn update_projects(&mut self) -> ioResult<()> {
-        self.jira_data.update_projects(&self.encoded_creds)?;
+    pub fn update_projects(&mut self) -> RusjiResult<()> {
+        self.jira_data.update_projects()?;
         Ok(())
     }
 
-    pub fn update_return_projects(&mut self) -> ioResult<Vec<&str>> {
+    pub fn update_return_projects(&mut self) -> RusjiResult<Vec<&str>> {
         self.update_projects()?;
         Ok(self.jira_data.get_projects_names())
     }
 
     pub fn update_tasks(&mut self, project_name: &str) {
         self.jira_data
-            .update_tasks(project_name, &self.encoded_creds)
+            .update_tasks(project_name)
             .unwrap();
     }
 
@@ -137,33 +134,24 @@ impl JiraProject {
 }
 
 /// Struct with data about company jira.
-pub struct JiraData<'a> {
+pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
-    jira_url: Url,
-    client: Client,
-    get_projects_url: &'a str,
-    get_project_tasks_url: &'a str,
-    get_task_url: &'a str,
+    client: RequestClient,
 }
 
-impl<'a> JiraData<'a> {
-    pub fn new(jira_url: &str) -> Self {
-        let jira_url = Url::parse(jira_url).unwrap();
+impl JiraData {
+    pub fn new(jira_url: &str, request_credentials: &str) -> Self {
         JiraData {
             projects: None,
-            jira_url: jira_url,
-            client: Client::new(),
-            get_projects_url: "/rest/api/2/project",
-            get_project_tasks_url: "/rest/api/2/search?jql=project=PRJ&expand=renderedFields",
-            get_task_url: "/rest/api/2/issue/TASK?expand=renderedFields",
+            client: RequestClient::new(request_credentials.to_string(), jira_url),
         }
     }
 
-    pub fn update_projects(&mut self, encoded_creds: &str) -> ioResult<()> {
-        let url = self.jira_url.join(self.get_projects_url).unwrap();
-        let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
+    pub fn update_projects(&mut self) -> RusjiResult<()> {
+        let binding = self.client.get_jira_projects()?;
+        let resp_text = binding.get_body();
 
-        let projects = serde_json::from_str::<Vec<JiraProject>>(resp_text.as_str())?;
+        let projects = serde_json::from_str::<Vec<JiraProject>>(resp_text)?;
         let projects_field = self.make_projects_field(projects);
 
         self.projects = Some(projects_field);
@@ -178,15 +166,11 @@ impl<'a> JiraData<'a> {
         to_return_projects_names
     }
 
-    pub fn update_tasks(&mut self, project_name: &str, encoded_creds: &str) -> ioResult<()> {
-        let url = self
-            .jira_url
-            .join(&self.get_project_tasks_url.replace("PRJ", project_name))
-            .unwrap();
-        let response = self.make_get_request(url, encoded_creds)?;
-        let resp_text = response.text().unwrap();
+    pub fn update_tasks(&mut self, project_name: &str) -> RusjiResult<()> {
+        let binding = self.client.get_tasks_from_project(project_name)?;
+        let resp_text = binding.get_body();
 
-        let tasks = serde_json::from_str::<JiraIssues>(resp_text.as_str())?.issues;
+        let tasks = serde_json::from_str::<JiraIssues>(resp_text)?.issues;
         let tasks_field = self.make_tasks_field(tasks);
 
         let mut project = self.get_mut_project(project_name);
@@ -202,7 +186,7 @@ impl<'a> JiraData<'a> {
 
     pub fn get_task_description(&self, project_name: &str, task_name: &str) -> (&str, &str) {
         let project = self.get_project(project_name);
-        let task = self.get_task(project, task_name);
+        let task = project.tasks.as_ref().unwrap().get(task_name).unwrap();
 
         (&task.summary, &task.description)
     }
@@ -249,9 +233,8 @@ impl<'a> JiraData<'a> {
         &mut self,
         task_key: &str,
         selected_project: &str,
-        encoded_creds: &str,
-    ) -> ioResult<(String, String)> {
-        let mut url = self.jira_url.clone();
+    ) -> RusjiResult<(String, String)> {
+        let mut selected_task_key: String = String::default();
         match task_key.parse::<usize>() {
             Ok(_) => {
                 let selected_projects_key = &self
@@ -261,21 +244,16 @@ impl<'a> JiraData<'a> {
                     .get(selected_project)
                     .unwrap()
                     .key;
-                url = url
-                    .join(&self.get_task_url.replace(
-                        "TASK",
-                        format!("{}-{}", selected_projects_key, task_key).as_str(),
-                    ))
-                    .unwrap();
+
+                selected_task_key = format!("{}-{}", selected_projects_key, task_key);
             }
             Err(_) => {
-                url = url
-                    .join(&self.get_task_url.replace("TASK", task_key))
-                    .unwrap();
+                selected_task_key = task_key.to_string();
             }
         }
-        let resp_text = self.make_get_request(url, encoded_creds)?.text().unwrap();
-        let task = serde_json::from_str::<JiraTask>(resp_text.as_str())?;
+        let binding = self.client.get_task(&selected_task_key)?;
+        let resp_text = binding.get_body();
+        let task = serde_json::from_str::<JiraTask>(resp_text)?;
         let return_data = (task.summary.clone(), task.description.clone());
 
         let mut project = self
@@ -297,25 +275,6 @@ impl<'a> JiraData<'a> {
         }
 
         Ok(return_data)
-    }
-
-    fn make_get_request(&self, url: Url, encoded_creds: &str) -> ioResult<Response> {
-        let response = self
-            .client
-            .get(url)
-            .header("Authorization", format!("Basic {encoded_creds}"))
-            .header("Content-Type", "application/json")
-            .send();
-        match response {
-            Ok(response) => {
-                if response.status().is_success() {
-                    Ok(response)
-                } else {
-                    Err(Error::new(ErrorKind::Other, "Bad response status"))
-                }
-            }
-            Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
-        }
     }
 
     fn make_projects_field(&self, projects: Vec<JiraProject>) -> HashMap<String, JiraProject> {
@@ -346,9 +305,9 @@ impl<'a> JiraData<'a> {
             .unwrap()
     }
 
-    fn get_task(&self, project: &'a JiraProject, task_name: &str) -> &'a JiraTask {
-        project.tasks.as_ref().unwrap().get(task_name).unwrap()
-    }
+    // fn get_task(&self, project: &'a JiraProject, task_name: &str) -> &'a JiraTask {
+    //     project.tasks.as_ref().unwrap().get(task_name).unwrap()
+    // }
 }
 
 #[cfg(test)]

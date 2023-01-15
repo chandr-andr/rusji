@@ -15,13 +15,11 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     add_global_callbacks(cursive);
     let config = Config::new().unwrap();
     let jira = config.get_jira_by_company(company_name).unwrap();
-    let jira_data = JiraData::new(jira.get_url());
-    let encoded_creds = config
-        .get_jira_by_company(company_name)
-        .unwrap()
-        .get_encoded_creds()
-        .to_string();
-    let cursive_data = CursiveJiraData::new(encoded_creds, jira_data);
+    let jira_data = JiraData::new(
+        jira.get_url(),
+        jira.get_encoded_creds(),
+    );
+    let cursive_data = CursiveJiraData::new(jira_data);
     cursive.set_user_data(cursive_data);
 
     let screen_size = cursive.screen_size();

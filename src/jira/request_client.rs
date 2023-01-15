@@ -1,4 +1,4 @@
-use reqwest::blocking::{Client, Response};
+use reqwest::blocking::Client;
 use url::Url;
 use crate::errors::RusjiError;
 

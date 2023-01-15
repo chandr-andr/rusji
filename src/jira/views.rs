@@ -530,7 +530,6 @@ impl InfoView {
         match cursive_data.jira_data.get_new_task(
             task_key,
             &cursive_data.selected_project,
-            &cursive_data.encoded_creds,
         ) {
             Ok((summary, desc)) => {
                 self.set_view_content(vec![summary.as_str(), desc.as_str()]);
