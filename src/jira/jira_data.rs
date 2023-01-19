@@ -52,6 +52,18 @@ pub struct JiraTask {
     key: String,
     description: String,
     summary: String,
+    status: JiraTaskStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct JiraTaskStatus {
+    #[serde(alias = "self")]
+    link: String,
+    description: String,
+    #[serde(alias = "iconUrl")]
+    icon_url: String,
+    name: String,
+    id: String,
 }
 
 impl<'de> Deserialize<'de> for JiraTask {
@@ -68,6 +80,7 @@ impl<'de> Deserialize<'de> for JiraTask {
             fields: Fields,
             #[serde(default = "default_rendered_fields", alias = "renderedFields")]
             rendered_fields: RenderedFields,
+            status: JiraTaskStatus,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -94,12 +107,9 @@ impl<'de> Deserialize<'de> for JiraTask {
             key: task.key,
             description: task.rendered_fields.description,
             summary: task.fields.summary,
+            status: task.status,
         })
     }
-}
-
-struct JiraTaskStatus {
-
 }
 
 /// JiraIssues holds all necessary information

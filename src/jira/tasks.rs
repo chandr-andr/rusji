@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -34,4 +36,23 @@ struct StatusCategory {
     id: usize,
     key: String,
     name: String,
+}
+
+impl TaskTypes {
+    /// Returns hashmap with keys task type name and values hashset with statuses ids.
+    fn task_type_name_and_status_ids(&self) -> HashMap<&str, HashSet<usize>> {
+        let mut type_name_status_ids: HashMap<&str, HashSet<usize>> = HashMap::new();
+
+        for task_type in &self.types {
+            let mut status_ids: HashSet<usize> = HashSet::new();
+
+            for task_status in &task_type.statuses {
+                status_ids.insert(task_status.id);
+            }
+
+            type_name_status_ids.insert(&task_type.name, status_ids);
+        }
+
+        type_name_status_ids
+    }
 }
