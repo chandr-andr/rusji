@@ -338,6 +338,20 @@ mod tests {
             },
             "renderedFields": {
                 "description": "test"
+            },
+            "status": {
+                "self": "https://jira.zxz.su/rest/api/2/status/10104",
+                "description": "Задача завершена",
+                "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
+                "name": "DONE",
+                "id": "10104",
+                "statusCategory": {
+                    "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Выполнено"
+                }
             }
         }
         "#;
