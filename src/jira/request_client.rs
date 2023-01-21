@@ -1,6 +1,6 @@
+use crate::errors::RusjiError;
 use reqwest::blocking::Client;
 use url::Url;
-use crate::errors::RusjiError;
 
 /// Struct for request response.
 ///
@@ -19,7 +19,7 @@ impl RequestResponse {
 /// Struct for request client
 ///
 /// Can make request and return a response or an RusjiError.
-pub (crate) struct RequestClient {
+pub(crate) struct RequestClient {
     client: Client,
     jira_url: Url,
     request_credentials: String,
@@ -30,7 +30,7 @@ impl RequestClient {
     pub fn new(request_credentials: String, jira_url: &str) -> Self {
         Self {
             client: Client::new(),
-            jira_url:  Url::parse(jira_url).unwrap(),
+            jira_url: Url::parse(jira_url).unwrap(),
             request_credentials,
         }
     }
@@ -41,22 +41,24 @@ impl RequestClient {
     }
 
     /// Returns all tasks from project.
-    pub fn get_tasks_from_project(&self, project_name: &str) -> Result<RequestResponse, RusjiError> {
-        let project_tasks_endpoint = format!(
-            "/rest/api/2/search?jql=project={project_name}&expand=renderedFields",
-        );
+    pub fn get_tasks_from_project(
+        &self,
+        project_name: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        let project_tasks_endpoint =
+            format!("/rest/api/2/search?jql=project={project_name}&expand=renderedFields",);
         self.make_request(self.jira_url.join(&project_tasks_endpoint).unwrap())
     }
 
     /// Returns new task.
     pub fn get_task(&self, task_key: &str) -> Result<RequestResponse, RusjiError> {
         self.make_request(
-            self.jira_url.join(
-                &format!(
+            self.jira_url
+                .join(&format!(
                     "/rest/api/2/issue/{}?expand=renderedFields",
                     task_key
-                ),
-            ).unwrap(),
+                ))
+                .unwrap(),
         )
     }
 
@@ -74,6 +76,8 @@ impl RequestClient {
             .header("Content-Type", "application/json")
             .send()?
             .text()?;
-        Ok(RequestResponse{ body: response_text })
+        Ok(RequestResponse {
+            body: response_text,
+        })
     }
 }

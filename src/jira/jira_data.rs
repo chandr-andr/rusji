@@ -2,9 +2,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{self};
 use std::collections::HashMap;
 
-
-use crate::request_client::RequestClient;
 use crate::errors::RusjiResult;
+use crate::request_client::RequestClient;
 
 pub(crate) struct CursiveJiraData {
     pub jira_data: JiraData,
@@ -30,9 +29,7 @@ impl CursiveJiraData {
     }
 
     pub fn update_tasks(&mut self, project_name: &str) {
-        self.jira_data
-            .update_tasks(project_name)
-            .unwrap();
+        self.jira_data.update_tasks(project_name).unwrap();
     }
 
     pub fn update_return_tasks(&mut self, project_name: &str) -> Vec<String> {
@@ -244,7 +241,7 @@ impl JiraData {
         task_key: &str,
         selected_project: &str,
     ) -> RusjiResult<(String, String)> {
-        let mut selected_task_key: String = String::default();
+        let selected_task_key;
         match task_key.parse::<usize>() {
             Ok(_) => {
                 let selected_projects_key = &self

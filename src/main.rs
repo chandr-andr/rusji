@@ -1,12 +1,12 @@
 mod cli;
 mod config;
 mod constance;
+mod errors;
 mod jira;
 mod screen;
 mod startup;
 mod theme;
 mod utils;
-mod errors;
 pub use crate::cli::*;
 pub use crate::config::*;
 pub use crate::jira::*;

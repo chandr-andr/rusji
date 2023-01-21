@@ -2,8 +2,9 @@ use super::{
     global_callbacks::add_global_callbacks,
     jira_data::{CursiveJiraData, JiraData},
     layouts::{ActionsLayout, InfoLayout, TasksProjectsLayout},
-    views::{JiraView, ProjectsView},
 };
+use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
+
 use crate::Config;
 use cursive::{
     view::{Nameable, Resizable},
@@ -15,10 +16,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     add_global_callbacks(cursive);
     let config = Config::new().unwrap();
     let jira = config.get_jira_by_company(company_name).unwrap();
-    let jira_data = JiraData::new(
-        jira.get_url(),
-        jira.get_encoded_creds(),
-    );
+    let jira_data = JiraData::new(jira.get_url(), jira.get_encoded_creds());
     let cursive_data = CursiveJiraData::new(jira_data);
     cursive.set_user_data(cursive_data);
 

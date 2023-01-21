@@ -1,4 +1,4 @@
-use super::views::{ProjectsView, TasksView};
+use crate::jira::{projects::views::ProjectsView, tasks::views::TasksView};
 use cursive::Cursive;
 
 pub(crate) fn add_global_callbacks(cursive: &mut Cursive) {

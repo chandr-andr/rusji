@@ -1,4 +1,8 @@
-use super::views::{ActionsView, InfoView, JiraView, ProjectsView, TasksView};
+use crate::jira::{
+    common::views::JiraView,
+    projects::views::ProjectsView,
+    tasks::views::{ActionsView, InfoView, TasksView},
+};
 use cursive::{
     view::{Nameable, Resizable, ViewWrapper},
     views::{DummyView, LinearLayout, NamedView},
