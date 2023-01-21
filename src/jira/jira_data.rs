@@ -77,12 +77,12 @@ impl<'de> Deserialize<'de> for JiraTask {
             fields: Fields,
             #[serde(default = "default_rendered_fields", alias = "renderedFields")]
             rendered_fields: RenderedFields,
-            status: JiraTaskStatus,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
         struct Fields {
             summary: String,
+            status: JiraTaskStatus,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -104,7 +104,7 @@ impl<'de> Deserialize<'de> for JiraTask {
             key: task.key,
             description: task.rendered_fields.description,
             summary: task.fields.summary,
-            status: task.status,
+            status: task.fields.status,
         })
     }
 }

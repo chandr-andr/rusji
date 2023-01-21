@@ -111,7 +111,7 @@ impl JiraView for TasksView {
 
     /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        self.update_tasks(cursive)
+        self.update_tasks(cursive);
     }
 
     /// Sets new content for SelectView in TasksView from passed `content`.
@@ -162,7 +162,6 @@ impl TasksView {
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         let project_tasks =
             cursive_data.update_return_tasks(&cursive_data.selected_project.clone());
-
         {
             tasks_select_view.clear();
             tasks_select_view.add_all_str(project_tasks);
@@ -319,7 +318,7 @@ impl InfoView {
             Ok((summary, desc)) => {
                 self.set_view_content(vec![summary.as_str(), desc.as_str()]);
                 TasksView::get_view(cursive);
-            }
+            },
             Err(_) => cursive.add_layer(Dialog::new().title("Task not found").button(
                 "Ok",
                 |cursive| {
