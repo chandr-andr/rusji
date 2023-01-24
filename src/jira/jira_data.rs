@@ -1,9 +1,11 @@
-use serde::{Deserialize, Serialize};
 use serde_json::{self};
 use std::collections::HashMap;
 
 use crate::errors::RusjiResult;
-use crate::jira::tasks::data::{JiraIssues, JiraTask};
+use crate::jira::{
+    tasks::data::{JiraIssues, JiraTask},
+    projects::data::{JiraProject}
+};
 use crate::request_client::RequestClient;
 
 pub(crate) struct CursiveJiraData {
@@ -42,30 +44,6 @@ impl CursiveJiraData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct JiraProject {
-    #[serde(alias = "self")]
-    link: String,
-    id: String,
-    key: String,
-    name: String,
-    #[serde(skip_serializing, skip_deserializing)]
-    tasks: Option<HashMap<String, JiraTask>>,
-}
-
-impl JiraProject {
-    fn tasks_names(&self) -> Option<Vec<String>> {
-        let mut tasks_names: Vec<String> = Vec::default();
-        if let Some(tasks) = self.tasks.as_ref() {
-            for task in tasks.values() {
-                tasks_names.push(format!("{} -- {}", &task.key, &task.summary));
-            }
-            return Some(tasks_names);
-        }
-        None
-    }
-}
-
 /// Struct with data about company jira.
 pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
@@ -74,8 +52,8 @@ pub struct JiraData {
 
 impl JiraData {
     pub fn new(jira_url: &str, request_credentials: &str) -> Self {
-        JiraData {
-            projects: None,
+        Self {
+            projects: Option::<HashMap<String, JiraProject>>::default(),
             client: RequestClient::new(request_credentials.to_string(), jira_url),
         }
     }
