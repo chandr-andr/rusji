@@ -318,7 +318,7 @@ impl InfoView {
             Ok((summary, desc)) => {
                 self.set_view_content(vec![summary.as_str(), desc.as_str()]);
                 TasksView::get_view(cursive);
-            },
+            }
             Err(_) => cursive.add_layer(Dialog::new().title("Task not found").button(
                 "Ok",
                 |cursive| {

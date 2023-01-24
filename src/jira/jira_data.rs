@@ -1,8 +1,9 @@
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{self};
 use std::collections::HashMap;
 
 use crate::errors::RusjiResult;
+use crate::jira::tasks::data::{JiraIssues, JiraTask};
 use crate::request_client::RequestClient;
 
 pub(crate) struct CursiveJiraData {
@@ -39,81 +40,6 @@ impl CursiveJiraData {
         }
         Vec::<String>::default()
     }
-}
-
-#[derive(Serialize, Debug)]
-pub struct JiraTask {
-    id: String,
-    #[serde(alias = "self")]
-    link: String,
-    key: String,
-    description: String,
-    summary: String,
-    status: JiraTaskStatus,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct JiraTaskStatus {
-    #[serde(alias = "self")]
-    link: String,
-    description: String,
-    #[serde(alias = "iconUrl")]
-    icon_url: String,
-    name: String,
-    id: String,
-}
-
-impl<'de> Deserialize<'de> for JiraTask {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Serialize, Deserialize, Debug)]
-        struct Task {
-            id: String,
-            #[serde(alias = "self")]
-            link: String,
-            key: String,
-            fields: Fields,
-            #[serde(default = "default_rendered_fields", alias = "renderedFields")]
-            rendered_fields: RenderedFields,
-        }
-
-        #[derive(Serialize, Deserialize, Debug)]
-        struct Fields {
-            summary: String,
-            status: JiraTaskStatus,
-        }
-
-        #[derive(Serialize, Deserialize, Debug)]
-        struct RenderedFields {
-            description: String,
-        }
-
-        fn default_rendered_fields() -> RenderedFields {
-            RenderedFields {
-                description: "No description".to_string(),
-            }
-        }
-
-        let task = Task::deserialize(deserializer)?;
-
-        Ok(JiraTask {
-            id: task.id,
-            link: task.link,
-            key: task.key,
-            description: task.rendered_fields.description,
-            summary: task.fields.summary,
-            status: task.fields.status,
-        })
-    }
-}
-
-/// JiraIssues holds all necessary information
-/// about task to interact with it.
-#[derive(Serialize, Deserialize, Debug)]
-struct JiraIssues {
-    issues: Vec<JiraTask>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -257,7 +183,7 @@ impl JiraData {
             Err(_) => {
                 selected_task_key = task_key.to_string();
             }
-        }
+        };
         let binding = self.client.get_task(&selected_task_key)?;
         let resp_text = binding.get_body();
         let task = serde_json::from_str::<JiraTask>(resp_text)?;
