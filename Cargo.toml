@@ -20,3 +20,4 @@ reqwest = { version = "0.11.13", features = ["blocking", "json"] }
 url = "2.3.1"
 cursive-markup = "0.3.0"
 thiserror = "1.0.38"
+rusty_pool = "0.7.0"

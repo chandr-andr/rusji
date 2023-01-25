@@ -1,8 +1,36 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::jira::tasks::data::JiraTask;
+use crate::{
+    jira::tasks::data::{JiraTask, TaskTypes},
+};
+
+pub type JiraProjects = Vec<JiraProject>;
+// pub struct JiraProjects {
+//     pub projects: Vec<JiraProject>,
+// }
+
+// impl IntoIterator for JiraProjects {
+//     type Item = JiraProject;
+//     type IntoIter = std::vec::IntoIter<Self::Item>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.projects.into_iter()
+//     }
+// }
+
+// impl JiraProjects {
+//     pub fn new(request_client: Arc<RwLock<RequestClient>>) -> RusjiResult<Self> {
+//         let response = request_client.read().unwrap().get_jira_projects()?;
+//         let resp_text = response.get_body();
+
+//         let projects = serde_json::from_str::<JiraProjects>(resp_text)?;
+//         Ok(projects)
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraProject {
@@ -13,6 +41,8 @@ pub struct JiraProject {
     pub name: String,
     #[serde(skip_serializing, skip_deserializing)]
     pub tasks: Option<HashMap<String, JiraTask>>,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub tasks_types: Option<TaskTypes>,
 }
 
 impl JiraProject {

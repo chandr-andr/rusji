@@ -7,6 +7,7 @@ mod screen;
 mod startup;
 mod theme;
 mod utils;
+
 pub use crate::cli::*;
 pub use crate::config::*;
 pub use crate::jira::*;

@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use cursive::View;
 use cursive::{
     view::{Finder, Nameable, Resizable, Scrollable, ViewWrapper},
@@ -12,7 +14,7 @@ use crate::jira::common::views::JiraView;
 use crate::jira::constance::{
     ACTIONS_SELECT_VIEW_NAME, INNER_CENTER_TOP_VIEW_ALIGN, INNER_LEFT_TOP_VIEW_ALIGN,
 };
-use crate::jira::jira_data::CursiveJiraData;
+use crate::jira_data::JiraData;
 
 pub(crate) struct TasksView {
     inner_view: NamedView<Dialog>,
@@ -159,9 +161,14 @@ impl TasksView {
     /// After updating focus on TasksView.
     fn update_tasks(&mut self, cursive: &mut Cursive) {
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        let project_tasks =
-            cursive_data.update_return_tasks(&cursive_data.selected_project.clone());
+
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let selected_project = jira_data.read().unwrap().selected_project.clone();
+
+        let project_tasks = jira_data
+            .write()
+            .unwrap()
+            .update_return_tasks(selected_project.as_str());
         {
             tasks_select_view.clear();
             tasks_select_view.add_all_str(project_tasks);
@@ -169,26 +176,30 @@ impl TasksView {
         }
 
         cursive.focus_name(&TasksView::view_name()).unwrap();
+        cursive.set_user_data(jira_data);
     }
 
     /// Tries to find task to display it.
     fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
-        let cursive_data: CursiveJiraData = cursive.take_user_data().unwrap();
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data_clone = jira_data.clone();
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
-        let jira_data = &cursive_data.jira_data;
-        let fit_tasks =
-            jira_data.find_task_by_subname(task_subname, &cursive_data.selected_project);
+
+        let jira_data_guard = jira_data_clone.read().unwrap();
+        let fit_tasks = jira_data_guard.find_task_by_subname(
+            task_subname,
+            jira_data_guard.selected_project.clone().as_str(),
+        );
+
         if fit_tasks.is_empty() {
             tasks_select_view.clear();
         } else {
             tasks_select_view.clear();
             for task in fit_tasks {
-                tasks_select_view.add_item_str(
-                    format!("{} -- {}", task.key, task.summary),
-                );
+                tasks_select_view.add_item_str(format!("{} -- {}", task.key, task.summary));
             }
         }
-        cursive.set_user_data(cursive_data);
+        cursive.set_user_data(jira_data);
     }
 }
 
@@ -300,12 +311,13 @@ impl InfoView {
 
     /// Shows task information in InfoView.
     fn show_info_on_select(&mut self, cursive: &mut Cursive, task_name: &str) {
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
+        let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+        let selected_project = jira_data.read().unwrap().selected_project.clone();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
-        let task = cursive_data
-            .jira_data
-            .get_project(&cursive_data.selected_project)
+        let jira_data_guard = jira_data.read().unwrap();
+        let task = jira_data_guard
+            .get_project(&selected_project)
             .get_task(task_key[0]);
 
         self.set_view_content(vec![&task.summary, &task.description]);
@@ -315,11 +327,8 @@ impl InfoView {
     ///
     /// If task isn't found display new view with error text.
     fn make_http_search(&mut self, cursive: &mut Cursive, task_key: &str) {
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        match cursive_data
-            .jira_data
-            .get_new_task(task_key, &cursive_data.selected_project)
-        {
+        let mut jira_data: JiraData = cursive.take_user_data().unwrap();
+        match jira_data.get_new_task(task_key) {
             Ok((summary, desc)) => {
                 self.set_view_content(vec![summary.as_str(), desc.as_str()]);
                 TasksView::get_view(cursive);

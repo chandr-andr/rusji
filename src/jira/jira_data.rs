@@ -3,58 +3,33 @@ use std::collections::HashMap;
 
 use crate::errors::RusjiResult;
 use crate::jira::{
+    projects::data::JiraProject,
     tasks::data::{JiraIssues, JiraTask},
-    projects::data::{JiraProject}
 };
 use crate::request_client::RequestClient;
 
-pub(crate) struct CursiveJiraData {
-    pub jira_data: JiraData,
-    pub selected_project: String,
-}
+use super::projects::data::JiraProjects;
+use super::tasks::data::TaskTypes;
 
-impl CursiveJiraData {
-    pub fn new(jira_data: JiraData) -> Self {
-        CursiveJiraData {
-            jira_data,
-            selected_project: String::default(),
-        }
-    }
-
-    pub fn update_projects(&mut self) -> RusjiResult<()> {
-        self.jira_data.update_projects()?;
-        Ok(())
-    }
-
-    pub fn update_return_projects(&mut self) -> RusjiResult<Vec<&str>> {
-        self.update_projects()?;
-        Ok(self.jira_data.get_projects_names())
-    }
-
-    pub fn update_tasks(&mut self, project_name: &str) {
-        self.jira_data.update_tasks(project_name).unwrap();
-    }
-
-    pub fn update_return_tasks(&mut self, project_name: &str) -> Vec<String> {
-        self.update_tasks(project_name);
-        if let Some(tasks) = self.jira_data.get_project(project_name).tasks_names() {
-            return tasks;
-        }
-        Vec::<String>::default()
-    }
-}
+use rusty_pool::ThreadPool;
 
 /// Struct with data about company jira.
 pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
-    client: RequestClient,
+    task_types: Option<TaskTypes>,
+    pub client: RequestClient,
+    pub thread_pool: ThreadPool,
+    pub selected_project: String,
 }
 
 impl JiraData {
     pub fn new(jira_url: &str, request_credentials: &str) -> Self {
         Self {
             projects: None,
+            task_types: None,
             client: RequestClient::new(request_credentials.to_string(), jira_url),
+            thread_pool: ThreadPool::default(),
+            selected_project: String::default(),
         }
     }
 
@@ -63,18 +38,27 @@ impl JiraData {
     }
 
     pub fn get_mut_project(&mut self, project_name: &str) -> &mut JiraProject {
-        self.projects.as_mut().unwrap().get_mut(project_name).unwrap()
+        self.projects
+            .as_mut()
+            .unwrap()
+            .get_mut(project_name)
+            .unwrap()
     }
 
     pub fn update_projects(&mut self) -> RusjiResult<()> {
         let binding = self.client.get_jira_projects()?;
         let resp_text = binding.get_body();
 
-        let projects = serde_json::from_str::<Vec<JiraProject>>(resp_text)?;
+        let projects = serde_json::from_str::<JiraProjects>(resp_text)?;
         let projects_field = self.make_projects_field(projects);
 
         self.projects = Some(projects_field);
         Ok(())
+    }
+
+    pub fn update_return_projects(&mut self) -> RusjiResult<Vec<&str>> {
+        self.update_projects()?;
+        Ok(self.get_projects_names())
     }
 
     pub fn get_projects_names(&self) -> Vec<&str> {
@@ -98,6 +82,14 @@ impl JiraData {
         Ok(())
     }
 
+    pub fn update_return_tasks(&mut self, project_name: &str) -> Vec<String> {
+        let _ = self.update_tasks(project_name);
+        if let Some(tasks) = self.get_project(project_name).tasks_names() {
+            return tasks;
+        }
+        Vec::<String>::default()
+    }
+
     pub fn find_project_by_subname(&self, project_subname: &str) -> Vec<&str> {
         let mut fit_projects: Vec<&str> = Vec::new();
         for project_name in self.projects.as_ref().unwrap().keys() {
@@ -114,7 +106,11 @@ impl JiraData {
         fit_projects
     }
 
-    pub fn find_task_by_subname(&self, task_subname: &str, selected_project: &str) -> Vec<&JiraTask> {
+    pub fn find_task_by_subname(
+        &self,
+        task_subname: &str,
+        selected_project: &str,
+    ) -> Vec<&JiraTask> {
         let mut fit_tasks: Vec<&JiraTask> = Vec::new();
         let project = self.get_project(selected_project);
         for (task_name, task) in project.tasks.as_ref().unwrap().iter() {
@@ -131,15 +127,11 @@ impl JiraData {
         fit_tasks
     }
 
-    pub fn get_new_task(
-        &mut self,
-        task_key: &str,
-        selected_project: &str,
-    ) -> RusjiResult<(String, String)> {
+    pub fn get_new_task(&mut self, task_key: &str) -> RusjiResult<(String, String)> {
         let selected_task_key;
         match task_key.parse::<usize>() {
             Ok(_) => {
-                let selected_projects_key = &self.get_project(selected_project).key;
+                let selected_projects_key = &self.get_project(&self.selected_project).key;
                 selected_task_key = format!("{}-{}", selected_projects_key, task_key);
             }
             Err(_) => {
@@ -151,7 +143,7 @@ impl JiraData {
         let task = serde_json::from_str::<JiraTask>(resp_text)?;
         let return_data = (task.summary.clone(), task.description.clone());
 
-        let mut project = self.get_mut_project(selected_project);
+        let mut project = self.get_mut_project(&self.selected_project.clone());
 
         match project.tasks.as_mut() {
             Some(tasks) => {
@@ -167,7 +159,7 @@ impl JiraData {
         Ok(return_data)
     }
 
-    fn make_projects_field(&self, projects: Vec<JiraProject>) -> HashMap<String, JiraProject> {
+    fn make_projects_field(&self, projects: JiraProjects) -> HashMap<String, JiraProject> {
         let mut projects_hashmap: HashMap<String, JiraProject> = HashMap::default();
         for project in projects {
             projects_hashmap.insert(project.name.clone(), project);
@@ -218,6 +210,17 @@ mod tests {
                 }
             }
         }
+        "#;
+
+        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
+    }
+
+    #[test]
+    fn test_deserialize_projects() {
+        let json_task_str = r#"
+        [
+
+        ]
         "#;
 
         serde_json::from_str::<JiraTask>(json_task_str).unwrap();

@@ -66,7 +66,10 @@ impl RequestClient {
     pub fn get_task_statuses(&self, project_name: &str) -> Result<RequestResponse, RusjiError> {
         self.make_request(
             self.jira_url
-                .join(&format!("rest/api/2/project/{}/statuses", project_name,))
+                .join(&format!(
+                    "rest/api/2/project/{}/statuses",
+                    project_name,
+                ))
                 .unwrap(),
         )
     }
@@ -78,7 +81,6 @@ impl RequestClient {
         let response_text = self
             .client
             .get(url)
-            .timeout(std::time::Duration::from_micros(5000000))
             .header(
                 "Authorization",
                 format!("Basic {}", self.request_credentials),

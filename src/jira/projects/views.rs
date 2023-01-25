@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use cursive::View;
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
@@ -7,11 +9,11 @@ use cursive::{
     Cursive,
 };
 
-use crate::jira::jira_data::CursiveJiraData;
 use crate::jira::utils::views::BadConnectionView;
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
+use crate::jira_data::JiraData;
 
 /// Struct for view with Jira projects.
 ///
@@ -153,8 +155,8 @@ impl ProjectsView {
     }
 
     fn set_selected_project(cursive: &mut Cursive, selected_project: &str) {
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        cursive_data.selected_project = selected_project.to_string();
+        let cursive_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+        cursive_data.write().unwrap().selected_project = selected_project.to_string();
     }
 
     /// Updates the projects names in SelectView.
@@ -164,23 +166,23 @@ impl ProjectsView {
     /// BadConnectionView with an error message.
     fn update_projects(&mut self, cursive: &mut Cursive) {
         let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        match cursive_data.update_return_projects() {
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        match jira_data.write().unwrap().update_return_projects() {
             Ok(projects) => {
                 select_project_view.clear();
                 select_project_view.add_all_str(projects);
             }
-            Err(_) => {
-                let bad_view = BadConnectionView::new(
-                    "Can't get projects from Jira.",
-                    |cursive: &mut Cursive| {
+            Err(err) => {
+                println!("{:?}", err);
+                let bad_view =
+                    BadConnectionView::new(err.to_string().as_str(), |cursive: &mut Cursive| {
                         cursive.pop_layer();
                         Self::get_view(cursive).update_view_content(cursive)
-                    },
-                );
+                    });
                 cursive.add_layer(bad_view);
             }
-        }
+        };
+        cursive.set_user_data(jira_data);
     }
 
     /// Gets input string from EditView as `project_subname`
@@ -191,15 +193,19 @@ impl ProjectsView {
     fn on_enter_search_project(cursive: &mut Cursive, project_subname: &str) {
         let mut select_project_view: ViewRef<SelectView> =
             ProjectsView::get_view(cursive).get_select_view();
-        let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
-        let jira_data = &cursive_data.jira_data;
-        let fit_projects = jira_data.find_project_by_subname(project_subname);
+
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data_clone = jira_data.clone();
+
+        let guard_jira_data = jira_data_clone.read().unwrap();
+        let fit_projects = guard_jira_data.find_project_by_subname(project_subname);
 
         if fit_projects.is_empty() {
             select_project_view.clear();
         } else {
             select_project_view.clear();
             select_project_view.add_all_str(fit_projects);
-        }
+        };
+        cursive.set_user_data(jira_data);
     }
 }
