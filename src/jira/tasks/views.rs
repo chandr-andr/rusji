@@ -182,7 +182,11 @@ impl TasksView {
             tasks_select_view.clear();
         } else {
             tasks_select_view.clear();
-            tasks_select_view.add_all_str(fit_tasks);
+            for task in fit_tasks {
+                tasks_select_view.add_item_str(
+                    format!("{} -- {}", task.key, task.summary),
+                );
+            }
         }
         cursive.set_user_data(cursive_data);
     }
@@ -299,11 +303,12 @@ impl InfoView {
         let cursive_data: &mut CursiveJiraData = cursive.user_data().unwrap();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
-        let (summary, description) = cursive_data
+        let task = cursive_data
             .jira_data
-            .get_task_description(&cursive_data.selected_project, task_key[0]);
+            .get_project(&cursive_data.selected_project)
+            .get_task(task_key[0]);
 
-        self.set_view_content(vec![summary, description]);
+        self.set_view_content(vec![&task.summary, &task.description]);
     }
 
     /// Makes API call to try find task that not in app.

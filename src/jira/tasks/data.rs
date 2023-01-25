@@ -74,18 +74,18 @@ impl<'de> Deserialize<'de> for JiraTask {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraTaskStatus {
+    pub id: String,
     #[serde(alias = "self")]
     link: String,
     description: String,
     #[serde(alias = "iconUrl")]
     icon_url: String,
     name: String,
-    id: String,
 }
 
 /// Struct for task types.
 #[derive(Serialize, Debug)]
-struct TaskTypes {
+pub struct TaskTypes {
     types: Vec<TaskType>,
 }
 
