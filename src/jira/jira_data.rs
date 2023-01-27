@@ -21,6 +21,7 @@ pub struct JiraData {
     pub client: Arc<RwLock<RequestClient>>,
     pub thread_pool: ThreadPool,
     pub selected_project: String,
+    pub selected_task: String,
 }
 
 impl JiraData {
@@ -34,7 +35,13 @@ impl JiraData {
             ))),
             thread_pool: ThreadPool::default(),
             selected_project: String::default(),
+            selected_task: String::default(),
         }
+    }
+
+    /// Sets new selected project.
+    pub fn set_selected_project(&mut self, selected_project: &str) {
+        self.selected_project = selected_project.to_string()
     }
 
     pub fn get_project(&self, project_name: &str) -> &JiraProject {
@@ -126,21 +133,19 @@ impl JiraData {
 
     pub fn get_new_task(&mut self, task_key: &str) -> RusjiResult<(String, String)> {
         let selected_task_key;
+        let selected_projects_key = self.selected_project.clone();
         match task_key.parse::<usize>() {
             Ok(_) => {
-                let selected_projects_key = &self.get_project(&self.selected_project).key;
                 selected_task_key = format!("{}-{}", selected_projects_key, task_key);
             }
             Err(_) => {
                 selected_task_key = task_key.to_string();
             }
         };
-        let response = self.client.read().unwrap().get_task(&selected_task_key)?;
-        let resp_text = response.get_body();
-        let task = serde_json::from_str::<JiraTask>(resp_text)?;
+        let task = JiraTask::new(self.client.clone(), selected_task_key.as_str())?;
         let return_data = (task.summary.clone(), task.description.clone());
 
-        let mut project = self.get_mut_project(&self.selected_project.clone());
+        let mut project = self.get_mut_project(selected_projects_key.as_str());
 
         match project.tasks.as_mut() {
             Some(tasks) => {

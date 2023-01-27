@@ -16,11 +16,8 @@ pub trait JiraView {
     /// Returns instance of main dialog view.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
 
-    /// Updates view content with [`super::jira_data::JiraData`] methods.
+    /// Updates view content from [`super::jira_data::JiraData`] data.
     fn update_view_content(&mut self, cursive: &mut Cursive);
-
-    /// Updates view content with passed `content`.
-    fn set_view_content(&mut self, content: Vec<&str>);
 
     /// Extends view content with passed `content`.
     fn add_content_to_view(&mut self, content: Vec<&str>);

@@ -44,7 +44,7 @@ impl JiraIssues {
 }
 
 /// Struct for single task in Jira.
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct JiraTask {
     pub id: String,
     #[serde(alias = "self")]
@@ -118,7 +118,7 @@ impl JiraTask {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JiraTaskStatus {
     pub id: String,
     #[serde(alias = "self")]

@@ -61,7 +61,20 @@ impl Default for ProjectsView {
         let projects_select_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, selected_project: &str| {
-                Self::set_selected_project(cursive, selected_project);
+                let jira_data: Arc<RwLock<JiraData>> = cursive
+                    .user_data()
+                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| {
+                        jira_data.clone()
+                    })
+                    .unwrap();
+                let mut jira_guard = jira_data.write().unwrap();
+                jira_guard.set_selected_project(selected_project);
+
+                let pool = jira_data.read().unwrap().thread_pool;
+                let thread_one = pool.evaluate(move || {
+                    jira_guard.update_projects()
+                });
+
                 TasksView::get_view(cursive).update_view_content(cursive);
             })
             .with_name(Self::select_view_name());
@@ -115,13 +128,6 @@ impl JiraView for ProjectsView {
         self.update_projects(cursive)
     }
 
-    /// Sets new content to the view from passed `content`.
-    fn set_view_content(&mut self, content: Vec<&str>) {
-        let mut select_view = self.get_select_view();
-        select_view.clear();
-        select_view.add_all_str(content);
-    }
-
     /// Extends view content with passed `content`.
     fn add_content_to_view(&mut self, content: Vec<&str>) {
         let mut select_view = self.get_select_view();
@@ -152,11 +158,6 @@ impl ProjectsView {
         self.get_main_dialog()
             .find_name(&Self::search_view_name())
             .unwrap()
-    }
-
-    fn set_selected_project(cursive: &mut Cursive, selected_project: &str) {
-        let cursive_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
-        cursive_data.write().unwrap().selected_project = selected_project.to_string();
     }
 
     /// Updates the projects names in SelectView.

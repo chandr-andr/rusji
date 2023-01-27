@@ -35,7 +35,7 @@ impl JiraProjects {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct JiraProject {
     #[serde(alias = "self")]
     pub link: String,

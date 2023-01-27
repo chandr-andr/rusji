@@ -34,6 +34,8 @@ impl Default for TasksView {
                             Self::get_view(cursive).on_enter_task_search(cursive, task_name)
                         })
                         .on_submit(|cursive: &mut Cursive, task_key: &str| {
+                            let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+                            jira_data.write().unwrap().selected_task = task_key.to_string();
                             InfoView::get_view(cursive).make_http_search(cursive, task_key)
                         })
                         .with_name(Self::search_view_name()),
@@ -113,14 +115,34 @@ impl JiraView for TasksView {
 
     /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        self.update_tasks(cursive);
-    }
+        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
 
-    /// Sets new content for SelectView in TasksView from passed `content`.
-    fn set_view_content(&mut self, content: Vec<&str>) {
-        let mut select_view = self.get_select_view();
-        select_view.clear();
-        select_view.add_all_str(content);
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data_clone = jira_data.clone();
+        let selected_project = jira_data_clone
+            .read()
+            .unwrap()
+            .selected_project
+            .clone();
+        let binding = jira_data_clone.read().unwrap();
+        match binding.get_project(&selected_project).tasks_names() {
+            Some(tasks_names) => {
+                tasks_select_view.clear();
+                tasks_select_view.add_all_str(tasks_names);
+                cursive.focus_name(&TasksView::view_name()).unwrap();
+            },
+            None => {
+                cursive.add_layer(
+                    Dialog::new()
+                        .title("No tasks")
+                        .content(TextView::new("No tasks in this project"))
+                        .button("Ok", |cursive| {
+                            cursive.pop_layer();
+                        })
+                )
+            }
+        }
+        cursive.set_user_data(jira_data);
     }
 
     /// Adds new content to SelectView from passed `content`.
@@ -154,31 +176,6 @@ impl TasksView {
             .unwrap()
     }
 
-    /// Updates tasks.
-    ///
-    /// Uses JiraData instance to get updates tasks.
-    ///
-    /// After updating focus on TasksView.
-    fn update_tasks(&mut self, cursive: &mut Cursive) {
-        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
-
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
-        let selected_project = jira_data.read().unwrap().selected_project.clone();
-
-        let project_tasks = jira_data
-            .write()
-            .unwrap()
-            .update_return_tasks(selected_project.as_str());
-        {
-            tasks_select_view.clear();
-            tasks_select_view.add_all_str(project_tasks);
-            tasks_select_view.sort();
-        }
-
-        cursive.focus_name(&TasksView::view_name()).unwrap();
-        cursive.set_user_data(jira_data);
-    }
-
     /// Tries to find task to display it.
     fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
         let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
@@ -188,7 +185,7 @@ impl TasksView {
         let jira_data_guard = jira_data_clone.read().unwrap();
         let fit_tasks = jira_data_guard.find_task_by_subname(
             task_subname,
-            jira_data_guard.selected_project.clone().as_str(),
+            &jira_data_guard.selected_project,
         );
 
         if fit_tasks.is_empty() {
@@ -261,20 +258,8 @@ impl JiraView for InfoView {
             .set_content(Self::make_inner_view("", ""));
     }
 
-    /// Sets new content of the InfoView.
-    ///
-    /// In fact, we completely clear the layout and
-    /// create a completely new view, which we add
-    /// new view.
-    fn set_view_content(&mut self, content: Vec<&str>) {
-        self.get_main_dialog()
-            .set_content(Self::make_inner_view(content[0], content[1]));
-    }
-
     /// Does the same as `set_view_content` method.
-    fn add_content_to_view(&mut self, content: Vec<&str>) {
-        self.set_view_content(content)
-    }
+    fn add_content_to_view(&mut self, content: Vec<&str>) {}
 }
 
 impl InfoView {
@@ -312,15 +297,15 @@ impl InfoView {
     /// Shows task information in InfoView.
     fn show_info_on_select(&mut self, cursive: &mut Cursive, task_name: &str) {
         let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
-        let selected_project = jira_data.read().unwrap().selected_project.clone();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
-        let jira_data_guard = jira_data.read().unwrap();
+        let mut jira_data_guard = jira_data.read().unwrap();
         let task = jira_data_guard
-            .get_project(&selected_project)
+            .get_project(jira_data_guard.selected_project.clone().as_str())
             .get_task(task_key[0]);
 
-        self.set_view_content(vec![&task.summary, &task.description]);
+        self.get_main_dialog()
+            .set_content(Self::make_inner_view(&task.summary, &task.description));
     }
 
     /// Makes API call to try find task that not in app.
@@ -330,7 +315,13 @@ impl InfoView {
         let mut jira_data: JiraData = cursive.take_user_data().unwrap();
         match jira_data.get_new_task(task_key) {
             Ok((summary, desc)) => {
-                self.set_view_content(vec![summary.as_str(), desc.as_str()]);
+                self.get_main_dialog()
+                    .set_content(
+                        Self::make_inner_view(
+                            summary.as_str(),
+                            desc.as_str(),
+                        ),
+                    );
                 TasksView::get_view(cursive);
             }
             Err(_) => cursive.add_layer(Dialog::new().title("Task not found").button(
