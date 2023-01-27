@@ -2,7 +2,7 @@ use serde_json::{self};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use crate::errors::RusjiResult;
+use crate::errors::{RusjiResult, RusjiError};
 use crate::jira::{
     projects::data::JiraProject,
     tasks::data::{JiraIssues, JiraTask},
@@ -56,8 +56,11 @@ impl JiraData {
             .unwrap()
     }
 
-    pub fn update_projects(&mut self) -> RusjiResult<()> {
-        let projects = JiraProjects::new(self.client.clone())?;
+    pub fn update_projects(
+        &mut self,
+        jira_projects: Result<JiraProjects, RusjiError>,
+    ) -> RusjiResult<()> {
+        let projects = jira_projects?;
         let projects_field = self.make_projects_field(projects);
         self.projects = Some(projects_field);
         Ok(())

@@ -9,11 +9,15 @@ use cursive::{
     Cursive,
 };
 
+use crate::errors::RusjiError;
 use crate::jira::utils::views::BadConnectionView;
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
 use crate::jira_data::JiraData;
+use crate::request_client::RequestResponse;
+
+use super::data::JiraProjects;
 
 /// Struct for view with Jira projects.
 ///
@@ -69,11 +73,18 @@ impl Default for ProjectsView {
                     .unwrap();
                 let mut jira_guard = jira_data.write().unwrap();
                 jira_guard.set_selected_project(selected_project);
-
-                let pool = jira_data.read().unwrap().thread_pool;
-                let thread_one = pool.evaluate(move || {
-                    jira_guard.update_projects()
-                });
+                let client_clone = jira_guard.client.clone();
+                let jira_projects = jira_data
+                    .read()
+                    .unwrap()
+                    .thread_pool
+                    .evaluate(
+                        move || -> Result<JiraProjects, RusjiError>
+                        {
+                            JiraProjects::new(client_clone)
+                        }
+                    );
+                let jira_project_result = jira_projects.await_complete();
 
                 TasksView::get_view(cursive).update_view_content(cursive);
             })
