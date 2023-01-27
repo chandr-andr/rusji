@@ -1,12 +1,46 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::{Arc, RwLock},
+};
 
 use serde::{Deserialize, Deserializer, Serialize};
+
+use crate::{errors::RusjiResult, request_client::RequestClient};
 
 /// JiraIssues holds all necessary information
 /// about task to interact with it.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraIssues {
-    pub issues: Vec<JiraTask>,
+    issues: Vec<JiraTask>,
+}
+
+impl IntoIterator for JiraIssues {
+    type Item = JiraTask;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.issues.into_iter()
+    }
+}
+
+impl JiraIssues {
+    /// Creates new instance of JiraIssues.
+    ///
+    /// Makes request to get tasks for project and parses the response.
+    /// If request failed return error.
+    pub fn new(
+        request_client: Arc<RwLock<RequestClient>>,
+        project_name: &str,
+    ) -> RusjiResult<Self> {
+        let response = request_client
+            .read()
+            .unwrap()
+            .get_tasks_from_project(project_name)?;
+
+        let resp_text = response.get_body();
+        let tasks = serde_json::from_str::<Self>(resp_text)?;
+        Ok(tasks)
+    }
 }
 
 /// Struct for single task in Jira.
@@ -69,6 +103,18 @@ impl<'de> Deserialize<'de> for JiraTask {
             summary: task.fields.summary,
             status: task.fields.status,
         })
+    }
+}
+
+impl JiraTask {
+    /// Creates new instance of JiraTask.
+    ///
+    /// Makes request
+    pub fn new(request_client: Arc<RwLock<RequestClient>>, task_key: &str) -> RusjiResult<Self> {
+        let response = request_client.read().unwrap().get_task(task_key)?;
+        let resp_text = response.get_body();
+        let task = serde_json::from_str::<Self>(resp_text)?;
+        Ok(task)
     }
 }
 

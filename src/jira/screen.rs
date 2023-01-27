@@ -14,7 +14,6 @@ use cursive::{
     Cursive,
 };
 
-
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     add_global_callbacks(cursive);
     let config = Config::new().unwrap();
@@ -24,7 +23,6 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
         jira.get_encoded_creds(),
     )));
     cursive.set_user_data(jira_data);
-
 
     let screen_size = cursive.screen_size();
     let side_width = screen_size.x * 2 / 7;

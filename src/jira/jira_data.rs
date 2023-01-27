@@ -1,5 +1,6 @@
 use serde_json::{self};
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use crate::errors::RusjiResult;
 use crate::jira::{
@@ -17,7 +18,7 @@ use rusty_pool::ThreadPool;
 pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
     task_types: Option<TaskTypes>,
-    pub client: RequestClient,
+    pub client: Arc<RwLock<RequestClient>>,
     pub thread_pool: ThreadPool,
     pub selected_project: String,
 }
@@ -27,7 +28,10 @@ impl JiraData {
         Self {
             projects: None,
             task_types: None,
-            client: RequestClient::new(request_credentials.to_string(), jira_url),
+            client: Arc::new(RwLock::new(RequestClient::new(
+                request_credentials.to_string(),
+                jira_url,
+            ))),
             thread_pool: ThreadPool::default(),
             selected_project: String::default(),
         }
@@ -46,12 +50,8 @@ impl JiraData {
     }
 
     pub fn update_projects(&mut self) -> RusjiResult<()> {
-        let binding = self.client.get_jira_projects()?;
-        let resp_text = binding.get_body();
-
-        let projects = serde_json::from_str::<JiraProjects>(resp_text)?;
+        let projects = JiraProjects::new(self.client.clone())?;
         let projects_field = self.make_projects_field(projects);
-
         self.projects = Some(projects_field);
         Ok(())
     }
@@ -70,10 +70,7 @@ impl JiraData {
     }
 
     pub fn update_tasks(&mut self, project_name: &str) -> RusjiResult<()> {
-        let binding = self.client.get_tasks_from_project(project_name)?;
-        let resp_text = binding.get_body();
-
-        let tasks = serde_json::from_str::<JiraIssues>(resp_text)?.issues;
+        let tasks = JiraIssues::new(self.client.clone(), project_name)?;
         let tasks_field = self.make_tasks_field(tasks);
 
         let mut project = self.get_mut_project(project_name);
@@ -138,7 +135,7 @@ impl JiraData {
                 selected_task_key = task_key.to_string();
             }
         };
-        let response = self.client.get_task(&selected_task_key)?;
+        let response = self.client.read().unwrap().get_task(&selected_task_key)?;
         let resp_text = response.get_body();
         let task = serde_json::from_str::<JiraTask>(resp_text)?;
         let return_data = (task.summary.clone(), task.description.clone());
@@ -167,7 +164,7 @@ impl JiraData {
         projects_hashmap
     }
 
-    fn make_tasks_field(&self, tasks: Vec<JiraTask>) -> HashMap<String, JiraTask> {
+    fn make_tasks_field(&self, tasks: JiraIssues) -> HashMap<String, JiraTask> {
         let mut tasks_hashmap: HashMap<String, JiraTask> = HashMap::default();
         for task in tasks {
             tasks_hashmap.insert(task.key.clone(), task);

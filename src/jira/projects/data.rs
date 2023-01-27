@@ -1,36 +1,39 @@
 use std::{
     collections::HashMap,
+    sync::{Arc, RwLock},
 };
 
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    errors::RusjiResult,
     jira::tasks::data::{JiraTask, TaskTypes},
+    request_client::RequestClient,
 };
 
-pub type JiraProjects = Vec<JiraProject>;
-// pub struct JiraProjects {
-//     pub projects: Vec<JiraProject>,
-// }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct JiraProjects(Vec<JiraProject>);
 
-// impl IntoIterator for JiraProjects {
-//     type Item = JiraProject;
-//     type IntoIter = std::vec::IntoIter<Self::Item>;
+impl IntoIterator for JiraProjects {
+    type Item = JiraProject;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
 
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.projects.into_iter()
-//     }
-// }
+    fn into_iter(self) -> Self::IntoIter {
+        let Self(projects) = self;
 
-// impl JiraProjects {
-//     pub fn new(request_client: Arc<RwLock<RequestClient>>) -> RusjiResult<Self> {
-//         let response = request_client.read().unwrap().get_jira_projects()?;
-//         let resp_text = response.get_body();
+        projects.into_iter()
+    }
+}
 
-//         let projects = serde_json::from_str::<JiraProjects>(resp_text)?;
-//         Ok(projects)
-//     }
-// }
+impl JiraProjects {
+    pub fn new(request_client: Arc<RwLock<RequestClient>>) -> RusjiResult<Self> {
+        let response = request_client.read().unwrap().get_jira_projects()?;
+        let resp_text = response.get_body();
+
+        let projects = serde_json::from_str::<JiraProjects>(resp_text)?;
+        Ok(projects)
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraProject {
