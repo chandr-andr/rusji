@@ -16,6 +16,8 @@ use crate::jira::constance::{
 };
 use crate::jira_data::JiraData;
 
+use super::data::JiraTask;
+
 pub(crate) struct TasksView {
     inner_view: NamedView<Dialog>,
 }
@@ -34,9 +36,30 @@ impl Default for TasksView {
                             Self::get_view(cursive).on_enter_task_search(cursive, task_name)
                         })
                         .on_submit(|cursive: &mut Cursive, task_key: &str| {
-                            let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
-                            jira_data.write().unwrap().selected_task = task_key.to_string();
-                            InfoView::get_view(cursive).make_http_search(cursive, task_key)
+                            let jira_data: &mut Arc<RwLock<JiraData>> =
+                                cursive.user_data().unwrap();
+                            {
+                                let selected_task_key;
+                                let mut jira_data_guard = jira_data.write().unwrap();
+                                match task_key.parse::<usize>() {
+                                    Ok(_) => {
+                                        let selected_projects_key =
+                                            &jira_data_guard.selected_project;
+                                        selected_task_key =
+                                            format!("{}-{}", selected_projects_key, task_key);
+                                    }
+                                    Err(_) => {
+                                        selected_task_key = task_key.to_string();
+                                    }
+                                };
+                                jira_data_guard.set_selected_task(&selected_task_key);
+                                let project_key = jira_data_guard.get_selected_task_key();
+                                let task =
+                                    JiraTask::new(jira_data_guard.client.clone(), &project_key);
+                                jira_data_guard.add_new_task(task);
+                            }
+
+                            InfoView::get_view(cursive).update_view_content(cursive);
                         })
                         .with_name(Self::search_view_name()),
                 );
@@ -119,28 +142,23 @@ impl JiraView for TasksView {
 
         let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
         let jira_data_clone = jira_data.clone();
-        let selected_project = jira_data_clone
-            .read()
-            .unwrap()
-            .selected_project
-            .clone();
-        let binding = jira_data_clone.read().unwrap();
-        match binding.get_project(&selected_project).tasks_names() {
+
+        let jira_guard = jira_data_clone.read().unwrap();
+
+        match jira_guard.get_selected_project().tasks_names() {
             Some(tasks_names) => {
                 tasks_select_view.clear();
                 tasks_select_view.add_all_str(tasks_names);
                 cursive.focus_name(&TasksView::view_name()).unwrap();
-            },
-            None => {
-                cursive.add_layer(
-                    Dialog::new()
-                        .title("No tasks")
-                        .content(TextView::new("No tasks in this project"))
-                        .button("Ok", |cursive| {
-                            cursive.pop_layer();
-                        })
-                )
             }
+            None => cursive.add_layer(
+                Dialog::new()
+                    .title("No tasks")
+                    .content(TextView::new("No tasks in this project"))
+                    .button("Ok", |cursive| {
+                        cursive.pop_layer();
+                    }),
+            ),
         }
         cursive.set_user_data(jira_data);
     }
@@ -183,10 +201,8 @@ impl TasksView {
         let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
 
         let jira_data_guard = jira_data_clone.read().unwrap();
-        let fit_tasks = jira_data_guard.find_task_by_subname(
-            task_subname,
-            &jira_data_guard.selected_project,
-        );
+        let fit_tasks =
+            jira_data_guard.find_task_by_subname(task_subname, &jira_data_guard.selected_project);
 
         if fit_tasks.is_empty() {
             tasks_select_view.clear();
@@ -253,13 +269,21 @@ impl JiraView for InfoView {
     ///
     /// In fact, just recreate InfoView without data and
     /// add it to InfoLayout.
-    fn update_view_content(&mut self, _: &mut Cursive) {
+    fn update_view_content(&mut self, cursive: &mut Cursive) {
+        let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+        let jira_data_guard = jira_data.write().unwrap();
+        let task = {
+            let selected_task = &jira_data_guard.get_selected_task_key();
+            jira_data_guard
+                .get_selected_project()
+                .get_task(selected_task)
+        };
         self.get_main_dialog()
-            .set_content(Self::make_inner_view("", ""));
+            .set_content(Self::make_inner_view(&task.summary, &task.description));
     }
 
     /// Does the same as `set_view_content` method.
-    fn add_content_to_view(&mut self, content: Vec<&str>) {}
+    fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
 impl InfoView {
@@ -299,38 +323,13 @@ impl InfoView {
         let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
-        let mut jira_data_guard = jira_data.read().unwrap();
+        let jira_data_guard = jira_data.read().unwrap();
         let task = jira_data_guard
             .get_project(jira_data_guard.selected_project.clone().as_str())
             .get_task(task_key[0]);
 
         self.get_main_dialog()
             .set_content(Self::make_inner_view(&task.summary, &task.description));
-    }
-
-    /// Makes API call to try find task that not in app.
-    ///
-    /// If task isn't found display new view with error text.
-    fn make_http_search(&mut self, cursive: &mut Cursive, task_key: &str) {
-        let mut jira_data: JiraData = cursive.take_user_data().unwrap();
-        match jira_data.get_new_task(task_key) {
-            Ok((summary, desc)) => {
-                self.get_main_dialog()
-                    .set_content(
-                        Self::make_inner_view(
-                            summary.as_str(),
-                            desc.as_str(),
-                        ),
-                    );
-                TasksView::get_view(cursive);
-            }
-            Err(_) => cursive.add_layer(Dialog::new().title("Task not found").button(
-                "Ok",
-                |cursive| {
-                    cursive.pop_layer();
-                },
-            )),
-        }
     }
 }
 

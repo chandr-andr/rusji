@@ -127,7 +127,7 @@ fn add_new_company(cursive: &mut Cursive) {
             cursive.set_user_data(c_user_data);
             success_dialog(cursive, "Company added successfully!")
         }
-        Err(err) => println!("{}", err),
+        Err(_) => {}
     }
 }
 

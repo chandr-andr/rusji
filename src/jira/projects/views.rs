@@ -1,5 +1,6 @@
 use std::sync::{Arc, RwLock};
 
+use cursive::views::TextView;
 use cursive::View;
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
@@ -10,14 +11,11 @@ use cursive::{
 };
 
 use crate::errors::RusjiError;
-use crate::jira::utils::views::BadConnectionView;
+use crate::jira::tasks::data::JiraIssues;
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
 use crate::jira_data::JiraData;
-use crate::request_client::RequestResponse;
-
-use super::data::JiraProjects;
 
 /// Struct for view with Jira projects.
 ///
@@ -67,24 +65,22 @@ impl Default for ProjectsView {
             .on_submit(|cursive: &mut Cursive, selected_project: &str| {
                 let jira_data: Arc<RwLock<JiraData>> = cursive
                     .user_data()
-                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| {
-                        jira_data.clone()
-                    })
+                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| jira_data.clone())
                     .unwrap();
-                let mut jira_guard = jira_data.write().unwrap();
-                jira_guard.set_selected_project(selected_project);
-                let client_clone = jira_guard.client.clone();
-                let jira_projects = jira_data
-                    .read()
-                    .unwrap()
-                    .thread_pool
-                    .evaluate(
-                        move || -> Result<JiraProjects, RusjiError>
-                        {
-                            JiraProjects::new(client_clone)
-                        }
+                {
+                    let mut jira_guard = jira_data.write().unwrap();
+                    jira_guard.set_selected_project(selected_project);
+                    let client_clone = jira_guard.client.clone();
+                    let project_key = jira_guard.get_selected_project_key();
+
+                    let jira_tasks = jira_guard.thread_pool.evaluate(
+                        move || -> Result<JiraIssues, RusjiError> {
+                            JiraIssues::new(client_clone, project_key.as_str())
+                        },
                     );
-                let jira_project_result = jira_projects.await_complete();
+                    let jira_tasks_result = jira_tasks.await_complete();
+                    jira_guard.update_tasks(jira_tasks_result);
+                }
 
                 TasksView::get_view(cursive).update_view_content(cursive);
             })
@@ -178,22 +174,26 @@ impl ProjectsView {
     /// BadConnectionView with an error message.
     fn update_projects(&mut self, cursive: &mut Cursive) {
         let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
+
         let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
-        match jira_data.write().unwrap().update_return_projects() {
-            Ok(projects) => {
-                select_project_view.clear();
-                select_project_view.add_all_str(projects);
-            }
-            Err(err) => {
-                println!("{:?}", err);
-                let bad_view =
-                    BadConnectionView::new(err.to_string().as_str(), |cursive: &mut Cursive| {
+        let jira_clone = jira_data.clone();
+
+        let jira_data_guard = jira_clone.write().unwrap();
+
+        let projects_names = jira_data_guard.get_projects_names();
+        if projects_names.is_empty() {
+            cursive.add_layer(
+                Dialog::new()
+                    .title("No projects")
+                    .content(TextView::new("Can't find projects"))
+                    .button("Ok", |cursive| {
                         cursive.pop_layer();
-                        Self::get_view(cursive).update_view_content(cursive)
-                    });
-                cursive.add_layer(bad_view);
-            }
-        };
+                    }),
+            )
+        } else {
+            select_project_view.clear();
+            select_project_view.add_all_str(projects_names);
+        }
         cursive.set_user_data(jira_data);
     }
 

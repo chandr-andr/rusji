@@ -4,6 +4,7 @@ use super::{
     global_callbacks::add_global_callbacks,
     jira_data::JiraData,
     layouts::{ActionsLayout, InfoLayout, TasksProjectsLayout},
+    projects::data::JiraProjects,
 };
 use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
 
@@ -16,12 +17,7 @@ use cursive::{
 
 pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     add_global_callbacks(cursive);
-    let config = Config::new().unwrap();
-    let jira = config.get_jira_by_company(company_name).unwrap();
-    let jira_data = Arc::new(RwLock::new(JiraData::new(
-        jira.get_url(),
-        jira.get_encoded_creds(),
-    )));
+    let jira_data = init_data(company_name);
     cursive.set_user_data(jira_data);
 
     let screen_size = cursive.screen_size();
@@ -41,4 +37,18 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     cursive.add_layer(main_layer);
 
     ProjectsView::get_view(cursive).update_view_content(cursive);
+}
+
+fn init_data(company_name: &str) -> Arc<RwLock<JiraData>> {
+    let config = Config::new().unwrap();
+    let jira = config.get_jira_by_company(company_name).unwrap();
+    let jira_data = Arc::new(RwLock::new(JiraData::new(
+        jira.get_url(),
+        jira.get_encoded_creds(),
+    )));
+
+    let jira_projects = JiraProjects::new(jira_data.read().unwrap().client.clone());
+    jira_data.write().unwrap().update_projects(jira_projects);
+
+    jira_data
 }
