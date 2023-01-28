@@ -61,6 +61,7 @@ impl Default for TasksView {
                                 jira_data_guard.add_new_task(task);
                             }
 
+                            InfoView::get_view(cursive).update_view_content(cursive);
                             Self::get_view(cursive).on_enter_task_search(cursive, task_key);
                         })
                         .with_name(Self::search_view_name()),
