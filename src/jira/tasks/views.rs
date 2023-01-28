@@ -53,9 +53,9 @@ impl Default for TasksView {
                                     }
                                 };
                                 jira_data_guard.set_selected_task(&selected_task_key);
-                                let project_key = jira_data_guard.get_selected_task_key();
+                                let task_key = jira_data_guard.get_selected_task_key();
                                 let task =
-                                    JiraTask::new(jira_data_guard.client.clone(), &project_key);
+                                    JiraTask::new(jira_data_guard.client.clone(), &task_key);
                                 jira_data_guard.add_new_task(task);
                             }
 
