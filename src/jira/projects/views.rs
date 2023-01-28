@@ -67,6 +67,7 @@ impl Default for ProjectsView {
                     .user_data()
                     .map(|jira_data: &mut Arc<RwLock<JiraData>>| jira_data.clone())
                     .unwrap();
+
                 {
                     let mut jira_guard = jira_data.write().unwrap();
                     jira_guard.set_selected_project(selected_project);

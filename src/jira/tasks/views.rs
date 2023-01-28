@@ -38,6 +38,7 @@ impl Default for TasksView {
                         .on_submit(|cursive: &mut Cursive, task_key: &str| {
                             let jira_data: &mut Arc<RwLock<JiraData>> =
                                 cursive.user_data().unwrap();
+
                             {
                                 let selected_task_key;
                                 let mut jira_data_guard = jira_data.write().unwrap();
@@ -56,10 +57,11 @@ impl Default for TasksView {
                                 let task_key = jira_data_guard.get_selected_task_key();
                                 let task =
                                     JiraTask::new(jira_data_guard.client.clone(), &task_key);
+
                                 jira_data_guard.add_new_task(task);
                             }
 
-                            InfoView::get_view(cursive).update_view_content(cursive);
+                            Self::get_view(cursive).on_enter_task_search(cursive, task_key);
                         })
                         .with_name(Self::search_view_name()),
                 );
