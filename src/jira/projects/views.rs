@@ -131,9 +131,34 @@ impl JiraView for ProjectsView {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
 
-    /// Updates projects names in the view content.
+    /// Updates the projects names in SelectView.
+    ///
+    /// Tries to get new vector of projects from JiraData.
+    /// If success clear SelectView and add new data, else add
+    /// BadConnectionView with an error message.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        self.update_projects(cursive)
+        let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
+
+        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_clone = jira_data.clone();
+
+        let jira_data_guard = jira_clone.write().unwrap();
+
+        let projects_names = jira_data_guard.get_projects_names();
+        if projects_names.is_empty() {
+            cursive.add_layer(
+                Dialog::new()
+                    .title("No projects")
+                    .content(TextView::new("Can't find projects"))
+                    .button("Ok", |cursive| {
+                        cursive.pop_layer();
+                    }),
+            )
+        } else {
+            select_project_view.clear();
+            select_project_view.add_all_str(projects_names);
+        }
+        cursive.set_user_data(jira_data);
     }
 
     /// Extends view content with passed `content`.
@@ -166,36 +191,6 @@ impl ProjectsView {
         self.get_main_dialog()
             .find_name(&Self::search_view_name())
             .unwrap()
-    }
-
-    /// Updates the projects names in SelectView.
-    ///
-    /// Tries to get new vector of projects from JiraData.
-    /// If success clear SelectView and add new data, else add
-    /// BadConnectionView with an error message.
-    fn update_projects(&mut self, cursive: &mut Cursive) {
-        let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
-
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
-        let jira_clone = jira_data.clone();
-
-        let jira_data_guard = jira_clone.write().unwrap();
-
-        let projects_names = jira_data_guard.get_projects_names();
-        if projects_names.is_empty() {
-            cursive.add_layer(
-                Dialog::new()
-                    .title("No projects")
-                    .content(TextView::new("Can't find projects"))
-                    .button("Ok", |cursive| {
-                        cursive.pop_layer();
-                    }),
-            )
-        } else {
-            select_project_view.clear();
-            select_project_view.add_all_str(projects_names);
-        }
-        cursive.set_user_data(jira_data);
     }
 
     /// Gets input string from EditView as `project_subname`

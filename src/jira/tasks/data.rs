@@ -109,7 +109,8 @@ impl<'de> Deserialize<'de> for JiraTask {
 impl JiraTask {
     /// Creates new instance of JiraTask.
     ///
-    /// Makes request
+    /// Makes request to Jira API.
+    /// Can return `RusjiError`.
     pub fn new(request_client: Arc<RwLock<RequestClient>>, task_key: &str) -> RusjiResult<Self> {
         let response = request_client.read().unwrap().get_task(task_key)?;
         let resp_text = response.get_body();
@@ -130,46 +131,29 @@ pub struct JiraTaskStatus {
 }
 
 /// Struct for task types.
-#[derive(Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct TaskTypes {
     types: Vec<TaskType>,
 }
 
-/// Struct for single task type.
-#[derive(Serialize, Debug)]
-struct TaskType {
-    #[serde(alias = "self")]
-    link: String,
-    id: String,
-    name: String,
-    subtask: bool,
-    statuses: Vec<TaskStatus>,
-}
-
-/// Struct for single task status.
-#[derive(Serialize, Debug)]
-struct TaskStatus {
-    #[serde(alias = "self")]
-    link: String,
-    description: String,
-    #[serde(alias = "iconUrl")]
-    icon_url: String,
-    name: String,
-    id: String,
-    category: StatusCategory,
-}
-
-/// Struct for single task category.
-#[derive(Serialize, Debug)]
-struct StatusCategory {
-    #[serde(alias = "self")]
-    link: String,
-    id: String,
-    key: String,
-    name: String,
-}
-
 impl TaskTypes {
+    /// Creates new instance of task types.
+    ///
+    /// Makes request to Jira API.
+    /// Can return RusjiError.
+    pub fn new(
+        request_client: Arc<RwLock<RequestClient>>,
+        project_name: &str,
+    ) -> RusjiResult<Self> {
+        let response = request_client
+            .read()
+            .unwrap()
+            .get_task_statuses(project_name)?;
+        let resp_text = response.get_body();
+        let statuses = serde_json::from_str::<Self>(resp_text)?;
+        Ok(statuses)
+    }
+
     /// Returns hashmap with keys task type name and values hashset with statuses ids.
     fn task_type_name_and_status_ids(&self) -> HashMap<&str, HashSet<&str>> {
         let mut type_name_status_ids: HashMap<&str, HashSet<&str>> = HashMap::new();
@@ -185,5 +169,89 @@ impl TaskTypes {
         }
 
         type_name_status_ids
+    }
+}
+
+/// Struct for single task type.
+#[derive(Deserialize, Serialize, Debug)]
+struct TaskType {
+    #[serde(alias = "self")]
+    link: String,
+    id: String,
+    name: String,
+    subtask: bool,
+    statuses: Vec<TaskStatus>,
+}
+
+/// Struct for single task status.
+#[derive(Deserialize, Serialize, Debug)]
+struct TaskStatus {
+    #[serde(alias = "self")]
+    link: String,
+    description: String,
+    #[serde(alias = "iconUrl")]
+    icon_url: String,
+    name: String,
+    id: String,
+    category: StatusCategory,
+}
+
+/// Struct for single task category.
+#[derive(Deserialize, Serialize, Debug)]
+struct StatusCategory {
+    #[serde(alias = "self")]
+    link: String,
+    id: String,
+    key: String,
+    name: String,
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deserialize_task() {
+        let json_task_str = r#"
+        {
+            "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+            "id": "299756",
+            "link": "https://jira.zxz.su/rest/api/2/issue/299756",
+            "key": "FRE-39",
+            "fields": {
+                "description": "test description",
+                "summary": "test summary"
+            },
+            "renderedFields": {
+                "description": "test"
+            },
+            "status": {
+                "self": "https://jira.zxz.su/rest/api/2/status/10104",
+                "description": "Задача завершена",
+                "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
+                "name": "DONE",
+                "id": "10104",
+                "statusCategory": {
+                    "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Выполнено"
+                }
+            }
+        }
+        "#;
+
+        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
+    }
+
+    #[test]
+    fn test_deserialize_task_types() {
+        let json_task_str = r#"
+
+        "#;
+
+        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
     }
 }

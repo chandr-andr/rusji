@@ -1,5 +1,3 @@
-use cursive::backend::Backend;
-
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -219,56 +217,5 @@ impl JiraData {
             tasks_hashmap.insert(task.key.clone(), task);
         }
         tasks_hashmap
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_deserialize_task() {
-        let json_task_str = r#"
-        {
-            "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
-            "id": "299756",
-            "link": "https://jira.zxz.su/rest/api/2/issue/299756",
-            "key": "FRE-39",
-            "fields": {
-                "description": "test description",
-                "summary": "test summary"
-            },
-            "renderedFields": {
-                "description": "test"
-            },
-            "status": {
-                "self": "https://jira.zxz.su/rest/api/2/status/10104",
-                "description": "Задача завершена",
-                "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
-                "name": "DONE",
-                "id": "10104",
-                "statusCategory": {
-                    "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
-                    "id": 3,
-                    "key": "done",
-                    "colorName": "green",
-                    "name": "Выполнено"
-                }
-            }
-        }
-        "#;
-
-        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
-    }
-
-    #[test]
-    fn test_deserialize_projects() {
-        let json_task_str = r#"
-        [
-
-        ]
-        "#;
-
-        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
     }
 }
