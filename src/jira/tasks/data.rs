@@ -132,8 +132,34 @@ pub struct JiraTaskStatus {
 
 /// Struct for task types.
 #[derive(Deserialize, Serialize, Debug)]
-pub struct TaskTypes {
-    types: Vec<TaskType>,
+pub struct TaskTypes(Vec<TaskType>);
+
+pub struct TaskTypesIter<'a> {
+    task_types: &'a TaskTypes,
+    iter_num: usize,
+}
+
+impl<'a> Iterator for TaskTypesIter<'a> {
+    type Item = &'a TaskType;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.iter_num >= self.task_types.0.len() {
+            None
+        } else {
+            self.iter_num += 1;
+            Some(&self.task_types.0[self.iter_num - 1])
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a TaskTypes {
+    type Item = &'a TaskType;
+    type IntoIter = TaskTypesIter<'a>;
+    fn into_iter(self) -> Self::IntoIter {
+        TaskTypesIter {
+            task_types: self,
+            iter_num: 0,
+        }
+    }
 }
 
 impl TaskTypes {
@@ -158,7 +184,7 @@ impl TaskTypes {
     fn task_type_name_and_status_ids(&self) -> HashMap<&str, HashSet<&str>> {
         let mut type_name_status_ids: HashMap<&str, HashSet<&str>> = HashMap::new();
 
-        for task_type in &self.types {
+        for task_type in self {
             let mut status_ids: HashSet<&str> = HashSet::new();
 
             for task_status in &task_type.statuses {
@@ -174,7 +200,7 @@ impl TaskTypes {
 
 /// Struct for single task type.
 #[derive(Deserialize, Serialize, Debug)]
-struct TaskType {
+pub struct TaskType {
     #[serde(alias = "self")]
     link: String,
     id: String,
@@ -193,7 +219,8 @@ struct TaskStatus {
     icon_url: String,
     name: String,
     id: String,
-    category: StatusCategory,
+    #[serde(alias = "statusCategory")]
+    status_category: StatusCategory,
 }
 
 /// Struct for single task category.
@@ -201,11 +228,10 @@ struct TaskStatus {
 struct StatusCategory {
     #[serde(alias = "self")]
     link: String,
-    id: String,
+    id: u8,
     key: String,
     name: String,
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -221,24 +247,24 @@ mod tests {
             "key": "FRE-39",
             "fields": {
                 "description": "test description",
-                "summary": "test summary"
+                "summary": "test summary",
+                "status": {
+                    "self": "https://jira.zxz.su/rest/api/2/status/10104",
+                    "description": "Задача завершена",
+                    "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
+                    "name": "DONE",
+                    "id": "10104",
+                    "statusCategory": {
+                        "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
+                        "id": 3,
+                        "key": "done",
+                        "colorName": "green",
+                        "name": "Выполнено"
+                    }
+                }
             },
             "renderedFields": {
                 "description": "test"
-            },
-            "status": {
-                "self": "https://jira.zxz.su/rest/api/2/status/10104",
-                "description": "Задача завершена",
-                "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
-                "name": "DONE",
-                "id": "10104",
-                "statusCategory": {
-                    "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
-                    "id": 3,
-                    "key": "done",
-                    "colorName": "green",
-                    "name": "Выполнено"
-                }
             }
         }
         "#;
@@ -249,9 +275,54 @@ mod tests {
     #[test]
     fn test_deserialize_task_types() {
         let json_task_str = r#"
-
+        [
+            {
+                "self": "https://link.com",
+                "id": "10000",
+                "name": "Task",
+                "subtask": false,
+                "statuses": [
+                    {
+                        "self": "https://link.com",
+                        "description": "Open.",
+                        "iconUrl": "https://link.com",
+                        "name": "Open",
+                        "id": "1",
+                        "statusCategory": {
+                            "self": "https://link.com",
+                            "id": 2,
+                            "key": "new",
+                            "colorName": "blue-gray",
+                            "name": "Open"
+                        }
+                    }
+                ]
+            },
+            {
+                "self": "https://link.com",
+                "id": "10101",
+                "name": "History",
+                "subtask": false,
+                "statuses": [
+                    {
+                        "self": "https://link.com",
+                        "description": "Finished",
+                        "iconUrl": "https://link.com",
+                        "name": "DONE",
+                        "id": "10104",
+                        "statusCategory": {
+                            "self": "https://link.com",
+                            "id": 3,
+                            "key": "done",
+                            "colorName": "green",
+                            "name": "Done"
+                        }
+                    }
+                ]
+            }
+        ]
         "#;
 
-        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
+        serde_json::from_str::<TaskTypes>(json_task_str).unwrap();
     }
 }
