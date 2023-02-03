@@ -1,4 +1,3 @@
-mod cli;
 mod config;
 mod constance;
 mod errors;
@@ -8,7 +7,6 @@ mod startup;
 mod theme;
 mod utils;
 
-pub use crate::cli::*;
 pub use crate::config::*;
 pub use crate::jira::*;
 pub use crate::screen::*;
