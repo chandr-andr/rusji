@@ -11,7 +11,7 @@ use cursive::{
 };
 
 use crate::errors::RusjiError;
-use crate::jira::tasks::data::JiraIssues;
+use crate::jira::tasks::data::{JiraIssues, TaskTypes};
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
@@ -71,16 +71,28 @@ impl Default for ProjectsView {
                 {
                     let mut jira_guard = jira_data.write().unwrap();
                     jira_guard.set_selected_project(selected_project);
+
                     let client_clone = jira_guard.client.clone();
                     let project_key = jira_guard.get_selected_project_key();
 
+                    let project_key_clone = project_key.clone();
                     let jira_tasks = jira_guard.thread_pool.evaluate(
                         move || -> Result<JiraIssues, RusjiError> {
-                            JiraIssues::new(client_clone, project_key.as_str())
+                            JiraIssues::new(client_clone, project_key_clone.as_str())
                         },
                     );
+
+                    let client_clone = jira_guard.client.clone();
+                    let project_task_statuses = jira_guard.thread_pool.evaluate(
+                        move || -> Result<TaskTypes, RusjiError> {
+                            TaskTypes::new(client_clone, project_key.as_str())
+                        }
+                    );
                     let jira_tasks_result = jira_tasks.await_complete();
+                    let project_task_statuses_result = project_task_statuses.await_complete();
+
                     jira_guard.update_tasks(jira_tasks_result);
+                    jira_guard.update_task_status_types(project_task_statuses_result)
                 }
 
                 TasksView::get_view(cursive).update_view_content(cursive);

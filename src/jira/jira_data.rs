@@ -203,6 +203,15 @@ impl JiraData {
         Ok(return_data)
     }
 
+    pub fn update_task_status_types(
+        &mut self,
+        jira_projects_task_statuses: Result<TaskTypes, RusjiError>,
+    ) {
+        if let Ok(types) = jira_projects_task_statuses {
+            self.task_types = Some(types)
+        }
+    }
+
     fn make_projects_field(&self, projects: JiraProjects) -> HashMap<String, JiraProject> {
         let mut projects_hashmap: HashMap<String, JiraProject> = HashMap::default();
         for project in projects {
