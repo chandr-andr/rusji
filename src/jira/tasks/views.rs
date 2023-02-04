@@ -189,13 +189,6 @@ impl TasksView {
             .unwrap()
     }
 
-    /// Returns instance of the EditView in TasksView.
-    pub fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_main_dialog()
-            .find_name(Self::search_view_name().as_str())
-            .unwrap()
-    }
-
     /// Tries to find task to display it.
     fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
         let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();

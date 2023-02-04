@@ -186,13 +186,6 @@ impl ProjectsView {
             .unwrap()
     }
 
-    /// Returns the view with list of projects names.
-    fn get_search_view(&mut self) -> ViewRef<EditView> {
-        self.get_main_dialog()
-            .find_name(&Self::search_view_name())
-            .unwrap()
-    }
-
     /// Gets input string from EditView as `project_subname`
     /// and tries to find suitable projects.
     ///
