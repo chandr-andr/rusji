@@ -147,34 +147,6 @@ pub struct JiraTaskType {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct TaskTypes(Vec<TaskType>);
 
-pub struct TaskTypesIter<'a> {
-    task_types: &'a TaskTypes,
-    iter_num: usize,
-}
-
-impl<'a> Iterator for TaskTypesIter<'a> {
-    type Item = &'a TaskType;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.iter_num >= self.task_types.0.len() {
-            None
-        } else {
-            self.iter_num += 1;
-            Some(&self.task_types.0[self.iter_num - 1])
-        }
-    }
-}
-
-impl<'a> IntoIterator for &'a TaskTypes {
-    type Item = &'a TaskType;
-    type IntoIter = TaskTypesIter<'a>;
-    fn into_iter(self) -> Self::IntoIter {
-        TaskTypesIter {
-            task_types: self,
-            iter_num: 0,
-        }
-    }
-}
-
 impl TaskTypes {
     /// Creates new instance of task types.
     ///
@@ -193,21 +165,27 @@ impl TaskTypes {
         Ok(statuses)
     }
 
-    /// Returns hashmap with keys task type name and values hashset with statuses ids.
-    fn task_type_name_and_status_ids(&self) -> HashMap<&str, HashSet<&str>> {
-        let mut type_name_status_ids: HashMap<&str, HashSet<&str>> = HashMap::new();
+    fn iter(&self) -> std::slice::Iter<TaskType> {
+        self.0.iter()
+    }
 
-        for task_type in self {
-            let mut status_ids: HashSet<&str> = HashSet::new();
-
-            for task_status in &task_type.statuses {
-                status_ids.insert(&task_status.id);
+    /// Returns available task statuses for task.
+    fn get_available_task_statuses(
+        &self,
+        task_type_name: &str,
+    ) -> Vec<&str> {
+        // TODO: change TaskTypes to HashMap
+        // because we need to can find task_type.name without iterate.
+        for task_type in self.iter() {
+            if task_type.name == task_type_name {
+                return task_type
+                    .statuses
+                    .iter()
+                    .map(|status| status.name.as_str())
+                    .collect();
             }
-
-            type_name_status_ids.insert(&task_type.name, status_ids);
         }
-
-        type_name_status_ids
+        Vec::default()
     }
 }
 
@@ -219,12 +197,21 @@ pub struct TaskType {
     id: String,
     name: String,
     subtask: bool,
-    statuses: Vec<TaskStatus>,
+    statuses: TaskStatuses,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TaskStatuses(Vec<TaskStatus>);
+
+impl TaskStatuses {
+    fn iter(&self) -> std::slice::Iter<TaskStatus> {
+        self.0.iter()
+    }
 }
 
 /// Struct for single task status.
 #[derive(Deserialize, Serialize, Debug)]
-struct TaskStatus {
+pub struct TaskStatus {
     #[serde(alias = "self")]
     link: String,
     description: String,
