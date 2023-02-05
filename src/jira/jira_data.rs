@@ -86,6 +86,10 @@ impl JiraData {
         format!("{}-{}", self.get_selected_project().key, self.selected_task)
     }
 
+    pub fn get_selected_task(&self) -> &JiraTask {
+        self.get_selected_project().get_task(self.get_selected_task_key().as_str())
+    }
+
     pub fn update_projects(&mut self, jira_projects: Result<JiraProjects, RusjiError>) {
         match jira_projects {
             Ok(projects) => {

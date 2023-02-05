@@ -53,6 +53,7 @@ pub struct JiraTask {
     pub description: String,
     pub summary: String,
     pub status: JiraTaskStatus,
+    pub issuetype: JiraTaskType,
 }
 
 /// Creates custom Deserialize for JiraTask.
@@ -80,6 +81,7 @@ impl<'de> Deserialize<'de> for JiraTask {
         struct Fields {
             summary: String,
             status: JiraTaskStatus,
+            issuetype: JiraTaskType,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -102,6 +104,7 @@ impl<'de> Deserialize<'de> for JiraTask {
             description: task.rendered_fields.description,
             summary: task.fields.summary,
             status: task.fields.status,
+            issuetype: task.fields.issuetype,
         })
     }
 }
@@ -128,6 +131,16 @@ pub struct JiraTaskStatus {
     #[serde(alias = "iconUrl")]
     icon_url: String,
     name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JiraTaskType {
+    id: String,
+    #[serde(alias = "self")]
+    link: String,
+    description: String,
+    name: String,
+    subtask: bool,
 }
 
 /// Struct for task types.
@@ -243,19 +256,27 @@ mod tests {
         {
             "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
             "id": "299756",
-            "link": "https://jira.zxz.su/rest/api/2/issue/299756",
+            "link": "https://link.com",
             "key": "FRE-39",
             "fields": {
+                "issuetype": {
+                    "self": "https://link.com",
+                    "id": "10001",
+                    "description": "Created by Jira Software - do not edit or delete. Issue type for a user story.",
+                    "iconUrl": "https://link.com",
+                    "name": "Story",
+                    "subtask": false
+                },
                 "description": "test description",
                 "summary": "test summary",
                 "status": {
-                    "self": "https://jira.zxz.su/rest/api/2/status/10104",
+                    "self": "https://link.com",
                     "description": "Задача завершена",
-                    "iconUrl": "https://jira.zxz.su/images/icons/status_generic.gif",
+                    "iconUrl": "https://link.com",
                     "name": "DONE",
                     "id": "10104",
                     "statusCategory": {
-                        "self": "https://jira.zxz.su/rest/api/2/statuscategory/3",
+                        "self": "https://link.com",
                         "id": 3,
                         "key": "done",
                         "colorName": "green",

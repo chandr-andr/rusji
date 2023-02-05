@@ -336,13 +336,57 @@ impl Default for ActionsView {
     fn default() -> Self {
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .with_name(ACTIONS_SELECT_VIEW_NAME);
+            .with_name(Self::select_view_name());
 
         Self {
             inner_view: Dialog::new()
                 .title("Choose action")
                 .content(ScrollView::new(inner_action_view).full_height()),
         }
+    }
+}
+
+impl JiraView for ActionsView {
+    /// Returns name of the ActionsView.
+    fn view_name() -> String {
+        String::from("ActionsView")
+    }
+
+    /// Returns instance of the ActionsView.
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+
+    /// Returns name of the main Dialog in ActionsView.
+    fn main_dialog_name() -> String {
+        String::from("ActionsDialogName")
+    }
+
+    /// Returns instance of the main Dialog in ActionsView.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+
+    /// Updates SelectView in ActionsView with data from JiraData.
+    fn update_view_content(&mut self, cursive: &mut Cursive) {
+        let jira_data: Arc<RwLock<JiraData>> = cursive
+            .user_data()
+            .map(|jira_data| Arc::clone(jira_data))
+            .unwrap();
+        let mut select_view: ViewRef<SelectView> = self.get_select_view();
+
+        let jira_data_guard = jira_data.read().unwrap();
+        let jira_project = jira_data_guard.get_selected_project();
+        let jira_task = jira_data_guard.get_selected_task();
+
+        if let Some(task_types) = &jira_project.tasks_types {
+
+        }
+    }
+
+    /// Adds new content to SelectView from passed `content`.
+    fn add_content_to_view(&mut self, content: Vec<&str>) {
+
     }
 }
 
@@ -361,5 +405,19 @@ impl ViewWrapper for ActionsView {
         F: FnOnce(&mut Self::V) -> R,
     {
         Some(f(&mut self.inner_view))
+    }
+}
+
+impl ActionsView {
+    /// Returns name of the SelectView in ActionsView.
+    pub fn select_view_name() -> String {
+        String::from("ActionsSelectView")
+    }
+
+    /// Returns instance of the SelectView in ActionsView.
+    pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
+        self.get_main_dialog()
+            .find_name(Self::select_view_name().as_str())
+            .unwrap()
     }
 }
