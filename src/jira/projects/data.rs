@@ -50,7 +50,8 @@ pub struct JiraProject {
 
 impl JiraProject {
     pub fn get_task(&self, task_name: &str) -> &JiraTask {
-        self.tasks.as_ref().unwrap().get(task_name).unwrap()
+        let a = self.tasks.as_ref().unwrap().get(task_name).unwrap();
+        a
     }
 
     pub fn get_mut_task(&mut self, task_name: &str) -> &mut JiraTask {

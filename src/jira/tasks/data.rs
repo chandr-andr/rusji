@@ -139,7 +139,7 @@ pub struct JiraTaskType {
     #[serde(alias = "self")]
     link: String,
     description: String,
-    name: String,
+    pub name: String,
     subtask: bool,
 }
 
@@ -170,7 +170,7 @@ impl TaskTypes {
     }
 
     /// Returns available task statuses for task.
-    fn get_available_task_statuses(
+    pub fn get_available_task_statuses(
         &self,
         task_type_name: &str,
     ) -> Vec<&str> {

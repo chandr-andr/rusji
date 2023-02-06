@@ -116,7 +116,12 @@ impl ViewWrapper for ActionsLayout {
 impl Default for ActionsLayout {
     fn default() -> Self {
         Self {
-            inner_layout: LinearLayout::vertical().child(ActionsView::default().full_height()),
+            inner_layout: LinearLayout::vertical()
+                .child(
+                    ActionsView::default()
+                        .with_name(ActionsView::view_name())
+                        .full_height()
+                ),
         }
     }
 }

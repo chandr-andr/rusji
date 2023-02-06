@@ -16,7 +16,7 @@ use rusty_pool::ThreadPool;
 /// Struct with data about company jira.
 pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
-    task_types: Option<TaskTypes>,
+    pub task_types: Option<TaskTypes>,
     pub client: Arc<RwLock<RequestClient>>,
     pub thread_pool: ThreadPool,
     pub selected_project: String,
@@ -44,9 +44,25 @@ impl JiraData {
     }
 
     /// Sets new selected task.
-    pub fn set_selected_task(&mut self, selected_task: &str) {
-        let selected_task_key: &str = selected_task.split('-').collect::<Vec<&str>>()[1];
-        self.selected_task = selected_task_key.to_string()
+    pub fn set_selected_task(&mut self, raw_selected_task: &str) -> &String {
+        let selected_task: String;
+        let project_key = &self.get_selected_project().key;
+        match raw_selected_task.parse::<usize>() {
+            Ok(_) => {
+                selected_task =
+                    format!("{}-{}", project_key, raw_selected_task);
+            }
+            Err(_) => {
+                let splited_task: Vec<&str> = raw_selected_task.split(" -- ").collect();
+                if splited_task.len() == 2 {
+                    selected_task = splited_task[0].into();
+                } else {
+                    selected_task = raw_selected_task.to_string();
+                }
+            }
+        };
+        self.selected_task = selected_task;
+        &self.selected_task
     }
 
     pub fn get_project(&self, project_name: &str) -> &JiraProject {
@@ -82,12 +98,8 @@ impl JiraData {
         project.key.clone()
     }
 
-    pub fn get_selected_task_key(&self) -> String {
-        format!("{}-{}", self.get_selected_project().key, self.selected_task)
-    }
-
     pub fn get_selected_task(&self) -> &JiraTask {
-        self.get_selected_project().get_task(self.get_selected_task_key().as_str())
+        self.get_selected_project().get_task(&self.selected_task)
     }
 
     pub fn update_projects(&mut self, jira_projects: Result<JiraProjects, RusjiError>) {
