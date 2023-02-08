@@ -65,18 +65,12 @@ impl JiraData {
         &self.selected_task
     }
 
+    /// Returns immutable reference to a project.
     pub fn get_project(&self, project_name: &str) -> &JiraProject {
         self.projects.as_ref().unwrap().get(project_name).unwrap()
     }
 
-    pub fn get_selected_project(&self) -> &JiraProject {
-        self.projects
-            .as_ref()
-            .unwrap()
-            .get::<String>(&self.selected_project)
-            .unwrap()
-    }
-
+    /// Returns mutable reference to a project.
     pub fn get_mut_project(&mut self, project_name: &str) -> &mut JiraProject {
         self.projects
             .as_mut()
@@ -85,6 +79,16 @@ impl JiraData {
             .unwrap()
     }
 
+    /// Returns immutable reference to a selected project.
+    pub fn get_selected_project(&self) -> &JiraProject {
+        self.projects
+            .as_ref()
+            .unwrap()
+            .get::<String>(&self.selected_project)
+            .unwrap()
+    }
+
+    /// Returns mutable reference to a selected project.
     pub fn get_mut_selected_project(&mut self) -> &mut JiraProject {
         self.projects
             .as_mut()
@@ -93,15 +97,26 @@ impl JiraData {
             .unwrap()
     }
 
+    /// Returns key of a selected project.
+    ///
+    /// Assume we have project with name `PROJECT`
+    /// and the key `PRO`.
+    /// This method will return `PRO`
     pub fn get_selected_project_key(&self) -> String {
         let project = self.get_selected_project();
         project.key.clone()
     }
 
+    /// Returns immutable reference to a task.
     pub fn get_selected_task(&self) -> &JiraTask {
         self.get_selected_project().get_task(&self.selected_task)
     }
 
+    /// Updates projects.
+    ///
+    /// This method receives `Result<JiraProjects, RusjiError>`
+    ///
+    /// If `jira_projects` is Ok updates `projects` field else pass `None`.
     pub fn update_projects(&mut self, jira_projects: Result<JiraProjects, RusjiError>) {
         match jira_projects {
             Ok(projects) => {
@@ -114,6 +129,7 @@ impl JiraData {
         }
     }
 
+    /// Returns names of projects.
     pub fn get_projects_names(&self) -> Vec<&str> {
         match self.projects.as_ref() {
             Some(project) => {
@@ -123,6 +139,11 @@ impl JiraData {
         }
     }
 
+    /// Updates tasks.
+    ///
+    /// This method receives `Result<JiraIssues, RusjiError>`
+    ///
+    /// If `jira_projects` is Ok updates `tasks` field else pass `None`.
     pub fn update_tasks(&mut self, jira_tasks: Result<JiraIssues, RusjiError>) {
         match jira_tasks {
             Ok(tasks) => {
@@ -148,6 +169,7 @@ impl JiraData {
         }
     }
 
+    /// Tries to find project by subname.
     pub fn find_project_by_subname(&self, project_subname: &str) -> Vec<&str> {
         let mut fit_projects: Vec<&str> = Vec::new();
         for project in self.projects.as_ref().unwrap().values() {
@@ -168,6 +190,7 @@ impl JiraData {
         fit_projects
     }
 
+    /// Tries to find task by subname
     pub fn find_task_by_subname(
         &self,
         task_subname: &str,
@@ -189,36 +212,7 @@ impl JiraData {
         fit_tasks
     }
 
-    pub fn get_new_task(&mut self, task_key: &str) -> RusjiResult<(String, String)> {
-        let selected_task_key;
-        let selected_projects_key = self.selected_project.clone();
-        match task_key.parse::<usize>() {
-            Ok(_) => {
-                selected_task_key = format!("{}-{}", selected_projects_key, task_key);
-            }
-            Err(_) => {
-                selected_task_key = task_key.to_string();
-            }
-        };
-        let task = JiraTask::new(self.client.clone(), selected_task_key.as_str())?;
-        let return_data = (task.summary.clone(), task.description.clone());
-
-        let mut project = self.get_mut_project(selected_projects_key.as_str());
-
-        match project.tasks.as_mut() {
-            Some(tasks) => {
-                tasks.insert(task.key.clone(), task);
-            }
-            None => {
-                let mut new_tasks = HashMap::<String, JiraTask>::new();
-                new_tasks.insert(task.key.clone(), task);
-                project.tasks = Some(new_tasks);
-            }
-        }
-
-        Ok(return_data)
-    }
-
+    /// Updates status types for tasks in project.
     pub fn update_task_status_types(
         &mut self,
         jira_projects_task_statuses: Result<TaskTypes, RusjiError>,
@@ -228,6 +222,7 @@ impl JiraData {
         }
     }
 
+    /// Builds `projects` field from `JiraProjects`.
     fn make_projects_field(&self, projects: JiraProjects) -> HashMap<String, JiraProject> {
         let mut projects_hashmap: HashMap<String, JiraProject> = HashMap::default();
         for project in projects {
@@ -236,6 +231,7 @@ impl JiraData {
         projects_hashmap
     }
 
+    /// Builds `tasks` field from `JiraIssues`
     fn make_tasks_field(&self, tasks: JiraIssues) -> HashMap<String, JiraTask> {
         let mut tasks_hashmap: HashMap<String, JiraTask> = HashMap::default();
         for task in tasks {
