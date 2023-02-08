@@ -42,7 +42,7 @@ impl Default for MainActionsView {
 
         Self {
             inner_view: Dialog::new()
-                .title("Choose action")
+                .title("Available action")
                 .content(ScrollView::new(inner_action_view).full_height())
                 .with_name(Self::main_dialog_name())
         }
