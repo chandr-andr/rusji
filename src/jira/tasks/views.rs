@@ -14,6 +14,7 @@ use crate::jira::common::views::JiraView;
 use crate::jira::constance::{
     INNER_CENTER_TOP_VIEW_ALIGN, INNER_LEFT_TOP_VIEW_ALIGN,
 };
+use crate::jira::tasks_actions::views::MainActionsView;
 use crate::jira_data::JiraData;
 
 use super::data::JiraTask;
@@ -51,7 +52,7 @@ impl Default for TasksView {
                             }
 
                             InfoView::get_view(cursive).update_view_content(cursive);
-                            ActionsView::get_view(cursive).update_view_content(cursive);
+                            MainActionsView::get_view(cursive).update_view_content(cursive);
                             Self::get_view(cursive).on_enter_task_search(cursive, task_key);
                         })
                         .with_name(Self::search_view_name()),
@@ -68,7 +69,7 @@ impl Default for TasksView {
                 jira_data.write().unwrap().set_selected_task(task_name);
 
                 InfoView::get_view(cursive).show_info_on_select(cursive, task_name);
-                ActionsView::get_view(cursive).update_view_content(cursive);
+                MainActionsView::get_view(cursive).update_view_content(cursive);
             })
             .with_name(Self::select_view_name())
             .scrollable();
@@ -321,114 +322,5 @@ impl InfoView {
 
         self.get_main_dialog()
             .set_content(Self::make_inner_view(&task.summary, &task.description));
-    }
-}
-
-pub struct ActionsView {
-    inner_view: NamedView<Dialog>,
-}
-
-impl Default for ActionsView {
-    fn default() -> Self {
-        let inner_action_view = SelectView::<String>::new()
-            .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .on_submit(|cursive: &mut Cursive, task_key: &str| {
-                let jira_data: Arc<RwLock<JiraData>> = cursive
-                    .user_data()
-                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
-                    .unwrap();
-                let jira_data_guard = jira_data.read().unwrap();
-                let jira_task = jira_data_guard.get_selected_task();
-
-                if let Some(task_types) = &jira_data_guard.task_types {
-                    let task_statuses = task_types.get_available_task_statuses(
-                        &jira_task.issuetype.name,
-                    );
-                    {
-                        let mut select_view = SelectView::new();
-
-                        select_view.add_all_str(task_statuses);
-                        cursive.add_layer(
-                            Dialog::new()
-                                .title("Choose new status")
-                                .content(select_view)
-                        );
-                    }
-                }
-            })
-            .with_name(Self::select_view_name());
-
-        Self {
-            inner_view: Dialog::new()
-                .title("Choose action")
-                .content(ScrollView::new(inner_action_view).full_height())
-                .with_name(Self::main_dialog_name())
-        }
-    }
-}
-
-impl JiraView for ActionsView {
-    /// Returns name of the ActionsView.
-    fn view_name() -> String {
-        String::from("ActionsView")
-    }
-
-    /// Returns instance of the ActionsView.
-    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
-        cursive.find_name(Self::view_name().as_str()).unwrap()
-    }
-
-    /// Returns name of the main Dialog in ActionsView.
-    fn main_dialog_name() -> String {
-        String::from("ActionsDialogName")
-    }
-
-    /// Returns instance of the main Dialog in ActionsView.
-    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
-        self.find_name(&Self::main_dialog_name()).unwrap()
-    }
-
-    /// Updates SelectView in ActionsView with data from JiraData.
-    fn update_view_content(&mut self, cursive: &mut Cursive) {
-        let mut select_view: ViewRef<SelectView> = self.get_select_view();
-        select_view.clear();
-        select_view.add_all_str(vec!["Change status"]);
-    }
-
-    /// Adds new content to SelectView from passed `content`.
-    fn add_content_to_view(&mut self, content: Vec<&str>) {
-
-    }
-}
-
-impl ViewWrapper for ActionsView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
-}
-
-impl ActionsView {
-    /// Returns name of the SelectView in ActionsView.
-    pub fn select_view_name() -> String {
-        String::from("ActionsSelectView")
-    }
-
-    /// Returns instance of the SelectView in ActionsView.
-    pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
-        self.get_main_dialog()
-            .find_name(Self::select_view_name().as_str())
-            .unwrap()
     }
 }

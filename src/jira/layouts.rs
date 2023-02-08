@@ -1,12 +1,14 @@
 use crate::jira::{
     common::views::JiraView,
     projects::views::ProjectsView,
-    tasks::views::{ActionsView, InfoView, TasksView},
+    tasks::views::{InfoView, TasksView},
 };
 use cursive::{
     view::{Nameable, Resizable, ViewWrapper},
     views::{DummyView, LinearLayout, NamedView},
 };
+
+use super::tasks_actions::views::MainActionsView;
 
 pub(crate) struct TasksProjectsLayout {
     inner_layout: LinearLayout,
@@ -118,8 +120,8 @@ impl Default for ActionsLayout {
         Self {
             inner_layout: LinearLayout::vertical()
                 .child(
-                    ActionsView::default()
-                        .with_name(ActionsView::view_name())
+                    MainActionsView::default()
+                        .with_name(MainActionsView::view_name())
                         .full_height()
                 ),
         }
