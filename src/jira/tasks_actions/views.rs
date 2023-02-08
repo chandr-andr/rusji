@@ -8,11 +8,11 @@ use cursive::{
 
 use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::JiraView}, jira_data::JiraData};
 
-pub struct MainMainActionsView {
+pub struct MainActionsView {
     inner_view: NamedView<Dialog>,
 }
 
-impl Default for MainMainActionsView {
+impl Default for MainActionsView {
     fn default() -> Self {
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
@@ -49,8 +49,8 @@ impl Default for MainMainActionsView {
     }
 }
 
-impl JiraView for MainMainActionsView {
-    /// Returns name of the MainMainActionsView.
+impl JiraView for MainActionsView {
+    /// Returns name of the MainActionsView.
     fn view_name() -> String {
         String::from("MainActionsView")
     }
@@ -71,19 +71,17 @@ impl JiraView for MainMainActionsView {
     }
 
     /// Updates SelectView in MainActionsView with data from JiraData.
-    fn update_view_content(&mut self, cursive: &mut Cursive) {
+    fn update_view_content(&mut self, _: &mut Cursive) {
         let mut select_view: ViewRef<SelectView> = self.get_select_view();
         select_view.clear();
         select_view.add_all_str(vec!["Change status"]);
     }
 
     /// Adds new content to SelectView from passed `content`.
-    fn add_content_to_view(&mut self, content: Vec<&str>) {
-
-    }
+    fn add_content_to_view(&mut self, _: Vec<&str>) {}
 }
 
-impl ViewWrapper for MainMainActionsView {
+impl ViewWrapper for MainActionsView {
     type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
@@ -101,7 +99,7 @@ impl ViewWrapper for MainMainActionsView {
     }
 }
 
-impl MainMainActionsView {
+impl MainActionsView {
     /// Returns name of the SelectView in MainActionsView.
     pub fn select_view_name() -> String {
         String::from("ActionsSelectView")

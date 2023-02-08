@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use cursive::View;
 use cursive::{
-    view::{Finder, Nameable, Resizable, Scrollable, ViewWrapper},
+    view::{Finder, Nameable, Scrollable, ViewWrapper},
     views::{
         Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView, SelectView, TextView,
         ViewRef,
@@ -11,9 +11,7 @@ use cursive::{
 };
 
 use crate::jira::common::views::JiraView;
-use crate::jira::constance::{
-    INNER_CENTER_TOP_VIEW_ALIGN, INNER_LEFT_TOP_VIEW_ALIGN,
-};
+use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
 use crate::jira::tasks_actions::views::MainActionsView;
 use crate::jira_data::JiraData;
 
