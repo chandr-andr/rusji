@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use crate::errors::{RusjiError, RusjiResult};
+use crate::errors::RusjiError;
 use crate::jira::{
     projects::data::JiraProject,
     tasks::data::{JiraIssues, JiraTask},
