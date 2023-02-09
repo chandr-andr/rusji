@@ -135,6 +135,6 @@ impl ViewWrapper for ChangeStatusActionView {
     }
 }
 
-impl ChangeStatusActionView {
-    pub fn new()
-}
+// impl ChangeStatusActionView {
+//     pub fn new()
+// }
