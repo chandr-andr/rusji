@@ -112,3 +112,29 @@ impl MainActionsView {
             .unwrap()
     }
 }
+
+pub struct ChangeStatusActionView {
+    inner_view: NamedView<Dialog>,
+}
+
+impl ViewWrapper for ChangeStatusActionView {
+    type V = NamedView<Dialog>;
+
+    fn with_view<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(&self.inner_view))
+    }
+
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(&mut self.inner_view))
+    }
+}
+
+impl ChangeStatusActionView {
+    pub fn new()
+}
