@@ -135,6 +135,40 @@ impl ViewWrapper for ChangeStatusActionView {
     }
 }
 
-// impl ChangeStatusActionView {
-//     pub fn new()
-// }
+impl JiraView for ChangeStatusActionView {
+    /// Returns name of the `ChangeStatusActionView`.
+    ///
+    /// It will used for `.with_name()` method.
+    fn view_name() -> String {
+        "ChangeStatusView".into()
+    }
+
+    /// Returns instance of `ChangeStatusActionView`
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+
+    /// Returns name of the main Dialog in `ChangeStatusActionView`.
+    fn main_dialog_name() -> String {
+        "ChangeStatusDialogName".into()
+    }
+
+    /// Returns main dialog from the view.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+}
+
+impl ChangeStatusActionView {
+    pub fn new(task_statuses: Vec<&str>) -> Self {
+        let mut select_view = SelectView::new();
+
+        select_view.add_all_str(task_statuses);
+        Self {
+            inner_view: Dialog::new()
+                .title("Choose new status")
+                .content(select_view)
+                .with_name(Self::main_dialog_name())
+        }
+    }
+}

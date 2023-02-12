@@ -14,11 +14,17 @@ pub trait JiraView {
     fn main_dialog_name() -> String;
 
     /// Returns instance of main dialog view.
+
+    // TODO: Change ViewRef<Dialog> to generic.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
 
     /// Updates view content from [`super::jira_data::JiraData`] data.
-    fn update_view_content(&mut self, cursive: &mut Cursive);
+    ///
+    /// Default implementation does nothing.
+    fn update_view_content(&mut self, cursive: &mut Cursive) {}
 
     /// Extends view content with passed `content`.
-    fn add_content_to_view(&mut self, content: Vec<&str>);
+    ///
+    /// Default implementation does nothing.
+    fn add_content_to_view(&mut self, content: Vec<&str>) {}
 }
