@@ -8,6 +8,8 @@ use cursive::{
 
 use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::JiraView}, jira_data::JiraData};
 
+use super::enums::Actions;
+
 pub struct MainActionsView {
     inner_view: NamedView<Dialog>,
 }
@@ -16,7 +18,7 @@ impl Default for MainActionsView {
     fn default() -> Self {
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .on_submit(|cursive: &mut Cursive, _: &str| {
+            .on_submit(|cursive: &mut Cursive, action_name: &str| {
                 let jira_data: Arc<RwLock<JiraData>> = cursive
                     .user_data()
                     .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
@@ -28,14 +30,9 @@ impl Default for MainActionsView {
                     let task_statuses = task_types.get_available_task_statuses(
                         &jira_task.issuetype.name,
                     );
-                    let mut select_view = SelectView::new();
-
-                    select_view.add_all_str(task_statuses);
-                    cursive.add_layer(
-                        Dialog::new()
-                            .title("Choose new status")
-                            .content(select_view)
-                    )
+                    let action: Actions = action_name.into();
+                    let change_status = ChangeStatusActionView::new(task_statuses);
+                    cursive.add_layer(change_status)
                 }
             })
             .with_name(Self::select_view_name());
@@ -52,7 +49,7 @@ impl Default for MainActionsView {
 impl JiraView for MainActionsView {
     /// Returns name of the MainActionsView.
     fn view_name() -> String {
-        String::from("MainActionsView")
+        "MainActionsView".into()
     }
 
     /// Returns instance of the MainActionsView.
@@ -62,7 +59,7 @@ impl JiraView for MainActionsView {
 
     /// Returns name of the main Dialog in MainActionsView.
     fn main_dialog_name() -> String {
-        String::from("ActionsDialogName")
+        "ActionsDialogName".into()
     }
 
     /// Returns instance of the main Dialog in MainActionsView.
@@ -74,7 +71,7 @@ impl JiraView for MainActionsView {
     fn update_view_content(&mut self, _: &mut Cursive) {
         let mut select_view: ViewRef<SelectView> = self.get_select_view();
         select_view.clear();
-        select_view.add_all_str(vec!["Change status"]);
+        select_view.add_all_str(Actions::get_actions());
     }
 
     /// Adds new content to SelectView from passed `content`.
@@ -168,6 +165,9 @@ impl ChangeStatusActionView {
             inner_view: Dialog::new()
                 .title("Choose new status")
                 .content(select_view)
+                .button("Back", |cursive: &mut Cursive| {
+                    cursive.pop_layer();
+                })
                 .with_name(Self::main_dialog_name())
         }
     }

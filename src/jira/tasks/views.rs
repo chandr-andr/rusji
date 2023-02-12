@@ -115,7 +115,7 @@ impl ViewWrapper for TasksView {
 impl JiraView for TasksView {
     /// Returns name of the TasksView.
     fn view_name() -> String {
-        String::from("TasksView")
+        "TasksView".into()
     }
 
     /// Returns instance of the TasksView.
@@ -125,7 +125,7 @@ impl JiraView for TasksView {
 
     /// Returns name of the main Dialog in TasksView.
     fn main_dialog_name() -> String {
-        String::from("TasksDialogName")
+        "TasksDialogName".into()
     }
 
     /// Returns instance of the main Dialog in TasksView.
@@ -169,12 +169,12 @@ impl JiraView for TasksView {
 impl TasksView {
     /// Returns name of the SelectView in TasksView.
     pub fn select_view_name() -> String {
-        String::from("TasksSelectView")
+        "TasksSelectView".into()
     }
 
     /// Returns name of the EditView in TasksView.
     pub fn search_view_name() -> String {
-        String::from("TasksSearchName")
+        "TasksSearchName".into()
     }
 
     /// Returns instance of the SelectView in TasksView.
@@ -237,7 +237,7 @@ impl ViewWrapper for InfoView {
 impl JiraView for InfoView {
     /// Returns name of the InfoView.
     fn view_name() -> String {
-        String::from("InfoView")
+        "InfoView".into()
     }
 
     /// Returns the instance of the InfoView.
@@ -247,7 +247,7 @@ impl JiraView for InfoView {
 
     /// Returns name of the main dialog.
     fn main_dialog_name() -> String {
-        String::from("InfoViewDialog")
+        "InfoViewDialog".into()
     }
 
     /// Returns the instance of the main Dialog.
