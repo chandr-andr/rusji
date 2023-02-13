@@ -1,44 +1,55 @@
 use std::str::FromStr;
 
-pub enum Actions {
+use crate::jira::common::views::ActionView;
+
+use super::views::ChangeStatusActionView;
+
+pub enum TaskActions {
     StatusChange,
     ChangeExecutor,
     ChangeRelease,
-    // NotState,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParsePointError;
 
-impl FromStr for Actions {
+impl FromStr for TaskActions {
     type Err = ParsePointError;
     fn from_str(str_action: &str) -> Result<Self, Self::Err> {
         match str_action {
-            "Change status" => Ok(Actions::StatusChange),
-            "Change executor" => Ok(Actions::ChangeExecutor),
-            "Change release" => Ok(Actions::ChangeRelease),
+            "Change status" => Ok(TaskActions::StatusChange),
+            "Change executor" => Ok(TaskActions::ChangeExecutor),
+            "Change release" => Ok(TaskActions::ChangeRelease),
             _ => Err(ParsePointError{})
         }
     }
 }
 
-impl From<Actions> for &str {
-    fn from(action: Actions) -> Self {
+impl From<TaskActions> for &str {
+    fn from(action: TaskActions) -> Self {
         match action {
-            Actions::StatusChange => "Change status",
-            Actions::ChangeExecutor => "Change executor",
-            Actions::ChangeRelease => "Change release",
-            // _ => "NotState",
+            TaskActions::StatusChange => "Change status",
+            TaskActions::ChangeExecutor => "Change executor",
+            TaskActions::ChangeRelease => "Change release",
         }
     }
 }
 
-impl Actions {
+impl TaskActions {
     pub fn get_actions() -> Vec<&'static str> {
         vec![
             Self::StatusChange.into(),
             Self::ChangeExecutor.into(),
             Self::ChangeRelease.into(),
         ]
+    }
+
+    /// Returns new action view based on `TaskActions` enum.
+    pub fn get_view(self, data: Vec<&str>) -> impl ActionView {
+        match self {
+            TaskActions::StatusChange => ChangeStatusActionView::new(data),
+            TaskActions::ChangeExecutor => ChangeStatusActionView::new(data),
+            TaskActions::ChangeRelease => ChangeStatusActionView::new(data),
+        }
     }
 }

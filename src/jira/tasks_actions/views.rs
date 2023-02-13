@@ -6,9 +6,9 @@ use cursive::{
     Cursive,
 };
 
-use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::JiraView}, jira_data::JiraData};
+use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::{JiraView, ActionView}}, jira_data::JiraData};
 
-use super::enums::Actions;
+use super::enums::TaskActions;
 
 use std::str::FromStr;
 
@@ -32,7 +32,7 @@ impl Default for MainActionsView {
                     let task_statuses = task_types.get_available_task_statuses(
                         &jira_task.issuetype.name,
                     );
-                    let action: Actions = Actions::from_str(action_name).unwrap();
+                    let action: TaskActions = TaskActions::from_str(action_name).unwrap();
                     let change_status = ChangeStatusActionView::new(task_statuses);
                     cursive.add_layer(change_status)
                 }
@@ -73,7 +73,7 @@ impl JiraView for MainActionsView {
     fn update_view_content(&mut self, _: &mut Cursive) {
         let mut select_view: ViewRef<SelectView> = self.get_select_view();
         select_view.clear();
-        select_view.add_all_str(Actions::get_actions());
+        select_view.add_all_str(TaskActions::get_actions());
     }
 
     /// Adds new content to SelectView from passed `content`.
@@ -110,11 +110,18 @@ impl MainActionsView {
             .find_name(Self::select_view_name().as_str())
             .unwrap()
     }
+
+    /// Adds new layout to main screnn.
+    ///
+    /// Based on selected action.
+    fn add_certain_action_view(&self, cursive: &mut Cursive, action: TaskActions) {}
 }
 
 pub struct ChangeStatusActionView {
     inner_view: NamedView<Dialog>,
 }
+
+impl ActionView for ChangeStatusActionView {}
 
 impl ViewWrapper for ChangeStatusActionView {
     type V = NamedView<Dialog>;

@@ -28,3 +28,5 @@ pub trait JiraView {
     /// Default implementation does nothing.
     fn add_content_to_view(&mut self, content: Vec<&str>) {}
 }
+
+pub trait ActionView {}
