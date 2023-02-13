@@ -1,17 +1,23 @@
+use std::str::FromStr;
+
 pub enum Actions {
     StatusChange,
     ChangeExecutor,
     ChangeRelease,
-    NotState,
+    // NotState,
 }
 
-impl From<&str> for Actions {
-    fn from(action: &str) -> Self {
-        match action {
-            "Change status" => Actions::StatusChange,
-            "Change executor" => Actions::ChangeExecutor,
-            "Change release" => Actions::ChangeRelease,
-            _ => Actions::NotState,
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParsePointError;
+
+impl FromStr for Actions {
+    type Err = ParsePointError;
+    fn from_str(str_action: &str) -> Result<Self, Self::Err> {
+        match str_action {
+            "Change status" => Ok(Actions::StatusChange),
+            "Change executor" => Ok(Actions::ChangeExecutor),
+            "Change release" => Ok(Actions::ChangeRelease),
+            _ => Err(ParsePointError{})
         }
     }
 }
@@ -22,7 +28,7 @@ impl From<Actions> for &str {
             Actions::StatusChange => "Change status",
             Actions::ChangeExecutor => "Change executor",
             Actions::ChangeRelease => "Change release",
-            _ => "NotState",
+            // _ => "NotState",
         }
     }
 }

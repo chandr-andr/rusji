@@ -10,6 +10,8 @@ use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::JiraVi
 
 use super::enums::Actions;
 
+use std::str::FromStr;
+
 pub struct MainActionsView {
     inner_view: NamedView<Dialog>,
 }
@@ -30,7 +32,8 @@ impl Default for MainActionsView {
                     let task_statuses = task_types.get_available_task_statuses(
                         &jira_task.issuetype.name,
                     );
-                    let action: Actions = action_name.into();
+                    // let action: Actions = action_name.into();
+                    let action: Actions = Actions::from_str(action_name).unwrap();
                     let change_status = ChangeStatusActionView::new(task_statuses);
                     cursive.add_layer(change_status)
                 }
