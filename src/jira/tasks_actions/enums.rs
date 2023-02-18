@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use cursive::Cursive;
+
 use crate::jira::common::views::ActionView;
 
 use super::views::ChangeStatusActionView;
@@ -45,11 +47,11 @@ impl TaskActions {
     }
 
     /// Returns new action view based on `TaskActions` enum.
-    pub fn get_view(self, data: Vec<&str>) -> impl ActionView {
+    pub fn get_view(self, cursive: &mut Cursive) -> impl ActionView {
         match self {
-            TaskActions::StatusChange => ChangeStatusActionView::new(data),
-            TaskActions::ChangeExecutor => ChangeStatusActionView::new(data),
-            TaskActions::ChangeRelease => ChangeStatusActionView::new(data),
+            TaskActions::StatusChange => ChangeStatusActionView::new(cursive),
+            TaskActions::ChangeExecutor => ChangeStatusActionView::new(cursive),
+            TaskActions::ChangeRelease => ChangeStatusActionView::new(cursive),
         }
     }
 }

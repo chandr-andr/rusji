@@ -27,20 +27,8 @@ impl Default for MainActionsView {
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, action_name: &str| {
-                let jira_data: Arc<RwLock<JiraData>> = cursive
-                    .user_data()
-                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
-                    .unwrap();
-                let jira_data_guard = jira_data.read().unwrap();
-                let jira_task = jira_data_guard.get_selected_task();
-
-                if let Some(task_types) = &jira_data_guard.task_types {
-                    let task_statuses =
-                        task_types.get_available_task_statuses(&jira_task.issuetype.name);
-                    let _action: TaskActions = TaskActions::from_str(action_name).unwrap();
-                    let change_status = ChangeStatusActionView::new(task_statuses);
-                    cursive.add_layer(change_status)
-                }
+                let action: TaskActions = TaskActions::from_str(action_name).unwrap();
+                Self::get_view(cursive).add_certain_action_view(cursive, action);
             })
             .with_name(Self::select_view_name());
 
@@ -119,14 +107,51 @@ impl MainActionsView {
     /// Adds new layout to main screnn.
     ///
     /// Based on selected action.
-    fn add_certain_action_view(&self, _cursive: &mut Cursive, _action: TaskActions) {}
+    fn add_certain_action_view(&self, cursive: &mut Cursive, action: TaskActions) {
+        let action_view = action.get_view(cursive);
+        cursive.add_layer(action_view);
+    }
 }
 
 pub struct ChangeStatusActionView {
     inner_view: NamedView<Dialog>,
 }
 
-impl ActionView for ChangeStatusActionView {}
+impl ActionView for ChangeStatusActionView {
+    /// Creates new ChangeStatusActionView view.
+    ///
+    /// Gets [`crate::jira_data::JiraData`] as a clone,
+    /// Then gets available task statuses from selected task.
+    ///
+    /// After adds this task statuses to the new select view.
+    fn new(cursive: &mut Cursive) -> Self {
+        let jira_data: Arc<RwLock<JiraData>> = cursive
+            .user_data()
+            .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
+            .unwrap();
+        let jira_data_guard = jira_data.read().unwrap();
+        let jira_task = jira_data_guard.get_selected_task();
+
+        let mut select_view = SelectView::new();
+
+        if let Some(task_types) = &jira_data_guard.task_types {
+            let task_statuses = task_types.get_available_task_statuses(
+                &jira_task.issuetype.name,
+            );
+            select_view.add_all_str(task_statuses);
+        }
+
+        Self {
+            inner_view: Dialog::new()
+                .title("Choose new status")
+                .content(select_view)
+                .button("Back", |cursive: &mut Cursive| {
+                    cursive.pop_layer();
+                })
+                .with_name(Self::main_dialog_name()),
+        }
+    }
+}
 
 impl ViewWrapper for ChangeStatusActionView {
     type V = NamedView<Dialog>;
@@ -167,22 +192,5 @@ impl JiraView for ChangeStatusActionView {
     /// Returns main dialog from the view.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
-    }
-}
-
-impl ChangeStatusActionView {
-    pub fn new(task_statuses: Vec<&str>) -> Self {
-        let mut select_view = SelectView::new();
-
-        select_view.add_all_str(task_statuses);
-        Self {
-            inner_view: Dialog::new()
-                .title("Choose new status")
-                .content(select_view)
-                .button("Back", |cursive: &mut Cursive| {
-                    cursive.pop_layer();
-                })
-                .with_name(Self::main_dialog_name()),
-        }
     }
 }

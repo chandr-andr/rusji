@@ -1,6 +1,6 @@
 use cursive::{
     views::{Dialog, ViewRef},
-    Cursive,
+    Cursive, view::ViewWrapper,
 };
 
 pub trait JiraView {
@@ -29,4 +29,6 @@ pub trait JiraView {
     fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
-pub trait ActionView {}
+pub trait ActionView: ViewWrapper {
+    fn new(cursive: &mut Cursive) -> Self;
+}
