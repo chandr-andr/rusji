@@ -121,13 +121,10 @@ fn add_new_company(cursive: &mut Cursive) {
         input_company_data.get("Jira Password").unwrap(),
     );
 
-    match is_add_success {
-        Ok(_) => {
-            c_user_data.refresh_config();
-            cursive.set_user_data(c_user_data);
-            success_dialog(cursive, "Company added successfully!")
-        }
-        Err(_) => {}
+    if let Ok(_) = is_add_success {
+        c_user_data.refresh_config();
+        cursive.set_user_data(c_user_data);
+        success_dialog(cursive, "Company added successfully!")
     }
 }
 

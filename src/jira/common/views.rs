@@ -1,6 +1,7 @@
 use cursive::{
+    view::ViewWrapper,
     views::{Dialog, ViewRef},
-    Cursive, view::ViewWrapper,
+    Cursive,
 };
 
 pub trait JiraView {

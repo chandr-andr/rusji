@@ -135,9 +135,7 @@ impl ActionView for ChangeStatusActionView {
         let mut select_view = SelectView::new();
 
         if let Some(task_types) = &jira_data_guard.task_types {
-            let task_statuses = task_types.get_available_task_statuses(
-                &jira_task.issuetype.name,
-            );
+            let task_statuses = task_types.get_available_task_statuses(&jira_task.issuetype.name);
             select_view.add_all_str(task_statuses);
         }
 
