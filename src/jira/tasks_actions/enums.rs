@@ -20,7 +20,7 @@ impl FromStr for TaskActions {
             "Change status" => Ok(TaskActions::StatusChange),
             "Change executor" => Ok(TaskActions::ChangeExecutor),
             "Change release" => Ok(TaskActions::ChangeRelease),
-            _ => Err(ParsePointError{})
+            _ => Err(ParsePointError {}),
         }
     }
 }

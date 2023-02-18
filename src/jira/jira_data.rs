@@ -49,8 +49,7 @@ impl JiraData {
         let project_key = &self.get_selected_project().key;
         match raw_selected_task.parse::<usize>() {
             Ok(_) => {
-                selected_task =
-                    format!("{}-{}", project_key, raw_selected_task);
+                selected_task = format!("{}-{}", project_key, raw_selected_task);
             }
             Err(_) => {
                 let splited_task: Vec<&str> = raw_selected_task.split(" -- ").collect();

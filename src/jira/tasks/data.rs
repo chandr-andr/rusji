@@ -1,4 +1,4 @@
-use std::{sync::{Arc, RwLock}};
+use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -167,10 +167,7 @@ impl TaskTypes {
     }
 
     /// Returns available task statuses for task.
-    pub fn get_available_task_statuses(
-        &self,
-        task_type_name: &str,
-    ) -> Vec<&str> {
+    pub fn get_available_task_statuses(&self, task_type_name: &str) -> Vec<&str> {
         // TODO: change TaskTypes to HashMap
         // because we need to can find task_type.name without iterate.
         for task_type in self.iter() {

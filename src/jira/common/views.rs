@@ -21,12 +21,12 @@ pub trait JiraView {
     /// Updates view content from [`super::jira_data::JiraData`] data.
     ///
     /// Default implementation does nothing.
-    fn update_view_content(&mut self, cursive: &mut Cursive) {}
+    fn update_view_content(&mut self, _cursive: &mut Cursive) {}
 
     /// Extends view content with passed `content`.
     ///
     /// Default implementation does nothing.
-    fn add_content_to_view(&mut self, content: Vec<&str>) {}
+    fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
 pub trait ActionView {}

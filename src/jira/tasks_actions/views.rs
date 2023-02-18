@@ -1,12 +1,18 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::{
-    views::{NamedView, Dialog, SelectView, ScrollView, ViewRef},
-    view::{Nameable, Resizable, ViewWrapper, Finder},
+    view::{Finder, Nameable, Resizable, ViewWrapper},
+    views::{Dialog, NamedView, ScrollView, SelectView, ViewRef},
     Cursive,
 };
 
-use crate::{jira::{constance::INNER_CENTER_TOP_VIEW_ALIGN, common::views::{JiraView, ActionView}}, jira_data::JiraData};
+use crate::{
+    jira::{
+        common::views::{ActionView, JiraView},
+        constance::INNER_CENTER_TOP_VIEW_ALIGN,
+    },
+    jira_data::JiraData,
+};
 
 use super::enums::TaskActions;
 
@@ -29,10 +35,9 @@ impl Default for MainActionsView {
                 let jira_task = jira_data_guard.get_selected_task();
 
                 if let Some(task_types) = &jira_data_guard.task_types {
-                    let task_statuses = task_types.get_available_task_statuses(
-                        &jira_task.issuetype.name,
-                    );
-                    let action: TaskActions = TaskActions::from_str(action_name).unwrap();
+                    let task_statuses =
+                        task_types.get_available_task_statuses(&jira_task.issuetype.name);
+                    let _action: TaskActions = TaskActions::from_str(action_name).unwrap();
                     let change_status = ChangeStatusActionView::new(task_statuses);
                     cursive.add_layer(change_status)
                 }
@@ -43,7 +48,7 @@ impl Default for MainActionsView {
             inner_view: Dialog::new()
                 .title("Available action")
                 .content(ScrollView::new(inner_action_view).full_height())
-                .with_name(Self::main_dialog_name())
+                .with_name(Self::main_dialog_name()),
         }
     }
 }
@@ -114,7 +119,7 @@ impl MainActionsView {
     /// Adds new layout to main screnn.
     ///
     /// Based on selected action.
-    fn add_certain_action_view(&self, cursive: &mut Cursive, action: TaskActions) {}
+    fn add_certain_action_view(&self, _cursive: &mut Cursive, _action: TaskActions) {}
 }
 
 pub struct ChangeStatusActionView {
@@ -177,7 +182,7 @@ impl ChangeStatusActionView {
                 .button("Back", |cursive: &mut Cursive| {
                     cursive.pop_layer();
                 })
-                .with_name(Self::main_dialog_name())
+                .with_name(Self::main_dialog_name()),
         }
     }
 }

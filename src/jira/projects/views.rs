@@ -86,11 +86,11 @@ impl Default for ProjectsView {
 
                     let project_task_statuses = {
                         let client_clone = jira_guard.client.clone();
-                        jira_guard.thread_pool.evaluate(
-                            move || -> Result<TaskTypes, RusjiError> {
+                        jira_guard
+                            .thread_pool
+                            .evaluate(move || -> Result<TaskTypes, RusjiError> {
                                 TaskTypes::new(client_clone, project_key.as_str())
-                            }
-                        )
+                            })
                     };
                     let jira_tasks_result = jira_tasks.await_complete();
                     let project_task_statuses_result = project_task_statuses.await_complete();
