@@ -12,7 +12,7 @@ struct CursiveUserData<'a> {
     to_find_names: Vec<&'a str>,
 }
 
-impl<'a> CursiveUserData<'static> {
+impl CursiveUserData<'static> {
     fn new(config: Config) -> Self {
         CursiveUserData {
             config,
@@ -121,7 +121,7 @@ fn add_new_company(cursive: &mut Cursive) {
         input_company_data.get("Jira Password").unwrap(),
     );
 
-    if let Ok(_) = is_add_success {
+    if is_add_success.is_ok() {
         c_user_data.refresh_config();
         cursive.set_user_data(c_user_data);
         success_dialog(cursive, "Company added successfully!")
