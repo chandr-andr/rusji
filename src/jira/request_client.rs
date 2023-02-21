@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use crate::errors::RusjiError;
-use reqwest::blocking::Client;
+use reqwest::blocking::{Client, RequestBuilder};
 use url::Url;
 
 /// Struct for request response.
@@ -37,7 +39,7 @@ impl RequestClient {
 
     /// Returns all Jira projects.
     pub fn get_jira_projects(&self) -> Result<RequestResponse, RusjiError> {
-        self.make_request(self.jira_url.join("/rest/api/2/project").unwrap())
+        self.make_basic_request(self.jira_url.join("/rest/api/2/project").unwrap())
     }
 
     /// Returns all tasks from project.
@@ -47,12 +49,12 @@ impl RequestClient {
     ) -> Result<RequestResponse, RusjiError> {
         let project_tasks_endpoint =
             format!("/rest/api/2/search?jql=project={project_name}&expand=renderedFields",);
-        self.make_request(self.jira_url.join(&project_tasks_endpoint).unwrap())
+        self.make_basic_request(self.jira_url.join(&project_tasks_endpoint).unwrap())
     }
 
     /// Returns new task.
     pub fn get_task(&self, task_key: &str) -> Result<RequestResponse, RusjiError> {
-        self.make_request(
+        self.make_basic_request(
             self.jira_url
                 .join(&format!(
                     "/rest/api/2/issue/{}?expand=renderedFields",
@@ -64,19 +66,55 @@ impl RequestClient {
 
     /// Returns all available task statuses for project.
     pub fn get_task_statuses(&self, project_name: &str) -> Result<RequestResponse, RusjiError> {
-        self.make_request(
+        self.make_basic_request(
             self.jira_url
                 .join(&format!("rest/api/2/project/{}/statuses", project_name,))
                 .unwrap(),
         )
     }
 
+    /// Updates task status.
+    pub fn update_task_status(
+        &self,
+        task_key: &str,
+        status_id: usize,
+    ) -> Result<RequestResponse, RusjiError>  {
+        todo!();
+    }
+
     /// Makes a request.
     ///
     /// Returns `RequestResponse` or `RusjiError`.
-    fn make_request(&self, url: Url) -> Result<RequestResponse, RusjiError> {
+    fn make_basic_request(&self, url: Url) -> Result<RequestResponse, RusjiError> {
         let response_text = self
-            .client
+            .request_builder(url)
+            .send()?
+            .text()?;
+        Ok(RequestResponse {
+            body: response_text,
+        })
+    }
+
+    /// Creates basic request builder.
+    ///
+    /// It's necessary because in some cases we have additional
+    /// parameters that should be added to the builder
+    ///
+    /// ### Basic usage is:
+    ///
+    /// ```
+    /// /// Add json body to builder.
+    /// let mut map = HashMap::new();
+    /// map.insert("lang", "rust");
+    ///
+    /// let builder = self.basic_request_builder(url)
+    ///     .json(&map);
+    ///
+    /// /// Send request
+    /// builder.send()
+    /// ```
+    fn request_builder(&self, url: Url) -> RequestBuilder {
+        self.client
             .get(url)
             .timeout(std::time::Duration::from_micros(5000000))
             .header(
@@ -84,10 +122,5 @@ impl RequestClient {
                 format!("Basic {}", self.request_credentials),
             )
             .header("Content-Type", "application/json")
-            .send()?
-            .text()?;
-        Ok(RequestResponse {
-            body: response_text,
-        })
     }
 }

@@ -13,16 +13,16 @@ pub enum TaskActions {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct ParsePointError;
+pub struct TaskActionParseError;
 
 impl FromStr for TaskActions {
-    type Err = ParsePointError;
+    type Err = TaskActionParseError;
     fn from_str(str_action: &str) -> Result<Self, Self::Err> {
         match str_action {
             "Change status" => Ok(TaskActions::StatusChange),
             "Change executor" => Ok(TaskActions::ChangeExecutor),
             "Change release" => Ok(TaskActions::ChangeRelease),
-            _ => Err(ParsePointError {}),
+            _ => Err(TaskActionParseError {}),
         }
     }
 }
@@ -38,6 +38,7 @@ impl From<TaskActions> for &str {
 }
 
 impl TaskActions {
+    /// Returns all available actions.
     pub fn get_actions() -> Vec<&'static str> {
         vec![
             Self::StatusChange.into(),

@@ -192,3 +192,9 @@ impl JiraView for ChangeStatusActionView {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
 }
+
+impl ChangeStatusActionView {
+    fn change_status(&self, cursive: &mut Cursive, new_status_name: &str) {
+
+    }
+}
