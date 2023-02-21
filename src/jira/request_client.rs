@@ -68,7 +68,7 @@ impl RequestClient {
     pub fn get_task_statuses(&self, project_name: &str) -> Result<RequestResponse, RusjiError> {
         self.make_basic_request(
             self.jira_url
-                .join(&format!("rest/api/2/project/{}/statuses", project_name,))
+                .join(&format!("rest/api/2/project/{}/statuses", project_name))
                 .unwrap(),
         )
     }
@@ -79,7 +79,23 @@ impl RequestClient {
         task_key: &str,
         status_id: usize,
     ) -> Result<RequestResponse, RusjiError>  {
-        todo!();
+        let j_body = HashMap::from(
+            [("transition", HashMap::from([("id", status_id)]))],
+        );
+        let req_builder = self.post(
+            self.jira_url
+                .join(&format!("http://jira/rest/api/2/issue/{}/transitions", task_key))
+                .unwrap()
+        );
+
+        let response_text = req_builder
+            .json(&j_body)
+            .send()?
+            .text()?;
+
+        Ok(RequestResponse {
+            body: response_text,
+        })
     }
 
     /// Makes a request.
@@ -87,7 +103,7 @@ impl RequestClient {
     /// Returns `RequestResponse` or `RusjiError`.
     fn make_basic_request(&self, url: Url) -> Result<RequestResponse, RusjiError> {
         let response_text = self
-            .request_builder(url)
+            .get(url)
             .send()?
             .text()?;
         Ok(RequestResponse {
@@ -95,32 +111,31 @@ impl RequestClient {
         })
     }
 
-    /// Creates basic request builder.
+    /// Adds basic fields to a request builder.
     ///
     /// It's necessary because in some cases we have additional
     /// parameters that should be added to the builder
     ///
-    /// ### Basic usage is:
-    ///
-    /// ```
-    /// /// Add json body to builder.
-    /// let mut map = HashMap::new();
-    /// map.insert("lang", "rust");
-    ///
-    /// let builder = self.basic_request_builder(url)
-    ///     .json(&map);
-    ///
-    /// /// Send request
-    /// builder.send()
-    /// ```
-    fn request_builder(&self, url: Url) -> RequestBuilder {
-        self.client
-            .get(url)
+    /// It is used only in methods like `get`, `post`, etc.
+    fn builder_add_default_fields(&self, builder: RequestBuilder) -> RequestBuilder {
+        builder
             .timeout(std::time::Duration::from_micros(5000000))
             .header(
                 "Authorization",
                 format!("Basic {}", self.request_credentials),
             )
             .header("Content-Type", "application/json")
+    }
+
+    /// Makes request builder for `get` request.
+    fn get(&self, url: Url) -> RequestBuilder {
+        let builder = self.client.get(url);
+        self.builder_add_default_fields(builder)
+    }
+
+    /// Makes request builder for `post` request.
+    fn post(&self, url: Url) -> RequestBuilder {
+        let builder = self.client.post(url);
+        self.builder_add_default_fields(builder)
     }
 }
