@@ -194,7 +194,7 @@ impl JiraView for ChangeStatusActionView {
 }
 
 impl ChangeStatusActionView {
-    fn change_status(&self, cursive: &mut Cursive, new_status_name: &str) {
+    fn change_status(&self, _cursive: &mut Cursive, _new_status_name: &str) {
 
     }
 }
