@@ -22,9 +22,7 @@ fn create_new_app_config(path: &str) -> std::io::Result<()> {
     File::create(&config_file_path)?;
     let default_config_structure = r#"
 {
-    "jira": {
-        "companies": []
-    }
+    "companies": []
 }
 "#;
     std::fs::write(config_file_path, default_config_structure)?;

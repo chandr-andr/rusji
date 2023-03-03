@@ -13,6 +13,7 @@ pub use crate::screen::*;
 pub use crate::startup::*;
 
 fn main() {
+    startup();
     let config = Config::new().unwrap();
     start_screen(config);
 }
