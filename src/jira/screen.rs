@@ -30,9 +30,9 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let info_layer = InfoLayout::default().with_name(InfoLayout::layout_name());
     let actions_something_layer = ActionsLayout::default();
 
-    main_layer.add_child(tasks_projects_layer.min_width(side_width));
-    main_layer.add_child(info_layer.min_width(center_width));
-    main_layer.add_child(actions_something_layer.min_width(side_width));
+    main_layer.add_child(tasks_projects_layer.min_width(side_width).max_width(side_width));
+    main_layer.add_child(info_layer.min_width(center_width).max_width(center_width));
+    main_layer.add_child(actions_something_layer.min_width(side_width).max_width(side_width));
 
     cursive.add_layer(main_layer);
 
