@@ -13,7 +13,10 @@ pub use crate::screen::*;
 pub use crate::startup::*;
 
 fn main() {
-    startup();
+    if let Err(err) = startup() {
+        println!("Something went wrong {err}");
+        return 
+    }
     let config = Config::new().unwrap();
     start_screen(config);
 }
