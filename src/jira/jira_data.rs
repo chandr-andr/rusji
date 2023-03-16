@@ -9,14 +9,12 @@ use crate::jira::{
 use crate::request_client::RequestClient;
 
 use super::projects::data::JiraProjects;
-use super::tasks::data::TaskTypes;
 
 use rusty_pool::ThreadPool;
 
 /// Struct with data about company jira.
 pub struct JiraData {
     projects: Option<HashMap<String, JiraProject>>,
-    pub task_types: Option<TaskTypes>,
     pub client: Arc<RwLock<RequestClient>>,
     pub thread_pool: ThreadPool,
     pub selected_project: String,
@@ -27,7 +25,6 @@ impl JiraData {
     pub fn new(jira_url: &str, request_credentials: &str) -> Self {
         Self {
             projects: None,
-            task_types: None,
             client: Arc::new(RwLock::new(RequestClient::new(
                 request_credentials.to_string(),
                 jira_url,
@@ -209,16 +206,6 @@ impl JiraData {
             }
         }
         fit_tasks
-    }
-
-    /// Updates status types for tasks in project.
-    pub fn update_task_status_types(
-        &mut self,
-        jira_projects_task_statuses: Result<TaskTypes, RusjiError>,
-    ) {
-        if let Ok(types) = jira_projects_task_statuses {
-            self.task_types = Some(types)
-        }
     }
 
     /// Builds `projects` field from `JiraProjects`.

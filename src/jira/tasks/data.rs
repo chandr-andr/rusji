@@ -50,7 +50,6 @@ pub struct JiraTask {
     pub description: String,
     pub summary: String,
     pub status: JiraTaskStatus,
-    pub issuetype: JiraTaskType,
 }
 
 /// Creates custom Deserialize for JiraTask.
@@ -78,7 +77,6 @@ impl<'de> Deserialize<'de> for JiraTask {
         struct Fields {
             summary: String,
             status: JiraTaskStatus,
-            issuetype: JiraTaskType,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -101,7 +99,6 @@ impl<'de> Deserialize<'de> for JiraTask {
             description: task.rendered_fields.description,
             summary: task.fields.summary,
             status: task.fields.status,
-            issuetype: task.fields.issuetype,
         })
     }
 }
@@ -119,6 +116,7 @@ impl JiraTask {
     }
 }
 
+/// Struct for single task status.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JiraTaskStatus {
     pub id: String,
@@ -128,93 +126,6 @@ pub struct JiraTaskStatus {
     #[serde(alias = "iconUrl")]
     icon_url: String,
     name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct JiraTaskType {
-    id: String,
-    #[serde(alias = "self")]
-    link: String,
-    description: String,
-    pub name: String,
-    subtask: bool,
-}
-
-/// Struct for task types.
-#[derive(Deserialize, Serialize, Debug)]
-pub struct TaskTypes(Vec<TaskType>);
-
-impl TaskTypes {
-    /// Creates new instance of task types.
-    ///
-    /// Makes request to Jira API.
-    /// Can return RusjiError.
-    pub fn new(
-        request_client: Arc<RwLock<RequestClient>>,
-        project_name: &str,
-    ) -> RusjiResult<Self> {
-        let response = request_client
-            .read()
-            .unwrap()
-            .get_task_statuses(project_name)?;
-        let resp_text = response.get_body();
-        let statuses = serde_json::from_str::<Self>(resp_text)?;
-        Ok(statuses)
-    }
-
-    fn iter(&self) -> std::slice::Iter<TaskType> {
-        self.0.iter()
-    }
-
-    /// Returns available task statuses for task.
-    pub fn get_available_task_statuses(&self, task_type_name: &str) -> Vec<&str> {
-        // TODO: change TaskTypes to HashMap
-        // because we need to can find task_type.name without iterate.
-        for task_type in self.iter() {
-            if task_type.name == task_type_name {
-                return task_type
-                    .statuses
-                    .iter()
-                    .map(|status| status.name.as_str())
-                    .collect();
-            }
-        }
-        Vec::default()
-    }
-}
-
-/// Struct for single task type.
-#[derive(Deserialize, Serialize, Debug)]
-pub struct TaskType {
-    #[serde(alias = "self")]
-    link: String,
-    id: String,
-    name: String,
-    subtask: bool,
-    statuses: TaskStatuses,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TaskStatuses(Vec<TaskStatus>);
-
-impl TaskStatuses {
-    fn iter(&self) -> std::slice::Iter<TaskStatus> {
-        self.0.iter()
-    }
-}
-
-/// Struct for single task status.
-#[derive(Deserialize, Serialize, Debug)]
-pub struct TaskStatus {
-    #[serde(alias = "self")]
-    link: String,
-    description: String,
-    #[serde(alias = "iconUrl")]
-    icon_url: String,
-    name: String,
-    id: String,
-    #[serde(alias = "statusCategory")]
-    status_category: StatusCategory,
 }
 
 /// Struct for single task category.
@@ -272,59 +183,5 @@ mod tests {
         "#;
 
         serde_json::from_str::<JiraTask>(json_task_str).unwrap();
-    }
-
-    #[test]
-    fn test_deserialize_task_types() {
-        let json_task_str = r#"
-        [
-            {
-                "self": "https://link.com",
-                "id": "10000",
-                "name": "Task",
-                "subtask": false,
-                "statuses": [
-                    {
-                        "self": "https://link.com",
-                        "description": "Open.",
-                        "iconUrl": "https://link.com",
-                        "name": "Open",
-                        "id": "1",
-                        "statusCategory": {
-                            "self": "https://link.com",
-                            "id": 2,
-                            "key": "new",
-                            "colorName": "blue-gray",
-                            "name": "Open"
-                        }
-                    }
-                ]
-            },
-            {
-                "self": "https://link.com",
-                "id": "10101",
-                "name": "History",
-                "subtask": false,
-                "statuses": [
-                    {
-                        "self": "https://link.com",
-                        "description": "Finished",
-                        "iconUrl": "https://link.com",
-                        "name": "DONE",
-                        "id": "10104",
-                        "statusCategory": {
-                            "self": "https://link.com",
-                            "id": 3,
-                            "key": "done",
-                            "colorName": "green",
-                            "name": "Done"
-                        }
-                    }
-                ]
-            }
-        ]
-        "#;
-
-        serde_json::from_str::<TaskTypes>(json_task_str).unwrap();
     }
 }

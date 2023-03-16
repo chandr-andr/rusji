@@ -11,7 +11,7 @@ use cursive::{
 };
 
 use crate::errors::RusjiError;
-use crate::jira::tasks::data::{JiraIssues, TaskTypes};
+use crate::jira::tasks::data::JiraIssues;
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
@@ -83,20 +83,9 @@ impl Default for ProjectsView {
                             },
                         )
                     };
-
-                    let project_task_statuses = {
-                        let client_clone = jira_guard.client.clone();
-                        jira_guard
-                            .thread_pool
-                            .evaluate(move || -> Result<TaskTypes, RusjiError> {
-                                TaskTypes::new(client_clone, project_key.as_str())
-                            })
-                    };
                     let jira_tasks_result = jira_tasks.await_complete();
-                    let project_task_statuses_result = project_task_statuses.await_complete();
 
                     jira_guard.update_tasks(jira_tasks_result);
-                    jira_guard.update_task_status_types(project_task_statuses_result)
                 }
 
                 TasksView::get_view(cursive).update_view_content(cursive);

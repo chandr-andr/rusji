@@ -104,7 +104,7 @@ impl MainActionsView {
             .unwrap()
     }
 
-    /// Adds new layout to main screnn.
+    /// Adds new layout to main screen.
     ///
     /// Based on selected action.
     fn add_certain_action_view(&self, cursive: &mut Cursive, action: TaskActions) {
@@ -132,12 +132,7 @@ impl ActionView for ChangeStatusActionView {
         let jira_data_guard = jira_data.read().unwrap();
         let jira_task = jira_data_guard.get_selected_task();
 
-        let mut select_view = SelectView::new();
-
-        if let Some(task_types) = &jira_data_guard.task_types {
-            let task_statuses = task_types.get_available_task_statuses(&jira_task.issuetype.name);
-            select_view.add_all_str(task_statuses);
-        }
+        let mut select_view = SelectView::<String>::new();
 
         Self {
             inner_view: Dialog::new()
@@ -194,7 +189,5 @@ impl JiraView for ChangeStatusActionView {
 }
 
 impl ChangeStatusActionView {
-    fn change_status(&self, _cursive: &mut Cursive, _new_status_name: &str) {
-
-    }
+    fn change_status(&self, _cursive: &mut Cursive, _new_status_name: &str) {}
 }
