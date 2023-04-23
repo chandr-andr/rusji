@@ -24,7 +24,8 @@ impl Jira {
     /// );
     /// ```
     fn new(url: String, username: String, password: String) -> Self {
-        let encoded_creds = base64::encode(format!("{}:{}", username, password));
+        let encoded_creds =
+            base64::encode(format!("{}:{}", username, password));
         Jira { url, encoded_creds }
     }
 
@@ -100,7 +101,11 @@ impl Config {
         username: &str,
         password: &str,
     ) -> Result<()> {
-        let jira_data = Jira::new(url.to_string(), username.to_string(), password.to_string());
+        let jira_data = Jira::new(
+            url.to_string(),
+            username.to_string(),
+            password.to_string(),
+        );
         let company_data = Company::new(company_name.to_string(), jira_data);
         self.companies.push(company_data);
         std::fs::write(&self.config_path, serde_json::to_string_pretty(&self)?)

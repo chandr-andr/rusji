@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-
 use crate::errors::RusjiError;
 use reqwest::blocking::{Client, RequestBuilder};
 use url::Url;
+
+use super::request_models::IssueTransitionsReqData;
 
 /// Struct for request response.
 ///
@@ -39,7 +39,9 @@ impl RequestClient {
 
     /// Returns all Jira projects.
     pub fn get_jira_projects(&self) -> Result<RequestResponse, RusjiError> {
-        self.make_basic_request(self.jira_url.join("/rest/api/2/project").unwrap())
+        self.make_basic_request(
+            self.jira_url.join("/rest/api/2/project").unwrap(),
+        )
     }
 
     /// Returns all tasks from project.
@@ -49,11 +51,16 @@ impl RequestClient {
     ) -> Result<RequestResponse, RusjiError> {
         let project_tasks_endpoint =
             format!("/rest/api/2/search?jql=project={project_name}&expand=renderedFields",);
-        self.make_basic_request(self.jira_url.join(&project_tasks_endpoint).unwrap())
+        self.make_basic_request(
+            self.jira_url.join(&project_tasks_endpoint).unwrap(),
+        )
     }
 
     /// Returns new task.
-    pub fn get_task(&self, task_key: &str) -> Result<RequestResponse, RusjiError> {
+    pub fn get_task(
+        &self,
+        task_key: &str,
+    ) -> Result<RequestResponse, RusjiError> {
         self.make_basic_request(
             self.jira_url
                 .join(&format!(
@@ -65,7 +72,10 @@ impl RequestClient {
     }
 
     /// Returns all available task statuses for project.
-    pub fn get_task_statuses(&self, project_name: &str) -> Result<RequestResponse, RusjiError> {
+    pub fn get_task_statuses(
+        &self,
+        project_name: &str,
+    ) -> Result<RequestResponse, RusjiError> {
         self.make_basic_request(
             self.jira_url
                 .join(&format!("rest/api/2/project/{}/statuses", project_name))
@@ -73,23 +83,35 @@ impl RequestClient {
         )
     }
 
-    /// Updates task status.
-    pub fn update_task_status(
+    /// Returns all available issue transitions for the task.
+    pub fn get_issue_transitions(
         &self,
-        task_key: &str,
-        status_id: usize,
-    ) -> Result<RequestResponse, RusjiError>  {
-        let j_body = HashMap::from(
-            [("transition", HashMap::from([("id", status_id)]))],
-        );
+        issue_key: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        self.make_basic_request(
+            self.jira_url
+                .join(&format!("rest/api/2/issue/{}/transitions", issue_key))
+                .unwrap(),
+        )
+    }
+
+    /// Updates task transition.
+    pub fn update_task_transition(
+        &self,
+        issue_key: &str,
+        transition_id: usize,
+    ) -> Result<RequestResponse, RusjiError> {
+        let mut request_data = IssueTransitionsReqData::new();
+        request_data = request_data.add_transition_data(transition_id);
+
         let req_builder = self.post(
             self.jira_url
-                .join(&format!("http://jira/rest/api/2/issue/{}/transitions", task_key))
-                .unwrap()
+                .join(&format!("rest/api/2/issue/{}/transitions", issue_key))
+                .unwrap(),
         );
 
         let response_text = req_builder
-            .json(&j_body)
+            .body(serde_json::to_string(&request_data)?)
             .send()?
             .text()?;
 
@@ -101,11 +123,11 @@ impl RequestClient {
     /// Makes a request.
     ///
     /// Returns `RequestResponse` or `RusjiError`.
-    fn make_basic_request(&self, url: Url) -> Result<RequestResponse, RusjiError> {
-        let response_text = self
-            .get(url)
-            .send()?
-            .text()?;
+    fn make_basic_request(
+        &self,
+        url: Url,
+    ) -> Result<RequestResponse, RusjiError> {
+        let response_text = self.get(url).send()?.text()?;
         Ok(RequestResponse {
             body: response_text,
         })
@@ -117,7 +139,10 @@ impl RequestClient {
     /// parameters that should be added to the builder
     ///
     /// It is used only in methods like `get`, `post`, etc.
-    fn builder_add_default_fields(&self, builder: RequestBuilder) -> RequestBuilder {
+    fn builder_add_default_fields(
+        &self,
+        builder: RequestBuilder,
+    ) -> RequestBuilder {
         builder
             .timeout(std::time::Duration::from_micros(5000000))
             .header(

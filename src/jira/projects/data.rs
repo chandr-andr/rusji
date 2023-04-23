@@ -5,7 +5,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{errors::RusjiResult, jira::tasks::data::JiraTask, request_client::RequestClient};
+use crate::{
+    errors::RusjiResult, jira::tasks::data::JiraTask,
+    request_client::request_client::RequestClient,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraProjects(Vec<JiraProject>);
@@ -22,7 +25,9 @@ impl IntoIterator for JiraProjects {
 }
 
 impl JiraProjects {
-    pub fn new(request_client: Arc<RwLock<RequestClient>>) -> RusjiResult<Self> {
+    pub fn new(
+        request_client: Arc<RwLock<RequestClient>>,
+    ) -> RusjiResult<Self> {
         let response = request_client.read().unwrap().get_jira_projects()?;
         let resp_text = response.get_body();
 
@@ -56,7 +61,8 @@ impl JiraProject {
         let mut tasks_names: Vec<String> = Vec::default();
         if let Some(tasks) = self.tasks.as_ref() {
             for task in tasks.values() {
-                tasks_names.push(format!("{} -- {}", &task.key, &task.summary));
+                tasks_names
+                    .push(format!("{} -- {}", &task.key, &task.summary));
             }
             return Some(tasks_names);
         }

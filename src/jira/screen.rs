@@ -27,29 +27,21 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let mut main_layer = LinearLayout::horizontal();
 
     let tasks_projects_layer = TasksProjectsLayout::default();
-    let info_layer = InfoLayout::default().with_name(InfoLayout::layout_name());
+    let info_layer =
+        InfoLayout::default().with_name(InfoLayout::layout_name());
     let actions_something_layer = ActionsLayout::default();
 
     main_layer.add_child(
-        tasks_projects_layer.min_width(
-            side_width,
-        ).max_width(
-            side_width,
-        ),
+        tasks_projects_layer
+            .min_width(side_width)
+            .max_width(side_width),
     );
+    main_layer
+        .add_child(info_layer.min_width(center_width).max_width(center_width));
     main_layer.add_child(
-        info_layer.min_width(
-            center_width,
-        ).max_width(
-            center_width,
-        ),
-    );
-    main_layer.add_child(
-        actions_something_layer.min_width(
-            side_width,
-        ).max_width(
-            side_width,
-        ),
+        actions_something_layer
+            .min_width(side_width)
+            .max_width(side_width),
     );
 
     cursive.add_layer(main_layer);
@@ -65,8 +57,8 @@ fn init_data(company_name: &str) -> Arc<RwLock<JiraData>> {
         jira.get_encoded_creds(),
     )));
 
-    let jira_projects = JiraProjects::new(
-        jira_data.read().unwrap().client.clone());
+    let jira_projects =
+        JiraProjects::new(jira_data.read().unwrap().client.clone());
     jira_data.write().unwrap().update_projects(jira_projects);
 
     jira_data

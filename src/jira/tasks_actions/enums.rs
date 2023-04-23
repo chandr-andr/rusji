@@ -4,7 +4,7 @@ use cursive::Cursive;
 
 use crate::jira::common::views::ActionView;
 
-use super::views::ChangeStatusActionView;
+use super::views::ChangeTransitionActionView;
 
 pub enum TaskActions {
     StatusChange,
@@ -50,9 +50,15 @@ impl TaskActions {
     /// Returns new action view based on `TaskActions` enum.
     pub fn get_view(self, cursive: &mut Cursive) -> impl ActionView {
         match self {
-            TaskActions::StatusChange => ChangeStatusActionView::new(cursive),
-            TaskActions::ChangeExecutor => ChangeStatusActionView::new(cursive),
-            TaskActions::ChangeRelease => ChangeStatusActionView::new(cursive),
+            TaskActions::StatusChange => {
+                ChangeTransitionActionView::new(cursive)
+            }
+            TaskActions::ChangeExecutor => {
+                ChangeTransitionActionView::new(cursive)
+            }
+            TaskActions::ChangeRelease => {
+                ChangeTransitionActionView::new(cursive)
+            }
         }
     }
 }

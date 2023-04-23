@@ -1,8 +1,12 @@
 use std::sync::{Arc, RwLock};
 
+use cursive::Cursive;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{errors::RusjiResult, request_client::RequestClient};
+use crate::{
+    errors::RusjiResult, jira_data::JiraData,
+    request_client::request_client::RequestClient,
+};
 
 /// JiraIssues holds all necessary information
 /// about task to interact with it.
@@ -50,6 +54,7 @@ pub struct JiraTask {
     pub description: String,
     pub summary: String,
     pub status: JiraTaskStatus,
+    pub transitions: Option<IssueTransitions>,
 }
 
 /// Creates custom Deserialize for JiraTask.
@@ -69,7 +74,10 @@ impl<'de> Deserialize<'de> for JiraTask {
             link: String,
             key: String,
             fields: Fields,
-            #[serde(default = "default_rendered_fields", alias = "renderedFields")]
+            #[serde(
+                default = "default_rendered_fields",
+                alias = "renderedFields"
+            )]
             rendered_fields: RenderedFields,
         }
 
@@ -99,6 +107,7 @@ impl<'de> Deserialize<'de> for JiraTask {
             description: task.rendered_fields.description,
             summary: task.fields.summary,
             status: task.fields.status,
+            transitions: Default::default(),
         })
     }
 }
@@ -108,11 +117,54 @@ impl JiraTask {
     ///
     /// Makes request to Jira API.
     /// Can return `RusjiError`.
-    pub fn new(request_client: Arc<RwLock<RequestClient>>, task_key: &str) -> RusjiResult<Self> {
-        let response = request_client.read().unwrap().get_task(task_key)?;
+    pub fn new(
+        request_client: Arc<RwLock<RequestClient>>,
+        issue_key: &str,
+    ) -> RusjiResult<Self> {
+        let response = request_client.read().unwrap().get_task(issue_key)?;
         let resp_text = response.get_body();
         let task = serde_json::from_str::<Self>(resp_text)?;
         Ok(task)
+    }
+
+    pub fn add_transitions(
+        &mut self,
+        request_client: Arc<RwLock<RequestClient>>,
+    ) {
+        let response = request_client
+            .read()
+            .unwrap()
+            .get_issue_transitions(&self.key)
+            .unwrap();
+
+        let available_transactions =
+            serde_json::from_str::<IssueTransitions>(response.get_body())
+                .unwrap();
+        self.transitions = Option::Some(available_transactions);
+    }
+}
+
+// Model for all tasks transactions
+// that available at the moment.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct IssueTransitions {
+    transitions: Vec<IssueTransition>,
+}
+
+/// Model for single transaction data.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct IssueTransition {
+    pub id: String,
+    pub name: String,
+}
+
+impl IssueTransitions {
+    /// Return name for all transactions.
+    pub fn all_transactions_name(&self) -> Vec<&str> {
+        self.transitions
+            .iter()
+            .map(|issue_transaction| issue_transaction.name.as_str())
+            .collect()
     }
 }
 

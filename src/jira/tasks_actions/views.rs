@@ -27,8 +27,10 @@ impl Default for MainActionsView {
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, action_name: &str| {
-                let action: TaskActions = TaskActions::from_str(action_name).unwrap();
-                Self::get_view(cursive).add_certain_action_view(cursive, action);
+                let action: TaskActions =
+                    TaskActions::from_str(action_name).unwrap();
+                Self::get_view(cursive)
+                    .add_certain_action_view(cursive, action);
             })
             .with_name(Self::select_view_name());
 
@@ -104,20 +106,24 @@ impl MainActionsView {
             .unwrap()
     }
 
-    /// Adds new layout to main screen.
+    /// Adds new view to main screen.
     ///
     /// Based on selected action.
-    fn add_certain_action_view(&self, cursive: &mut Cursive, action: TaskActions) {
+    fn add_certain_action_view(
+        &self,
+        cursive: &mut Cursive,
+        action: TaskActions,
+    ) {
         let action_view = action.get_view(cursive);
         cursive.add_layer(action_view);
     }
 }
 
-pub struct ChangeStatusActionView {
+pub struct ChangeTransitionActionView {
     inner_view: NamedView<Dialog>,
 }
 
-impl ActionView for ChangeStatusActionView {
+impl ActionView for ChangeTransitionActionView {
     /// Creates new ChangeStatusActionView view.
     ///
     /// Gets [`crate::jira_data::JiraData`] as a clone,
@@ -133,6 +139,13 @@ impl ActionView for ChangeStatusActionView {
         let jira_task = jira_data_guard.get_selected_task();
 
         let mut select_view = SelectView::<String>::new();
+        select_view.add_all_str(
+            jira_task
+                .transitions
+                .as_ref()
+                .unwrap()
+                .all_transactions_name(),
+        );
 
         Self {
             inner_view: Dialog::new()
@@ -146,7 +159,7 @@ impl ActionView for ChangeStatusActionView {
     }
 }
 
-impl ViewWrapper for ChangeStatusActionView {
+impl ViewWrapper for ChangeTransitionActionView {
     type V = NamedView<Dialog>;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
@@ -164,7 +177,7 @@ impl ViewWrapper for ChangeStatusActionView {
     }
 }
 
-impl JiraView for ChangeStatusActionView {
+impl JiraView for ChangeTransitionActionView {
     /// Returns name of the `ChangeStatusActionView`.
     ///
     /// It will used for `.with_name()` method.
@@ -188,6 +201,6 @@ impl JiraView for ChangeStatusActionView {
     }
 }
 
-impl ChangeStatusActionView {
+impl ChangeTransitionActionView {
     fn change_status(&self, _cursive: &mut Cursive, _new_status_name: &str) {}
 }

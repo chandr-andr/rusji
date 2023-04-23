@@ -15,7 +15,7 @@ pub use crate::startup::*;
 fn main() {
     if let Err(err) = startup() {
         println!("Something went wrong {err}");
-        return 
+        return;
     }
     let config = Config::new().unwrap();
     start_screen(config);

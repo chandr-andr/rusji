@@ -5,7 +5,8 @@ use cursive::View;
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
     views::{
-        Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView, SelectView, ViewRef,
+        Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView,
+        SelectView, ViewRef,
     },
     Cursive,
 };
@@ -13,7 +14,8 @@ use cursive::{
 use crate::errors::RusjiError;
 use crate::jira::tasks::data::JiraIssues;
 use crate::jira::{
-    common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
+    common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN,
+    tasks::views::TasksView,
 };
 use crate::jira_data::JiraData;
 
@@ -65,7 +67,9 @@ impl Default for ProjectsView {
             .on_submit(|cursive: &mut Cursive, selected_project: &str| {
                 let jira_data: Arc<RwLock<JiraData>> = cursive
                     .user_data()
-                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| jira_data.clone())
+                    .map(|jira_data: &mut Arc<RwLock<JiraData>>| {
+                        jira_data.clone()
+                    })
                     .unwrap();
 
                 {
@@ -79,7 +83,10 @@ impl Default for ProjectsView {
                         let project_key_clone = project_key.clone();
                         jira_guard.thread_pool.evaluate(
                             move || -> Result<JiraIssues, RusjiError> {
-                                JiraIssues::new(client_clone, project_key_clone.as_str())
+                                JiraIssues::new(
+                                    client_clone,
+                                    project_key_clone.as_str(),
+                                )
                             },
                         )
                     };
@@ -142,9 +149,11 @@ impl JiraView for ProjectsView {
     /// If success clear SelectView and add new data, else add
     /// BadConnectionView with an error message.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        let mut select_project_view: ViewRef<SelectView> = self.get_select_view();
+        let mut select_project_view: ViewRef<SelectView> =
+            self.get_select_view();
 
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data: Arc<RwLock<JiraData>> =
+            cursive.take_user_data().unwrap();
         let jira_clone = jira_data.clone();
 
         let jira_data_guard = jira_clone.write().unwrap();
@@ -200,11 +209,13 @@ impl ProjectsView {
         let mut select_project_view: ViewRef<SelectView> =
             ProjectsView::get_view(cursive).get_select_view();
 
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data: Arc<RwLock<JiraData>> =
+            cursive.take_user_data().unwrap();
         let jira_data_clone = jira_data.clone();
 
         let guard_jira_data = jira_data_clone.read().unwrap();
-        let fit_projects = guard_jira_data.find_project_by_subname(project_subname);
+        let fit_projects =
+            guard_jira_data.find_project_by_subname(project_subname);
 
         if fit_projects.is_empty() {
             select_project_view.clear();

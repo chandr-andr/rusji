@@ -6,7 +6,7 @@ use crate::jira::{
     projects::data::JiraProject,
     tasks::data::{JiraIssues, JiraTask},
 };
-use crate::request_client::RequestClient;
+use crate::request_client::request_client::RequestClient;
 
 use super::projects::data::JiraProjects;
 
@@ -40,16 +40,18 @@ impl JiraData {
         self.selected_project = selected_project.to_string();
     }
 
-    /// Sets new selected task.
+    /// Sets new selected task, in format `PRO-1`.
     pub fn set_selected_task(&mut self, raw_selected_task: &str) -> &String {
         let selected_task: String;
         let project_key = &self.get_selected_project().key;
         match raw_selected_task.parse::<usize>() {
             Ok(_) => {
-                selected_task = format!("{}-{}", project_key, raw_selected_task);
+                selected_task =
+                    format!("{}-{}", project_key, raw_selected_task);
             }
             Err(_) => {
-                let splited_task: Vec<&str> = raw_selected_task.split(" -- ").collect();
+                let splited_task: Vec<&str> =
+                    raw_selected_task.split(" -- ").collect();
                 if splited_task.len() == 2 {
                     selected_task = splited_task[0].into();
                 } else {
@@ -108,12 +110,21 @@ impl JiraData {
         self.get_selected_project().get_task(&self.selected_task)
     }
 
+    /// Returns mutable reference to a task.
+    pub fn get_mut_selected_task(&mut self) -> &mut JiraTask {
+        let issue_key = self.get_selected_task().key.clone();
+        self.get_mut_selected_project().get_mut_task(&issue_key)
+    }
+
     /// Updates projects.
     ///
     /// This method receives `Result<JiraProjects, RusjiError>`
     ///
     /// If `jira_projects` is Ok updates `projects` field else pass `None`.
-    pub fn update_projects(&mut self, jira_projects: Result<JiraProjects, RusjiError>) {
+    pub fn update_projects(
+        &mut self,
+        jira_projects: Result<JiraProjects, RusjiError>,
+    ) {
         match jira_projects {
             Ok(projects) => {
                 let projects_field = self.make_projects_field(projects);
@@ -129,7 +140,10 @@ impl JiraData {
     pub fn get_projects_names(&self) -> Vec<&str> {
         match self.projects.as_ref() {
             Some(project) => {
-                return project.values().map(|prj| prj.name.as_str()).collect();
+                return project
+                    .values()
+                    .map(|prj| prj.name.as_str())
+                    .collect();
             }
             None => Vec::default(),
         }
@@ -140,7 +154,10 @@ impl JiraData {
     /// This method receives `Result<JiraIssues, RusjiError>`
     ///
     /// If `jira_projects` is Ok updates `tasks` field else pass `None`.
-    pub fn update_tasks(&mut self, jira_tasks: Result<JiraIssues, RusjiError>) {
+    pub fn update_tasks(
+        &mut self,
+        jira_tasks: Result<JiraIssues, RusjiError>,
+    ) {
         match jira_tasks {
             Ok(tasks) => {
                 let tasks_field = self.make_tasks_field(tasks);
@@ -155,14 +172,12 @@ impl JiraData {
     }
 
     /// Adds new task to project.
-    pub fn add_new_task(&mut self, task: Result<JiraTask, RusjiError>) {
-        if let Ok(task) = task {
-            self.get_mut_selected_project()
-                .tasks
-                .as_mut()
-                .unwrap()
-                .insert(task.key.clone(), task);
-        }
+    pub fn add_new_task(&mut self, task: JiraTask) {
+        self.get_mut_selected_project()
+            .tasks
+            .as_mut()
+            .unwrap()
+            .insert(task.key.clone(), task);
     }
 
     /// Tries to find project by subname.
@@ -209,8 +224,12 @@ impl JiraData {
     }
 
     /// Builds `projects` field from `JiraProjects`.
-    fn make_projects_field(&self, projects: JiraProjects) -> HashMap<String, JiraProject> {
-        let mut projects_hashmap: HashMap<String, JiraProject> = HashMap::default();
+    fn make_projects_field(
+        &self,
+        projects: JiraProjects,
+    ) -> HashMap<String, JiraProject> {
+        let mut projects_hashmap: HashMap<String, JiraProject> =
+            HashMap::default();
         for project in projects {
             projects_hashmap.insert(project.name.clone(), project);
         }
@@ -218,7 +237,10 @@ impl JiraData {
     }
 
     /// Builds `tasks` field from `JiraIssues`
-    fn make_tasks_field(&self, tasks: JiraIssues) -> HashMap<String, JiraTask> {
+    fn make_tasks_field(
+        &self,
+        tasks: JiraIssues,
+    ) -> HashMap<String, JiraTask> {
         let mut tasks_hashmap: HashMap<String, JiraTask> = HashMap::default();
         for task in tasks {
             tasks_hashmap.insert(task.key.clone(), task);

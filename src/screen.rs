@@ -4,7 +4,9 @@ use crate::jira::screen::make_jira_screen;
 use crate::theme::make_dark_theme;
 use crate::Config;
 use cursive::view::{Nameable, Resizable};
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use cursive::views::{
+    Dialog, DummyView, EditView, LinearLayout, SelectView, TextView,
+};
 use cursive::Cursive;
 
 struct CursiveUserData<'a> {
@@ -34,12 +36,15 @@ pub fn start_screen(config: Config) {
 
     let c_user_data: &mut CursiveUserData = cursive.user_data().unwrap();
 
-    let mut exist_companies_select_view = SelectView::<String>::new().on_submit(on_select_company);
-    exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
+    let mut exist_companies_select_view =
+        SelectView::<String>::new().on_submit(on_select_company);
+    exist_companies_select_view
+        .add_all_str(c_user_data.config.companies_names());
 
     let mut delete_exist_companies_select_view =
         SelectView::<String>::new().on_submit(delete_company);
-    delete_exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
+    delete_exist_companies_select_view
+        .add_all_str(c_user_data.config.companies_names());
 
     let mut add_new_company_select_view =
         SelectView::<String>::new().on_submit(add_new_company_screen);
@@ -143,12 +148,15 @@ fn success_dialog(cursive: &mut Cursive, success_text: &str) {
 pub fn set_start_screen(cursive: &mut Cursive) {
     let c_user_data: &mut CursiveUserData = cursive.user_data().unwrap();
 
-    let mut exist_companies_select_view = SelectView::<String>::new().on_submit(on_select_company);
-    exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
+    let mut exist_companies_select_view =
+        SelectView::<String>::new().on_submit(on_select_company);
+    exist_companies_select_view
+        .add_all_str(c_user_data.config.companies_names());
 
     let mut delete_exist_companies_select_view =
         SelectView::<String>::new().on_submit(delete_company);
-    delete_exist_companies_select_view.add_all_str(c_user_data.config.companies_names());
+    delete_exist_companies_select_view
+        .add_all_str(c_user_data.config.companies_names());
 
     let mut add_new_company_select_view =
         SelectView::<String>::new().on_submit(add_new_company_screen);

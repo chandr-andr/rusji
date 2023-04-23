@@ -4,8 +4,8 @@ use cursive::View;
 use cursive::{
     view::{Finder, Nameable, Scrollable, ViewWrapper},
     views::{
-        Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView, SelectView, TextView,
-        ViewRef,
+        Dialog, DummyView, EditView, LinearLayout, NamedView, ScrollView,
+        SelectView, TextView, ViewRef,
     },
     Cursive,
 };
@@ -31,27 +31,16 @@ impl Default for TasksView {
                 .child(TextView::new("Press <Enter> if not found."))
                 .child(
                     EditView::new()
-                        .on_edit(|cursive: &mut Cursive, task_name: &str, _: usize| {
-                            Self::get_view(cursive).on_enter_task_search(cursive, task_name)
-                        })
+                        .on_edit(
+                            |cursive: &mut Cursive,
+                             task_name: &str,
+                             _: usize| {
+                                Self::get_view(cursive)
+                                    .on_enter_task_search(cursive, task_name)
+                            },
+                        )
                         .on_submit(|cursive: &mut Cursive, task_key: &str| {
-                            let jira_data: &mut Arc<RwLock<JiraData>> =
-                                cursive.user_data().unwrap();
-
-                            {
-                                let mut jira_data_guard = jira_data.write().unwrap();
-
-                                jira_data_guard.set_selected_task(task_key);
-                                let task_key = &jira_data_guard.selected_task;
-
-                                let task = JiraTask::new(jira_data_guard.client.clone(), task_key);
-
-                                jira_data_guard.add_new_task(task);
-                            }
-
-                            InfoView::get_view(cursive).update_view_content(cursive);
-                            MainActionsView::get_view(cursive).update_view_content(cursive);
-                            Self::get_view(cursive).on_enter_task_search(cursive, task_key);
+                            Self::on_edit_submit(cursive, task_key);
                         })
                         .with_name(Self::search_view_name()),
                 );
@@ -62,12 +51,23 @@ impl Default for TasksView {
         let inner_tasks_view = SelectView::<String>::new()
             .align(INNER_LEFT_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, task_name: &str| {
-                let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+                let jira_data: &mut Arc<RwLock<JiraData>> =
+                    cursive.user_data().unwrap();
 
-                jira_data.write().unwrap().set_selected_task(task_name);
+                {
+                    let mut jira_data_guard = jira_data.write().unwrap();
 
-                InfoView::get_view(cursive).show_info_on_select(cursive, task_name);
-                MainActionsView::get_view(cursive).update_view_content(cursive);
+                    jira_data_guard.set_selected_task(task_name);
+                    let client = jira_data_guard.client.clone();
+
+                    let task = jira_data_guard.get_mut_selected_task();
+                    task.add_transitions(client);
+                }
+
+                InfoView::get_view(cursive)
+                    .show_info_on_select(cursive, task_name);
+                MainActionsView::get_view(cursive)
+                    .update_view_content(cursive);
             })
             .with_name(Self::select_view_name())
             .scrollable();
@@ -135,9 +135,11 @@ impl JiraView for TasksView {
 
     /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
+        let mut tasks_select_view: ViewRef<SelectView> =
+            self.get_select_view();
 
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+        let jira_data: Arc<RwLock<JiraData>> =
+            cursive.take_user_data().unwrap();
         let jira_data_clone = jira_data.clone();
 
         let jira_guard = jira_data_clone.read().unwrap();
@@ -177,6 +179,30 @@ impl TasksView {
         "TasksSearchName".into()
     }
 
+    /// Submit callback.
+    fn on_edit_submit(cursive: &mut Cursive, issue_key: &str) {
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
+
+        {
+            let mut jira_data_guard = jira_data.write().unwrap();
+
+            jira_data_guard.set_selected_task(issue_key);
+            let issue_key = &jira_data_guard.selected_task;
+
+            let task =
+                JiraTask::new(jira_data_guard.client.clone(), issue_key);
+            if let Ok(mut task) = task {
+                task.add_transitions(jira_data_guard.client.clone());
+                jira_data_guard.add_new_task(task);
+            }
+        }
+
+        InfoView::get_view(cursive).update_view_content(cursive);
+        MainActionsView::get_view(cursive).update_view_content(cursive);
+        Self::get_view(cursive).on_enter_task_search(cursive, issue_key);
+    }
+
     /// Returns instance of the SelectView in TasksView.
     pub fn get_select_view(&mut self) -> ViewRef<SelectView> {
         self.get_main_dialog()
@@ -185,21 +211,30 @@ impl TasksView {
     }
 
     /// Tries to find task to display it.
-    fn on_enter_task_search(&mut self, cursive: &mut Cursive, task_subname: &str) {
-        let jira_data: Arc<RwLock<JiraData>> = cursive.take_user_data().unwrap();
+    fn on_enter_task_search(
+        &mut self,
+        cursive: &mut Cursive,
+        task_subname: &str,
+    ) {
+        let jira_data: Arc<RwLock<JiraData>> =
+            cursive.take_user_data().unwrap();
         let jira_data_clone = jira_data.clone();
-        let mut tasks_select_view: ViewRef<SelectView> = self.get_select_view();
+        let mut tasks_select_view: ViewRef<SelectView> =
+            self.get_select_view();
 
         let jira_data_guard = jira_data_clone.read().unwrap();
-        let fit_tasks =
-            jira_data_guard.find_task_by_subname(task_subname, &jira_data_guard.selected_project);
+        let fit_tasks = jira_data_guard.find_task_by_subname(
+            task_subname,
+            &jira_data_guard.selected_project,
+        );
 
         if fit_tasks.is_empty() {
             tasks_select_view.clear();
         } else {
             tasks_select_view.clear();
             for task in fit_tasks {
-                tasks_select_view.add_item_str(format!("{} -- {}", task.key, task.summary));
+                tasks_select_view
+                    .add_item_str(format!("{} -- {}", task.key, task.summary));
             }
         }
         cursive.set_user_data(jira_data);
@@ -260,7 +295,8 @@ impl JiraView for InfoView {
     /// In fact, just recreate InfoView without data and
     /// add it to InfoLayout.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
-        let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
         let jira_data_guard = jira_data.write().unwrap();
         let task = {
             let selected_task = &jira_data_guard.selected_task;
@@ -268,8 +304,10 @@ impl JiraView for InfoView {
                 .get_selected_project()
                 .get_task(selected_task)
         };
-        self.get_main_dialog()
-            .set_content(Self::make_inner_view(&task.summary, &task.description));
+        self.get_main_dialog().set_content(Self::make_inner_view(
+            &task.summary,
+            &task.description,
+        ));
     }
 
     /// Does the same as `set_view_content` method.
@@ -294,9 +332,10 @@ impl InfoView {
     }
 
     fn make_summary_dialog(summary: &str) -> Dialog {
-        Dialog::new()
-            .title("Task")
-            .content(cursive_markup::MarkupView::html(summary).with_name("summary_task_view"))
+        Dialog::new().title("Task").content(
+            cursive_markup::MarkupView::html(summary)
+                .with_name("summary_task_view"),
+        )
     }
 
     fn make_description_dialog(description: &str) -> Dialog {
@@ -304,13 +343,15 @@ impl InfoView {
             .title("Description")
             .padding_lrtb(1, 1, 1, 1)
             .content(ScrollView::new(
-                cursive_markup::MarkupView::html(description).with_name("description_task_view"),
+                cursive_markup::MarkupView::html(description)
+                    .with_name("description_task_view"),
             ))
     }
 
     /// Shows task information in InfoView.
     fn show_info_on_select(&mut self, cursive: &mut Cursive, task_name: &str) {
-        let jira_data: &mut Arc<RwLock<JiraData>> = cursive.user_data().unwrap();
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
         let task_key: Vec<&str> = task_name.split(" -- ").collect();
 
         let jira_data_guard = jira_data.read().unwrap();
@@ -318,7 +359,9 @@ impl InfoView {
             .get_project(jira_data_guard.selected_project.clone().as_str())
             .get_task(task_key[0]);
 
-        self.get_main_dialog()
-            .set_content(Self::make_inner_view(&task.summary, &task.description));
+        self.get_main_dialog().set_content(Self::make_inner_view(
+            &task.summary,
+            &task.description,
+        ));
     }
 }
