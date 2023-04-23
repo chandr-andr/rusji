@@ -138,13 +138,29 @@ impl ActionView for ChangeTransitionActionView {
         let jira_data_guard = jira_data.read().unwrap();
         let jira_task = jira_data_guard.get_selected_task();
 
-        let mut select_view = SelectView::<String>::new();
+        let mut select_view = SelectView::<String>::new().on_submit(
+            |cursive: &mut Cursive, transaction_name: &str| {
+                Self::change_status(cursive, transaction_name);
+                cursive.pop_layer();
+
+                let jira_data: &mut Arc<RwLock<JiraData>> =
+                    cursive.user_data().unwrap();
+                let mut jira_data_guard = jira_data.write().unwrap();
+                {
+                    let client = jira_data_guard.client.clone();
+
+                    jira_data_guard
+                        .get_mut_selected_task()
+                        .add_transitions(client)
+                }
+            },
+        );
         select_view.add_all_str(
             jira_task
                 .transitions
                 .as_ref()
                 .unwrap()
-                .all_transactions_name(),
+                .all_transitions_name(),
         );
 
         Self {
@@ -202,5 +218,21 @@ impl JiraView for ChangeTransitionActionView {
 }
 
 impl ChangeTransitionActionView {
-    fn change_status(&self, _cursive: &mut Cursive, _new_status_name: &str) {}
+    fn change_status(cursive: &mut Cursive, transition_name: &str) {
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
+        let jira_data_guard = jira_data.read().unwrap();
+
+        let jira_task = jira_data_guard.get_selected_task();
+        let transition_id = jira_task
+            .transitions
+            .as_ref()
+            .unwrap()
+            .get_transitions_id_by_name(transition_name);
+
+        let client = jira_data_guard.client.read().unwrap();
+        client
+            .update_task_transition(&jira_task.key, transition_id)
+            .unwrap();
+    }
 }

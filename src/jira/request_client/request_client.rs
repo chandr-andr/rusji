@@ -99,7 +99,7 @@ impl RequestClient {
     pub fn update_task_transition(
         &self,
         issue_key: &str,
-        transition_id: usize,
+        transition_id: &str,
     ) -> Result<RequestResponse, RusjiError> {
         let mut request_data = IssueTransitionsReqData::new();
         request_data = request_data.add_transition_data(transition_id);

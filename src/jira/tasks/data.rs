@@ -160,11 +160,20 @@ pub struct IssueTransition {
 
 impl IssueTransitions {
     /// Return name for all transactions.
-    pub fn all_transactions_name(&self) -> Vec<&str> {
+    pub fn all_transitions_name(&self) -> Vec<&str> {
         self.transitions
             .iter()
             .map(|issue_transaction| issue_transaction.name.as_str())
             .collect()
+    }
+
+    pub fn get_transitions_id_by_name(&self, transition_name: &str) -> &str {
+        for transition in &self.transitions {
+            if transition.name == transition_name {
+                return transition.id.as_str();
+            }
+        }
+        "0".into()
     }
 }
 
