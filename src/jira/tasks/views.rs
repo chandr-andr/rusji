@@ -247,7 +247,7 @@ pub(crate) struct InfoView {
 
 impl Default for InfoView {
     fn default() -> Self {
-        Self::new("Choose task", "")
+        Self::new("Choose task", Default::default(), Default::default())
     }
 }
 
@@ -307,6 +307,7 @@ impl JiraView for InfoView {
         self.get_main_dialog().set_content(Self::make_inner_view(
             &task.summary,
             &task.description,
+            &task.key,
         ));
     }
 
@@ -315,24 +316,34 @@ impl JiraView for InfoView {
 }
 
 impl InfoView {
-    fn new(summary: &str, description: &str) -> Self {
+    fn new(summary: &str, description: &str, task_key: &str) -> Self {
         let dialog = Dialog::new()
             .title("Task information")
-            .content(Self::make_inner_view(summary, description))
+            .content(Self::make_inner_view(summary, description, task_key))
             .with_name(Self::main_dialog_name());
 
         Self { inner_view: dialog }
     }
 
-    fn make_inner_view(summary: &str, description: &str) -> LinearLayout {
+    fn make_inner_view(
+        summary: &str,
+        description: &str,
+        task_key: &str,
+    ) -> LinearLayout {
         LinearLayout::vertical()
-            .child(InfoView::make_summary_dialog(summary))
+            .child(InfoView::make_summary_dialog(summary, task_key))
             .child(DummyView)
             .child(InfoView::make_description_dialog(description))
     }
 
-    fn make_summary_dialog(summary: &str) -> Dialog {
-        Dialog::new().title("Task").content(
+    fn make_summary_dialog(summary: &str, task_key: &str) -> Dialog {
+        let title: String;
+        if task_key.is_empty() {
+            title = "No task selected".into();
+        } else {
+            title = format!("Task - {}", task_key);
+        }
+        Dialog::new().title(title).content(
             cursive_markup::MarkupView::html(summary)
                 .with_name("summary_task_view"),
         )
@@ -362,6 +373,7 @@ impl InfoView {
         self.get_main_dialog().set_content(Self::make_inner_view(
             &task.summary,
             &task.description,
+            &task.key,
         ));
     }
 }
