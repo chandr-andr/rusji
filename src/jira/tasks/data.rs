@@ -1,11 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
-    errors::RusjiResult, jira_data::JiraData,
-    request_client::request_client::RequestClient,
+    errors::RusjiResult, request_client::request_client::RequestClient,
 };
 
 /// JiraIssues holds all necessary information
