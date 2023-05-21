@@ -13,6 +13,7 @@ use cursive::{
 use crate::jira::common::views::JiraView;
 use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
 use crate::jira::tasks_actions::views::MainActionsView;
+use crate::jira::utils::views::{FailedAttemptView, TryAgainView};
 use crate::jira_data::JiraData;
 
 use super::data::JiraTask;
@@ -36,11 +37,11 @@ impl Default for TasksView {
                              task_name: &str,
                              _: usize| {
                                 Self::get_view(cursive)
-                                    .on_enter_task_search(cursive, task_name)
+                                    .on_edit_task_search(cursive, task_name)
                             },
                         )
                         .on_submit(|cursive: &mut Cursive, task_key: &str| {
-                            Self::on_edit_submit(cursive, task_key);
+                            Self::on_submit_task_search(cursive, task_key);
                         })
                         .with_name(Self::search_view_name()),
                 );
@@ -180,10 +181,11 @@ impl TasksView {
     }
 
     /// Submit callback.
-    fn on_edit_submit(cursive: &mut Cursive, issue_key: &str) {
+    pub fn on_submit_task_search(cursive: &mut Cursive, issue_key: &str) {
         let jira_data: &mut Arc<RwLock<JiraData>> =
             cursive.user_data().unwrap();
 
+        let mut is_issue_exist: bool = false;
         {
             let mut jira_data_guard = jira_data.write().unwrap();
 
@@ -195,12 +197,19 @@ impl TasksView {
             if let Ok(mut task) = task {
                 task.add_transitions(jira_data_guard.client.clone());
                 jira_data_guard.add_new_task(task);
+                is_issue_exist = true;
             }
-        }
+        };
 
-        InfoView::get_view(cursive).update_view_content(cursive);
-        MainActionsView::get_view(cursive).update_view_content(cursive);
-        Self::get_view(cursive).on_enter_task_search(cursive, issue_key);
+        if is_issue_exist {
+            InfoView::get_view(cursive).update_view_content(cursive);
+            MainActionsView::get_view(cursive).update_view_content(cursive);
+            Self::get_view(cursive).on_edit_task_search(cursive, issue_key);
+        } else {
+            cursive.add_layer(FailedAttemptView::new(
+                format!("Can't find task with number: {}", issue_key).as_str(),
+            ))
+        }
     }
 
     /// Returns instance of the SelectView in TasksView.
@@ -211,7 +220,7 @@ impl TasksView {
     }
 
     /// Tries to find task to display it.
-    fn on_enter_task_search(
+    fn on_edit_task_search(
         &mut self,
         cursive: &mut Cursive,
         task_subname: &str,
