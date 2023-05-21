@@ -207,7 +207,7 @@ impl TasksView {
             Self::get_view(cursive).on_edit_task_search(cursive, issue_key);
         } else {
             cursive.add_layer(FailedAttemptView::new(
-                format!("Can't find task with number: {}", issue_key).as_str(),
+                format!("Can't find task with key: {}", issue_key).as_str(),
             ))
         }
     }
