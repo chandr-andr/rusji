@@ -16,7 +16,7 @@ use crate::jira::tasks_actions::views::MainActionsView;
 use crate::jira::utils::views::{FailedAttemptView, TryAgainView};
 use crate::jira_data::JiraData;
 
-use super::data::JiraTask;
+use super::data::JiraIssue;
 
 pub(crate) struct TasksView {
     inner_view: NamedView<Dialog>,
@@ -193,7 +193,7 @@ impl TasksView {
             let issue_key = &jira_data_guard.selected_task;
 
             let task =
-                JiraTask::new(jira_data_guard.client.clone(), issue_key);
+                JiraIssue::new(jira_data_guard.client.clone(), issue_key);
             if let Ok(mut task) = task {
                 task.add_transitions(jira_data_guard.client.clone());
                 jira_data_guard.add_new_task(task);

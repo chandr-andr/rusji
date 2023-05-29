@@ -10,11 +10,11 @@ use crate::{
 /// about task to interact with it.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraIssues {
-    issues: Vec<JiraTask>,
+    issues: Vec<JiraIssue>,
 }
 
 impl IntoIterator for JiraIssues {
-    type Item = JiraTask;
+    type Item = JiraIssue;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -44,14 +44,14 @@ impl JiraIssues {
 
 /// Struct for single task in Jira.
 #[derive(Serialize, Debug, Clone)]
-pub struct JiraTask {
+pub struct JiraIssue {
     pub id: String,
     #[serde(alias = "self")]
     pub link: String,
     pub key: String,
     pub description: String,
     pub summary: String,
-    pub status: JiraTaskStatus,
+    pub status: JiraIssueStatus,
     pub transitions: Option<IssueTransitions>,
 }
 
@@ -60,7 +60,7 @@ pub struct JiraTask {
 /// It is used because there is no necessities to store
 /// real json structure.
 /// No need to have a lot of nested structs.
-impl<'de> Deserialize<'de> for JiraTask {
+impl<'de> Deserialize<'de> for JiraIssue {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -82,7 +82,7 @@ impl<'de> Deserialize<'de> for JiraTask {
         #[derive(Serialize, Deserialize, Debug)]
         struct Fields {
             summary: String,
-            status: JiraTaskStatus,
+            status: JiraIssueStatus,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -98,7 +98,7 @@ impl<'de> Deserialize<'de> for JiraTask {
 
         let task = Task::deserialize(deserializer)?;
 
-        Ok(JiraTask {
+        Ok(JiraIssue {
             id: task.id,
             link: task.link,
             key: task.key,
@@ -110,7 +110,7 @@ impl<'de> Deserialize<'de> for JiraTask {
     }
 }
 
-impl JiraTask {
+impl JiraIssue {
     /// Creates new instance of JiraTask.
     ///
     /// Makes request to Jira API.
@@ -177,7 +177,7 @@ impl IssueTransitions {
 
 /// Struct for single task status.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct JiraTaskStatus {
+pub struct JiraIssueStatus {
     pub id: String,
     #[serde(alias = "self")]
     link: String,
@@ -241,6 +241,6 @@ mod tests {
         }
         "#;
 
-        serde_json::from_str::<JiraTask>(json_task_str).unwrap();
+        serde_json::from_str::<JiraIssue>(json_task_str).unwrap();
     }
 }

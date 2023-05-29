@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock};
 use crate::errors::RusjiError;
 use crate::jira::{
     projects::data::JiraProject,
-    tasks::data::{JiraIssues, JiraTask},
+    tasks::data::{JiraIssue, JiraIssues},
 };
 use crate::request_client::request_client::RequestClient;
 
@@ -106,12 +106,12 @@ impl JiraData {
     }
 
     /// Returns immutable reference to a task.
-    pub fn get_selected_task(&self) -> &JiraTask {
+    pub fn get_selected_task(&self) -> &JiraIssue {
         self.get_selected_project().get_task(&self.selected_task)
     }
 
     /// Returns mutable reference to a task.
-    pub fn get_mut_selected_task(&mut self) -> &mut JiraTask {
+    pub fn get_mut_selected_task(&mut self) -> &mut JiraIssue {
         let issue_key = self.get_selected_task().key.clone();
         self.get_mut_selected_project().get_mut_task(&issue_key)
     }
@@ -172,7 +172,7 @@ impl JiraData {
     }
 
     /// Adds new task to project.
-    pub fn add_new_task(&mut self, task: JiraTask) {
+    pub fn add_new_task(&mut self, task: JiraIssue) {
         self.get_mut_selected_project()
             .tasks
             .as_mut()
@@ -206,8 +206,8 @@ impl JiraData {
         &self,
         task_subname: &str,
         selected_project: &str,
-    ) -> Vec<&JiraTask> {
-        let mut fit_tasks: Vec<&JiraTask> = Vec::new();
+    ) -> Vec<&JiraIssue> {
+        let mut fit_tasks: Vec<&JiraIssue> = Vec::new();
         let project = self.get_project(selected_project);
         for (task_name, task) in project.tasks.as_ref().unwrap().iter() {
             let task_name_copy = task_name.clone();
@@ -240,8 +240,8 @@ impl JiraData {
     fn make_tasks_field(
         &self,
         tasks: JiraIssues,
-    ) -> HashMap<String, JiraTask> {
-        let mut tasks_hashmap: HashMap<String, JiraTask> = HashMap::default();
+    ) -> HashMap<String, JiraIssue> {
+        let mut tasks_hashmap: HashMap<String, JiraIssue> = HashMap::default();
         for task in tasks {
             tasks_hashmap.insert(task.key.clone(), task);
         }

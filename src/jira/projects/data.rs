@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    errors::RusjiResult, jira::tasks::data::JiraTask,
+    errors::RusjiResult, jira::tasks::data::JiraIssue,
     request_client::request_client::RequestClient,
 };
 
@@ -44,16 +44,16 @@ pub struct JiraProject {
     pub key: String,
     pub name: String,
     #[serde(skip_serializing, skip_deserializing)]
-    pub tasks: Option<HashMap<String, JiraTask>>,
+    pub tasks: Option<HashMap<String, JiraIssue>>,
 }
 
 impl JiraProject {
-    pub fn get_task(&self, task_name: &str) -> &JiraTask {
+    pub fn get_task(&self, task_name: &str) -> &JiraIssue {
         let a = self.tasks.as_ref().unwrap().get(task_name).unwrap();
         a
     }
 
-    pub fn get_mut_task(&mut self, task_name: &str) -> &mut JiraTask {
+    pub fn get_mut_task(&mut self, task_name: &str) -> &mut JiraIssue {
         self.tasks.as_mut().unwrap().get_mut(task_name).unwrap()
     }
 
