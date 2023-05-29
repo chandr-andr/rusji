@@ -11,7 +11,7 @@ use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
 use crate::Config;
 use cursive::{
     view::{Nameable, Resizable},
-    views::LinearLayout,
+    views::{Dialog, LinearLayout, TextContent, TextView},
     Cursive,
 };
 
@@ -24,27 +24,37 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let side_width = screen_size.x * 2 / 7;
     let center_width = screen_size.x * 3 / 7;
 
-    let mut main_layer = LinearLayout::horizontal();
+    let mut all_layout = LinearLayout::vertical();
 
-    let tasks_projects_layer = TasksProjectsLayout::default();
-    let info_layer =
+    let bottom_menu = Dialog::new().content(TextView::new_with_content(
+        TextContent::new("m - menu, x - exit"),
+    ));
+
+    let mut main_layout = LinearLayout::horizontal();
+
+    let tasks_projects_layout = TasksProjectsLayout::default();
+    let info_layout =
         InfoLayout::default().with_name(InfoLayout::layout_name());
-    let actions_something_layer = ActionsLayout::default();
+    let actions_something_layout = ActionsLayout::default();
 
-    main_layer.add_child(
-        tasks_projects_layer
+    main_layout.add_child(
+        tasks_projects_layout
             .min_width(side_width)
             .max_width(side_width),
     );
-    main_layer
-        .add_child(info_layer.min_width(center_width).max_width(center_width));
-    main_layer.add_child(
-        actions_something_layer
+    main_layout.add_child(
+        info_layout.min_width(center_width).max_width(center_width),
+    );
+    main_layout.add_child(
+        actions_something_layout
             .min_width(side_width)
             .max_width(side_width),
     );
 
-    cursive.add_layer(main_layer);
+    all_layout.add_child(main_layout);
+    all_layout.add_child(bottom_menu);
+
+    cursive.add_layer(all_layout);
 
     ProjectsView::get_view(cursive).update_view_content(cursive);
 }

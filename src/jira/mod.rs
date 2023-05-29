@@ -1,3 +1,4 @@
+mod bottom_menu;
 mod common;
 mod constance;
 mod global_callbacks;
