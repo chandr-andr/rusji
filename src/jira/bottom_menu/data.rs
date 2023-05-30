@@ -27,15 +27,9 @@ impl<'a> Button<'a> {
     }
 }
 
-fn test(cursive: &Cursive) {}
-
 impl<'a> Buttons<'a> {
     pub fn new() -> Self {
         let mut buttons: Vec<Button> = Vec::default();
-
-        let m_button = Button::new("m", "menu", test);
-
-        buttons.push(m_button);
         Self { buttons: buttons }
     }
 }
