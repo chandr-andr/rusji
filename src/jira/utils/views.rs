@@ -1,29 +1,13 @@
 use cursive::{
     view::ViewWrapper,
     views::{Dialog, TextView},
-    Cursive,
+    Cursive, View,
 };
+use rusji_derive::ViewWrapper;
 
+#[derive(ViewWrapper)]
 pub(crate) struct TryAgainView {
     inner_view: Dialog,
-}
-
-impl ViewWrapper for TryAgainView {
-    type V = Dialog;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
 }
 
 impl TryAgainView {
@@ -40,26 +24,9 @@ impl TryAgainView {
     }
 }
 
+#[derive(ViewWrapper)]
 pub(crate) struct FailedAttemptView {
     inner_view: Dialog,
-}
-
-impl ViewWrapper for FailedAttemptView {
-    type V = Dialog;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
 }
 
 impl FailedAttemptView {

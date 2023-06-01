@@ -6,30 +6,15 @@ use crate::jira::{
 use cursive::{
     view::{Nameable, Resizable, ViewWrapper},
     views::{DummyView, LinearLayout, NamedView},
+    View,
 };
+use rusji_derive::ViewWrapper;
 
 use super::tasks_actions::views::MainActionsView;
 
+#[derive(ViewWrapper)]
 pub(crate) struct TasksProjectsLayout {
     inner_layout: LinearLayout,
-}
-
-impl ViewWrapper for TasksProjectsLayout {
-    type V = LinearLayout;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_layout))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_layout))
-    }
 }
 
 impl Default for TasksProjectsLayout {
@@ -51,26 +36,9 @@ impl Default for TasksProjectsLayout {
     }
 }
 
+#[derive(ViewWrapper)]
 pub(crate) struct InfoLayout {
     inner_layout: NamedView<LinearLayout>,
-}
-
-impl ViewWrapper for InfoLayout {
-    type V = NamedView<LinearLayout>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_layout))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_layout))
-    }
 }
 
 impl Default for InfoLayout {
@@ -93,26 +61,9 @@ impl InfoLayout {
     }
 }
 
+#[derive(ViewWrapper)]
 pub(crate) struct ActionsLayout {
     inner_layout: LinearLayout,
-}
-
-impl ViewWrapper for ActionsLayout {
-    type V = LinearLayout;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_layout))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_layout))
-    }
 }
 
 impl Default for ActionsLayout {
