@@ -21,3 +21,5 @@ url = "2.3.1"
 cursive-markup = "0.3.0"
 thiserror = "1.0.38"
 rusty_pool = "0.7.0"
+rusji-derive = { path = "rusji-derive" }
+

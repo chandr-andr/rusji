@@ -3,8 +3,9 @@ use std::sync::{Arc, RwLock};
 use cursive::{
     view::{Finder, Nameable, Resizable, ViewWrapper},
     views::{Dialog, NamedView, ScrollView, SelectView, ViewRef},
-    Cursive,
+    Cursive, View,
 };
+use rusji_derive::ViewWrapper;
 
 use crate::{
     jira::{
@@ -18,6 +19,7 @@ use super::enums::TaskActions;
 
 use std::str::FromStr;
 
+#[derive(ViewWrapper)]
 pub struct MainActionsView {
     inner_view: NamedView<Dialog>,
 }
@@ -75,24 +77,6 @@ impl JiraView for MainActionsView {
     fn add_content_to_view(&mut self, _: Vec<&str>) {}
 }
 
-impl ViewWrapper for MainActionsView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
-}
-
 impl MainActionsView {
     /// Returns name of the SelectView in MainActionsView.
     pub fn select_view_name() -> String {
@@ -119,6 +103,7 @@ impl MainActionsView {
     }
 }
 
+#[derive(ViewWrapper)]
 pub struct ChangeTransitionActionView {
     inner_view: NamedView<Dialog>,
 }
@@ -172,24 +157,6 @@ impl ActionView for ChangeTransitionActionView {
                 })
                 .with_name(Self::main_dialog_name()),
         }
-    }
-}
-
-impl ViewWrapper for ChangeTransitionActionView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
     }
 }
 

@@ -6,11 +6,11 @@ use cursive::{
 use rusji_derive::ViewWrapper;
 
 #[derive(ViewWrapper)]
-pub(crate) struct BottomMenuView {
+pub(crate) struct MenuView {
     inner_view: NamedView<Dialog>,
 }
 
-impl BottomMenuView {
+impl MenuView {
     fn default() -> Self {
         Self {
             inner_view: Dialog::new()

@@ -29,6 +29,7 @@ impl<'a> Button<'a> {
 
 impl<'a> Buttons<'a> {
     pub fn new() -> Self {
+        // let menu_button = Button::new("m", "menu");
         let mut buttons: Vec<Button> = Vec::default();
         Self { buttons: buttons }
     }

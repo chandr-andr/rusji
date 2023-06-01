@@ -9,6 +9,7 @@ use cursive::{
     },
     Cursive,
 };
+use rusji_derive::ViewWrapper;
 
 use crate::jira::common::views::JiraView;
 use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
@@ -18,6 +19,7 @@ use crate::jira_data::JiraData;
 
 use super::data::JiraIssue;
 
+#[derive(ViewWrapper)]
 pub(crate) struct TasksView {
     inner_view: NamedView<Dialog>,
 }
@@ -84,32 +86,6 @@ impl Default for TasksView {
                 )
                 .with_name(Self::main_dialog_name()),
         }
-    }
-}
-
-impl ViewWrapper for TasksView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
-
-    fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &cursive::view::Selector<'_>,
-        callback: cursive::event::AnyCb<'a>,
-    ) {
-        self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 }
 
@@ -250,6 +226,7 @@ impl TasksView {
     }
 }
 
+#[derive(ViewWrapper)]
 pub(crate) struct InfoView {
     inner_view: NamedView<Dialog>,
 }
@@ -257,24 +234,6 @@ pub(crate) struct InfoView {
 impl Default for InfoView {
     fn default() -> Self {
         Self::new("Choose task", Default::default(), Default::default())
-    }
-}
-
-impl ViewWrapper for InfoView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
     }
 }
 

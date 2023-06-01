@@ -10,6 +10,7 @@ use cursive::{
     },
     Cursive,
 };
+use rusji_derive::ViewWrapper;
 
 use crate::errors::RusjiError;
 use crate::jira::bottom_menu::data::Button;
@@ -23,36 +24,9 @@ use crate::jira_data::JiraData;
 /// Struct for view with Jira projects.
 ///
 /// Has inner view.
-///
-/// This view can be used as regular view because it implements ViewWrapper
+#[derive(ViewWrapper)]
 pub(crate) struct ProjectsView {
     inner_view: NamedView<Dialog>,
-}
-
-impl ViewWrapper for ProjectsView {
-    type V = NamedView<Dialog>;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(&self.inner_view))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(&mut self.inner_view))
-    }
-
-    fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &cursive::view::Selector<'_>,
-        callback: cursive::event::AnyCb<'a>,
-    ) {
-        self.with_view_mut(|v| v.call_on_any(selector, callback));
-    }
 }
 
 impl Default for ProjectsView {
