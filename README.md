@@ -18,14 +18,16 @@ If there are a lot of projects in your Jira you can simply easily find desired o
 
 ### **Search by task** (issue in Jira termins)
 Every project has a lot of tasks, so you can find needed one with enter number of it.
-> IMPORTANT: **Not all tasks are preloaded**, if you didn't find the required one in the application list, you just need to press Enter in the task search bar and it will be added to the application
+> IMPORTANT: **Not all tasks are preloaded**, if you didn't find the required one in the application list, you just need to press Enter in the task search bar and it will be added to the application search list.
 
 ### **View all the necessary information about the task**
 Just select a task and information will be shown.
 
+### **Change issue status**
+When issue is selected you can find new available menu on the right menu.
+
 # Features in developing.
 - Add actions for tasks
-    - Change status
     - Change executor
     - Change inner information like release, epic, description and etc.
 - Add availability to create comments
