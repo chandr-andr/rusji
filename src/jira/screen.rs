@@ -1,6 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use super::{
+    bottom_menu::views::BottomMenuView,
     global_callbacks::add_global_callbacks,
     jira_data::JiraData,
     layouts::{ActionsLayout, InfoLayout, TasksProjectsLayout},
@@ -26,9 +27,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
 
     let mut all_layout = LinearLayout::vertical();
 
-    let bottom_menu = Dialog::new().content(TextView::new_with_content(
-        TextContent::new("m - menu, x - exit"),
-    ));
+    let bottom_menu = BottomMenuView::default();
 
     let mut main_layout = LinearLayout::horizontal();
 

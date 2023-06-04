@@ -1,43 +1,66 @@
 use cursive::Cursive;
 
-pub struct Buttons<'a> {
-    buttons: Vec<Button<'a>>,
+use crate::jira::menu::views::MenuView;
+
+pub struct BottomButtons<'a> {
+    pub buttons: Vec<BottomButton<'a>>,
 }
 
-pub struct Button<'a> {
-    keyboard_key: &'a str,
-    name: &'a str,
-    action_fn: fn(&Cursive),
+pub struct BottomButton<'a> {
+    pub keyboard_key: char,
+    pub name: &'a str,
+    pub action_fn: fn(&mut Cursive),
 }
 
-impl<'a> Button<'a> {
-    pub fn new<S>(keyboard_key: S, name: S, action_fn: fn(&Cursive)) -> Self
+impl<'a> BottomButton<'a> {
+    /// Create new button.
+    pub fn new<S>(
+        keyboard_key: char,
+        name: S,
+        action_fn: fn(&mut Cursive),
+    ) -> Self
     where
         S: Into<&'a str>,
     {
         Self {
-            keyboard_key: keyboard_key.into(),
+            keyboard_key: keyboard_key,
             name: name.into(),
             action_fn: action_fn,
         }
     }
 
+    /// Return button's full name for the bottom view.
     pub fn full_name(&self) -> String {
         format!("{} - {}", self.keyboard_key, self.name)
     }
 }
 
-impl<'a> Buttons<'a> {
+impl<'a> BottomButtons<'a> {
     pub fn new() -> Self {
-        // let menu_button = Button::new("m", "menu");
-        let mut buttons: Vec<Button> = Vec::default();
+        let mut buttons: Vec<BottomButton> = Vec::default();
+        buttons.push(BottomButton::new(
+            'm',
+            "menu",
+            |cursive: &mut Cursive| {
+                let menu = MenuView::new();
+                cursive.add_layer(menu);
+            },
+        ));
+        buttons.push(BottomButton::new(
+            'q',
+            "quit",
+            |cursive: &mut Cursive| {
+                cursive.quit();
+            },
+        ));
+
         Self { buttons: buttons }
     }
 
     pub fn buttons_text(&self) -> String {
         self.buttons
             .iter()
-            .map(|button| format!("{} ", button.full_name()))
+            .map(|button| format!("| {} |", button.full_name()))
             .collect()
     }
 }

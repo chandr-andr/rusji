@@ -1,7 +1,7 @@
 use cursive::{
-    view::{Finder, ViewWrapper},
-    views::{Dialog, NamedView},
-    Cursive, View,
+    view::{Finder, Nameable, ViewWrapper},
+    views::{Dialog, NamedView, ScrollView, SelectView},
+    View,
 };
 use rusji_derive::ViewWrapper;
 
@@ -33,7 +33,14 @@ impl JiraView for MenuView {
 }
 
 impl MenuView {
-    // fn new(cursive: &mut Cursive) -> Self {
-    //     let SelectView::<String>::new()
-    // }
+    pub fn new() -> Self {
+        let inner_select_view = SelectView::<String>::new();
+
+        Self {
+            inner_view: Dialog::new()
+                .title("Menu")
+                .content(ScrollView::new(inner_select_view))
+                .with_name(Self::main_dialog_name()),
+        }
+    }
 }

@@ -13,7 +13,7 @@ use cursive::{
 use rusji_derive::ViewWrapper;
 
 use crate::errors::RusjiError;
-use crate::jira::bottom_menu::data::Button;
+use crate::jira::bottom_menu::data::BottomButton;
 use crate::jira::tasks::data::JiraIssues;
 use crate::jira::{
     common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN,
