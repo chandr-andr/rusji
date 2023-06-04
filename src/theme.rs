@@ -13,7 +13,7 @@ pub fn make_dark_theme() -> Theme {
         (TitleSecondary, Dark(Yellow)),
         (Highlight, Dark(Blue)),
         (HighlightInactive, TerminalDefault),
-        (HighlightText, Dark(White)),
+        (HighlightText, TerminalDefault),
     ];
     palette.extend(colors);
     Theme {

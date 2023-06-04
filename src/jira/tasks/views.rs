@@ -14,7 +14,7 @@ use rusji_derive::ViewWrapper;
 use crate::jira::common::views::JiraView;
 use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
 use crate::jira::tasks_actions::views::MainActionsView;
-use crate::jira::utils::views::{FailedAttemptView, TryAgainView};
+use crate::jira::utils::views::FailedAttemptView;
 use crate::jira_data::JiraData;
 
 use super::data::JiraIssue;
@@ -121,7 +121,7 @@ impl JiraView for TasksView {
 
         let jira_guard = jira_data_clone.read().unwrap();
 
-        match jira_guard.get_selected_project().tasks_names() {
+        match jira_guard.get_selected_project().unwrap().tasks_names() {
             Some(tasks_names) => {
                 tasks_select_view.clear();
                 tasks_select_view.add_all_str(tasks_names);
@@ -162,12 +162,13 @@ impl TasksView {
             cursive.user_data().unwrap();
 
         let mut is_issue_exist: bool = false;
+
         {
             let mut jira_data_guard = jira_data.write().unwrap();
 
-            jira_data_guard.set_selected_task(issue_key);
-            let issue_key = &jira_data_guard.selected_task;
-
+            if let None = jira_data_guard.set_selected_task(issue_key) {
+                return;
+            }
             let task =
                 JiraIssue::new(jira_data_guard.client.clone(), issue_key);
             if let Ok(mut task) = task {
@@ -213,15 +214,21 @@ impl TasksView {
             &jira_data_guard.selected_project,
         );
 
-        if fit_tasks.is_empty() {
-            tasks_select_view.clear();
+        if fit_tasks.is_none() {
         } else {
-            tasks_select_view.clear();
-            for task in fit_tasks {
-                tasks_select_view
-                    .add_item_str(format!("{} -- {}", task.key, task.summary));
+            let unwrap_tasks = fit_tasks.as_ref().unwrap();
+            if unwrap_tasks.is_empty() {
+                tasks_select_view.clear();
+            } else {
+                tasks_select_view.clear();
+                for task in unwrap_tasks {
+                    tasks_select_view.add_item_str(format!(
+                        "{} -- {}",
+                        task.key, task.summary
+                    ));
+                }
             }
-        }
+        };
         cursive.set_user_data(jira_data);
     }
 }
@@ -270,6 +277,7 @@ impl JiraView for InfoView {
             let selected_task = &jira_data_guard.selected_task;
             jira_data_guard
                 .get_selected_project()
+                .unwrap()
                 .get_task(selected_task)
         };
         self.get_main_dialog().set_content(Self::make_inner_view(
@@ -336,6 +344,7 @@ impl InfoView {
         let jira_data_guard = jira_data.read().unwrap();
         let task = jira_data_guard
             .get_project(jira_data_guard.selected_project.clone().as_str())
+            .unwrap()
             .get_task(task_key[0]);
 
         self.get_main_dialog().set_content(Self::make_inner_view(

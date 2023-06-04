@@ -41,9 +41,12 @@ impl JiraData {
     }
 
     /// Sets new selected task, in format `PRO-1`.
-    pub fn set_selected_task(&mut self, raw_selected_task: &str) -> &String {
+    pub fn set_selected_task(
+        &mut self,
+        raw_selected_task: &str,
+    ) -> Option<&String> {
         let selected_task: String;
-        let project_key = &self.get_selected_project().key;
+        let project_key = &self.get_selected_project()?.key;
         match raw_selected_task.parse::<usize>() {
             Ok(_) => {
                 selected_task =
@@ -60,12 +63,17 @@ impl JiraData {
             }
         };
         self.selected_task = selected_task;
-        &self.selected_task
+        Some(&self.selected_task)
     }
 
     /// Returns immutable reference to a project.
-    pub fn get_project(&self, project_name: &str) -> &JiraProject {
-        self.projects.as_ref().unwrap().get(project_name).unwrap()
+    pub fn get_project(&self, project_name: &str) -> Option<&JiraProject> {
+        if let Some(project) =
+            self.projects.as_ref().unwrap().get(project_name)
+        {
+            return Some(project);
+        };
+        return None;
     }
 
     /// Returns mutable reference to a project.
@@ -78,12 +86,11 @@ impl JiraData {
     }
 
     /// Returns immutable reference to a selected project.
-    pub fn get_selected_project(&self) -> &JiraProject {
+    pub fn get_selected_project(&self) -> Option<&JiraProject> {
         self.projects
             .as_ref()
             .unwrap()
             .get::<String>(&self.selected_project)
-            .unwrap()
     }
 
     /// Returns mutable reference to a selected project.
@@ -102,12 +109,14 @@ impl JiraData {
     /// This method will return `PRO`
     pub fn get_selected_project_key(&self) -> String {
         let project = self.get_selected_project();
-        project.key.clone()
+        project.unwrap().key.clone()
     }
 
     /// Returns immutable reference to a task.
     pub fn get_selected_task(&self) -> &JiraIssue {
-        self.get_selected_project().get_task(&self.selected_task)
+        self.get_selected_project()
+            .unwrap()
+            .get_task(&self.selected_task)
     }
 
     /// Returns mutable reference to a task.
@@ -206,10 +215,11 @@ impl JiraData {
         &self,
         task_subname: &str,
         selected_project: &str,
-    ) -> Vec<&JiraIssue> {
+    ) -> Option<Vec<&JiraIssue>> {
         let mut fit_tasks: Vec<&JiraIssue> = Vec::new();
-        let project = self.get_project(selected_project);
-        for (task_name, task) in project.tasks.as_ref().unwrap().iter() {
+        let project = self.get_project(selected_project)?;
+
+        for (task_name, task) in project.tasks.as_ref()?.iter() {
             let task_name_copy = task_name.clone();
             let available_condition = task_name.contains(task_subname)
                 || task_name.contains(task_subname.to_uppercase().as_str())
@@ -220,7 +230,7 @@ impl JiraData {
                 fit_tasks.push(task);
             }
         }
-        fit_tasks
+        Some(fit_tasks)
     }
 
     /// Builds `projects` field from `JiraProjects`.
