@@ -12,6 +12,9 @@ pub fn view_wrapper_derive(input: TokenStream) -> TokenStream {
     impl_view_wrapper(&ast)
 }
 
+/// Implement ViewWrapper trait from cursive library.
+///
+/// Take field type for associated type and field name.
 fn impl_view_wrapper(ast: &syn::DeriveInput) -> TokenStream {
     let mut associated_types = Vec::new();
     let mut field_names = Vec::new();

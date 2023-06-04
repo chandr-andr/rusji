@@ -15,8 +15,7 @@ pub trait JiraView {
     fn main_dialog_name() -> String;
 
     /// Returns instance of main dialog view.
-
-    // TODO: Change ViewRef<Dialog> to generic.
+    /// TODO: Change ViewRef<Dialog> to generic.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
 
     /// Updates view content from [`super::jira_data::JiraData`] data.

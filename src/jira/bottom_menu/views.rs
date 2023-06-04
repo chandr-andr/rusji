@@ -5,6 +5,8 @@ use cursive::{
 };
 use rusji_derive::ViewWrapper;
 
+use super::data::Buttons;
+
 #[derive(ViewWrapper)]
 pub(crate) struct BottomMenuView {
     inner_view: NamedView<Dialog>,
@@ -12,6 +14,7 @@ pub(crate) struct BottomMenuView {
 
 impl BottomMenuView {
     fn default() -> Self {
+        let buttons = Buttons::new();
         Self {
             inner_view: Dialog::new()
                 .content(TextView::new_with_content(TextContent::new(

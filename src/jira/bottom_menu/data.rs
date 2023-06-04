@@ -33,4 +33,11 @@ impl<'a> Buttons<'a> {
         let mut buttons: Vec<Button> = Vec::default();
         Self { buttons: buttons }
     }
+
+    pub fn buttons_text(&self) -> String {
+        self.buttons
+            .iter()
+            .map(|button| format!("{} ", button.full_name()))
+            .collect()
+    }
 }
