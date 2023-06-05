@@ -12,7 +12,7 @@ use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
 use crate::Config;
 use cursive::{
     view::{Nameable, Resizable},
-    views::{Dialog, LinearLayout, TextContent, TextView},
+    views::LinearLayout,
     Cursive,
 };
 
