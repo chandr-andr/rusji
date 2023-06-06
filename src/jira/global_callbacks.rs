@@ -28,8 +28,7 @@ pub(crate) fn add_global_callbacks(cursive: &mut Cursive) {
                 let jira_data: &mut Arc<RwLock<JiraData>> =
                     cursive.user_data().unwrap();
                 let mut jira_data_guard = jira_data.write().unwrap();
-                let poped_value = jira_data_guard.activated_views.pop();
-                poped_value.is_some()
+                jira_data_guard.activated_views.pop().is_some()
             };
             if is_need_to_hide {
                 cursive.pop_layer();
