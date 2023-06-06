@@ -166,7 +166,7 @@ impl TasksView {
         {
             let mut jira_data_guard = jira_data.write().unwrap();
 
-            if let None = jira_data_guard.set_selected_task(issue_key) {
+            if jira_data_guard.set_selected_task(issue_key).is_none() {
                 return;
             }
             let task =

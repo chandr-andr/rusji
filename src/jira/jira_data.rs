@@ -75,7 +75,7 @@ impl JiraData {
         {
             return Some(project);
         };
-        return None;
+        None
     }
 
     /// Returns mutable reference to a project.

@@ -54,7 +54,7 @@ impl Default for ProjectsView {
                     let project_key = jira_guard.get_selected_project_key();
 
                     let jira_tasks = {
-                        let project_key_clone = project_key.clone();
+                        let project_key_clone = project_key;
                         jira_guard.thread_pool.evaluate(
                             move || -> Result<JiraIssues, RusjiError> {
                                 JiraIssues::new(

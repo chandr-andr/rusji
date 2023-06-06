@@ -23,9 +23,9 @@ impl<'a> BottomButton<'a> {
         S: Into<&'a str>,
     {
         Self {
-            keyboard_key: keyboard_key,
+            keyboard_key,
             name: name.into(),
-            action_fn: action_fn,
+            action_fn,
         }
     }
 
@@ -54,7 +54,7 @@ impl<'a> BottomButtons<'a> {
             },
         ));
 
-        Self { buttons: buttons }
+        Self { buttons }
     }
 
     pub fn buttons_text(&self) -> String {

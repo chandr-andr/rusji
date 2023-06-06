@@ -171,7 +171,7 @@ impl IssueTransitions {
                 return transition.id.as_str();
             }
         }
-        "0".into()
+        "0"
     }
 }
 
