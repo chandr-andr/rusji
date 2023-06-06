@@ -19,6 +19,7 @@ pub struct JiraData {
     pub thread_pool: ThreadPool,
     pub selected_project: String,
     pub selected_task: String,
+    pub activated_views: Vec<String>,
 }
 
 impl JiraData {
@@ -32,6 +33,7 @@ impl JiraData {
             thread_pool: ThreadPool::default(),
             selected_project: String::default(),
             selected_task: String::default(),
+            activated_views: Vec::default(),
         }
     }
 

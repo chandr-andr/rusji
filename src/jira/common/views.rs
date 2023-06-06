@@ -14,7 +14,7 @@ pub trait JiraView {
     /// Returns name of the main dialog view.
     fn main_dialog_name() -> String;
 
-    /// Returns instance of main dialog view.
+    /// Returns instance of main dialog view.   
     /// TODO: Change ViewRef<Dialog> to generic.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
 
@@ -31,4 +31,15 @@ pub trait JiraView {
 
 pub trait ActionView: ViewWrapper {
     fn new(cursive: &mut Cursive) -> Self;
+}
+
+pub trait ToggleableView: JiraView {
+    /// Toggle on view.
+    ///
+    /// `Toggle on` means add name of this view to
+    /// the activated_views in `JiraData` struct.
+    ///
+    /// It is necessary if we want to have an option
+    /// to close first-side views with button.
+    fn toggle_on_view(cursive: &mut Cursive);
 }

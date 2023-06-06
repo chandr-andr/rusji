@@ -42,7 +42,7 @@ impl<'a> BottomButtons<'a> {
             'm',
             "menu",
             |cursive: &mut Cursive| {
-                let menu = MenuView::new();
+                let menu = MenuView::new(cursive);
                 cursive.add_layer(menu);
             },
         ));
