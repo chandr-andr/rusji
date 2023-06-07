@@ -9,7 +9,7 @@ use rusji_derive::ViewWrapper;
 
 use crate::{
     jira::{
-        common::views::{ActionView, JiraView},
+        common::views::{ActionView, JiraView, ToggleableView},
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
     },
     jira_data::JiraData,
@@ -116,6 +116,7 @@ impl ActionView for ChangeTransitionActionView {
     ///
     /// After adds this task statuses to the new select view.
     fn new(cursive: &mut Cursive) -> Self {
+        Self::toggle_on_view(cursive);
         let jira_data: Arc<RwLock<JiraData>> = cursive
             .user_data()
             .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
@@ -153,6 +154,7 @@ impl ActionView for ChangeTransitionActionView {
                 .title("Choose new status")
                 .content(select_view)
                 .button("Back", |cursive: &mut Cursive| {
+                    Self::toggle_off_view(cursive);
                     cursive.pop_layer();
                 })
                 .with_name(Self::main_dialog_name()),
@@ -186,6 +188,7 @@ impl JiraView for ChangeTransitionActionView {
 
 impl ChangeTransitionActionView {
     fn change_status(cursive: &mut Cursive, transition_name: &str) {
+        Self::toggle_off_view(cursive);
         let jira_data: &mut Arc<RwLock<JiraData>> =
             cursive.user_data().unwrap();
         let jira_data_guard = jira_data.read().unwrap();
@@ -203,3 +206,5 @@ impl ChangeTransitionActionView {
             .unwrap();
     }
 }
+
+impl ToggleableView for ChangeTransitionActionView {}

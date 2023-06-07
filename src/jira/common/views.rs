@@ -1,8 +1,12 @@
+use std::sync::{Arc, RwLock};
+
 use cursive::{
     view::ViewWrapper,
     views::{Dialog, ViewRef},
     Cursive,
 };
+
+use crate::jira_data::JiraData;
 
 pub trait JiraView {
     /// Returns name of the view.
@@ -41,5 +45,29 @@ pub trait ToggleableView: JiraView {
     ///
     /// It is necessary if we want to have an option
     /// to close first-side views with button.
-    fn toggle_on_view(cursive: &mut Cursive);
+    fn toggle_on_view(cursive: &mut Cursive) {
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
+        let mut jira_data_guard = jira_data.write().unwrap();
+        jira_data_guard.activated_views.push(Self::view_name());
+    }
+
+    /// Toggle on view.
+    ///
+    /// `Toggle on` means add name of this view to
+    /// the activated_views in `JiraData` struct.
+    ///
+    /// It is necessary if we want to have an option
+    /// to close first-side views with button.
+    fn toggle_off_view(cursive: &mut Cursive) {
+        let jira_data: &mut Arc<RwLock<JiraData>> =
+            cursive.user_data().unwrap();
+        let mut jira_data_guard = jira_data.write().unwrap();
+        let view_position = jira_data_guard.activated_views.iter().position(
+            |view_name: &String| view_name.clone() == Self::view_name(),
+        );
+        if let Some(position) = view_position {
+            jira_data_guard.activated_views.remove(position);
+        }
+    }
 }

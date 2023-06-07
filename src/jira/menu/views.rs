@@ -1,5 +1,3 @@
-use std::sync::{Arc, RwLock};
-
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
     views::{Dialog, NamedView, ScrollView, SelectView},
@@ -7,10 +5,7 @@ use cursive::{
 };
 use rusji_derive::ViewWrapper;
 
-use crate::{
-    jira::common::views::{JiraView, ToggleableView},
-    jira_data::JiraData,
-};
+use crate::jira::common::views::{JiraView, ToggleableView};
 
 #[derive(ViewWrapper)]
 pub(crate) struct MenuView {
@@ -37,14 +32,7 @@ impl JiraView for MenuView {
     }
 }
 
-impl ToggleableView for MenuView {
-    fn toggle_on_view(cursive: &mut cursive::Cursive) {
-        let jira_data: &mut Arc<RwLock<JiraData>> =
-            cursive.user_data().unwrap();
-        let mut jira_data_guard = jira_data.write().unwrap();
-        jira_data_guard.activated_views.push(Self::view_name());
-    }
-}
+impl ToggleableView for MenuView {}
 
 impl MenuView {
     pub fn new(cursive: &mut cursive::Cursive) -> Self {
