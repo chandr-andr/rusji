@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::{
-    view::{Finder, Nameable, Resizable, ViewWrapper},
+    view::{Finder, Nameable, ViewWrapper},
     views::{Dialog, NamedView, ScrollView, SelectView, ViewRef},
     Cursive, View,
 };
@@ -20,12 +20,15 @@ use super::enums::TaskActions;
 use std::str::FromStr;
 
 #[derive(ViewWrapper)]
-pub struct MainActionsView {
+pub struct ActionsView {
     inner_view: NamedView<Dialog>,
 }
 
-impl Default for MainActionsView {
-    fn default() -> Self {
+impl ToggleableView for ActionsView {}
+
+impl ActionsView {
+    pub fn new(cursive: &mut Cursive) -> Self {
+        Self::toggle_on_view(cursive);
         let inner_action_view = SelectView::<String>::new()
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, action_name: &str| {
@@ -34,18 +37,19 @@ impl Default for MainActionsView {
                 Self::get_view(cursive)
                     .add_certain_action_view(cursive, action);
             })
+            .with_all_str(TaskActions::get_actions())
             .with_name(Self::select_view_name());
 
         Self {
             inner_view: Dialog::new()
                 .title("Available action")
-                .content(ScrollView::new(inner_action_view).full_height())
+                .content(ScrollView::new(inner_action_view))
                 .with_name(Self::main_dialog_name()),
         }
     }
 }
 
-impl JiraView for MainActionsView {
+impl JiraView for ActionsView {
     /// Returns name of the MainActionsView.
     fn view_name() -> String {
         "MainActionsView".into()
@@ -77,7 +81,7 @@ impl JiraView for MainActionsView {
     fn add_content_to_view(&mut self, _: Vec<&str>) {}
 }
 
-impl MainActionsView {
+impl ActionsView {
     /// Returns name of the SelectView in MainActionsView.
     pub fn select_view_name() -> String {
         String::from("ActionsSelectView")
@@ -122,6 +126,7 @@ impl ActionView for ChangeTransitionActionView {
             .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
             .unwrap();
         let jira_data_guard = jira_data.read().unwrap();
+
         let jira_task = jira_data_guard.get_selected_task();
 
         let mut select_view = SelectView::<String>::new().on_submit(
@@ -141,6 +146,7 @@ impl ActionView for ChangeTransitionActionView {
                 }
             },
         );
+
         select_view.add_all_str(
             jira_task
                 .transitions

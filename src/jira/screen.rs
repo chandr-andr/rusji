@@ -4,7 +4,7 @@ use super::{
     bottom_menu::views::BottomMenuView,
     global_callbacks::add_global_callbacks,
     jira_data::JiraData,
-    layouts::{ActionsLayout, InfoLayout, TasksProjectsLayout},
+    layouts::{InfoLayout, TasksProjectsLayout},
     projects::data::JiraProjects,
 };
 use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
@@ -23,7 +23,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
 
     let screen_size = cursive.screen_size();
     let side_width = screen_size.x * 2 / 7;
-    let center_width = screen_size.x * 3 / 7;
+    let center_width = screen_size.x * 5 / 7;
 
     let mut all_layout = LinearLayout::vertical();
 
@@ -34,7 +34,7 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let tasks_projects_layout = TasksProjectsLayout::default();
     let info_layout =
         InfoLayout::default().with_name(InfoLayout::layout_name());
-    let actions_something_layout = ActionsLayout::default();
+    // let actions_something_layout = ActionsLayout::default();
 
     main_layout.add_child(
         tasks_projects_layout
@@ -44,11 +44,11 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     main_layout.add_child(
         info_layout.min_width(center_width).max_width(center_width),
     );
-    main_layout.add_child(
-        actions_something_layout
-            .min_width(side_width)
-            .max_width(side_width),
-    );
+    // main_layout.add_child(
+    //     actions_something_layout
+    //         .min_width(side_width)
+    //         .max_width(side_width),
+    // );
 
     all_layout.add_child(main_layout);
     all_layout.add_child(bottom_menu);

@@ -2,6 +2,8 @@ use cursive::Cursive;
 
 use crate::jira::menu::views::MenuView;
 
+use super::helpers::build_tasks_action_view;
+
 pub struct BottomButtons<'a> {
     pub buttons: Vec<BottomButton<'a>>,
 }
@@ -38,6 +40,11 @@ impl<'a> BottomButton<'a> {
 impl<'a> BottomButtons<'a> {
     pub fn new() -> Self {
         let mut buttons: Vec<BottomButton> = Vec::default();
+        buttons.push(BottomButton::new(
+            'a',
+            "task actions",
+            build_tasks_action_view,
+        ));
         buttons.push(BottomButton::new(
             'm',
             "menu",

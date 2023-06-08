@@ -10,8 +10,6 @@ use cursive::{
 };
 use rusji_derive::ViewWrapper;
 
-use super::tasks_actions::views::MainActionsView;
-
 #[derive(ViewWrapper)]
 pub(crate) struct TasksProjectsLayout {
     inner_layout: LinearLayout,
@@ -58,22 +56,5 @@ impl InfoLayout {
 
     pub fn inner_layout_name() -> String {
         String::from("InnerInfoLayout")
-    }
-}
-
-#[derive(ViewWrapper)]
-pub(crate) struct ActionsLayout {
-    inner_layout: LinearLayout,
-}
-
-impl Default for ActionsLayout {
-    fn default() -> Self {
-        Self {
-            inner_layout: LinearLayout::vertical().child(
-                MainActionsView::default()
-                    .with_name(MainActionsView::view_name())
-                    .full_height(),
-            ),
-        }
     }
 }
