@@ -91,7 +91,7 @@ impl TasksView {
             &jira_data_guard.selected_project,
         );
 
-        if !fit_tasks.is_none() {
+        if fit_tasks.is_some() {
             let unwrap_tasks = fit_tasks.as_ref().unwrap();
             if unwrap_tasks.is_empty() {
                 tasks_select_view.clear();
