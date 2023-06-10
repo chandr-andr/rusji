@@ -41,9 +41,7 @@ pub(crate) fn add_global_callbacks(cursive: &mut Cursive) {
 
 pub(crate) fn add_menu_callbacks(cursive: &mut Cursive) {
     for bottom_button in BottomButtons::new().buttons.into_iter() {
-        cursive.add_global_callback(
-            bottom_button.keyboard_key,
-            bottom_button.action_fn,
-        )
+        cursive
+            .add_global_callback(bottom_button.event, bottom_button.action_fn)
     }
 }

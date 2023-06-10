@@ -1,30 +1,52 @@
-use cursive::Cursive;
+use cursive::{event::Event, Cursive};
 
-pub struct Button<'a> {
-    pub keyboard_key: char,
-    pub name: &'a str,
-    pub action_fn: fn(&mut Cursive),
-}
-
-impl<'a> Button<'a> {
+pub trait Button<'a, CursiveEvent> {
     /// Create new button.
-    pub fn new<S>(
-        keyboard_key: char,
+    fn new<S>(
+        event: CursiveEvent,
         name: S,
         action_fn: fn(&mut Cursive),
     ) -> Self
     where
+        Self: Sized,
         S: Into<&'a str>,
+        CursiveEvent: Into<CursiveEvent>;
+
+    /// Return button's full name for the bottom view.
+    fn full_name(&self) -> String;
+}
+
+pub struct CustomizableButton<'a> {
+    pub event: char,
+    pub name: &'a str,
+    pub action_fn: fn(&mut Cursive),
+}
+
+impl<'a> Button<'a, char> for CustomizableButton<'a> {
+    fn new<S>(event: char, name: S, action_fn: fn(&mut Cursive)) -> Self
+    where
+        Self: Sized,
+        S: Into<&'a str>,
+        char: Into<char>,
     {
         Self {
-            keyboard_key,
+            event: event,
             name: name.into(),
-            action_fn,
+            action_fn: action_fn,
         }
     }
 
-    /// Return button's full name for the bottom view.
-    pub fn full_name(&self) -> String {
-        format!("{} - {}", self.keyboard_key, self.name)
+    fn full_name(&self) -> String {
+        format!("{} - {}", self.event, self.name)
     }
+}
+
+struct StrictButton<'a, CursiveEvent>
+where
+    CursiveEvent: Into<Event>,
+{
+    pub event_description: &'a str,
+    pub event: CursiveEvent,
+    pub name: &'a str,
+    pub action_fn: fn(&mut Cursive),
 }
