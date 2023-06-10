@@ -1,8 +1,9 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::{
+    event::Event,
     view::{Finder, Nameable, ViewWrapper},
-    views::{Dialog, NamedView, ScrollView, SelectView, ViewRef},
+    views::{Dialog, NamedView, OnEventView, ScrollView, SelectView, ViewRef},
     Cursive, View,
 };
 use rusji_derive::ViewWrapper;
@@ -40,10 +41,17 @@ impl ActionsView {
             .with_all_str(TaskActions::get_actions())
             .with_name(Self::select_view_name());
 
+        let a = OnEventView::new(inner_action_view).on_event(
+            'q',
+            |cursive: &mut Cursive| {
+                print!("YEEEEAAAAAAPPPPPPPP");
+            },
+        );
+
         Self {
             inner_view: Dialog::new()
                 .title("Available action")
-                .content(ScrollView::new(inner_action_view))
+                .content(ScrollView::new(a))
                 .with_name(Self::main_dialog_name()),
         }
     }
