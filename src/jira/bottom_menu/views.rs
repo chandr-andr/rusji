@@ -1,5 +1,4 @@
 use cursive::{
-    event::Event,
     view::ViewWrapper,
     views::{TextContent, TextView},
     View,

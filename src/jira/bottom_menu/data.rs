@@ -1,5 +1,5 @@
 use cursive::{
-    event::{Event, Key},
+    event::{Event},
     Cursive,
 };
 

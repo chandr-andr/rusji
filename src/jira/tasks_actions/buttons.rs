@@ -7,17 +7,12 @@ use crate::jira::common::{
 
 use super::{enums::TaskActions, views::ChangeTransitionActionView};
 
+#[derive(Default)]
 pub struct TasksActionsButtons<'a> {
     pub buttons: Vec<CallbackWithButton<'a, TaskActions>>,
 }
 
-impl<'a> Default for TasksActionsButtons<'a> {
-    fn default() -> Self {
-        Self {
-            buttons: Vec::default(),
-        }
-    }
-}
+
 
 impl<'a> TasksActionsButtons<'a> {
     pub fn add_button(
