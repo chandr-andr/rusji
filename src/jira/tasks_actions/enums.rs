@@ -2,10 +2,13 @@ use std::str::FromStr;
 
 use cursive::Cursive;
 
-use crate::jira::common::views::ButtonView;
+use crate::jira::common::{
+    buttons_variants::ButtonVariant, views::ButtonView,
+};
 
 use super::views::ChangeTransitionActionView;
 
+#[derive(Clone, Copy)] // TODO: remove Clone, Copy
 pub enum TaskActions {
     StatusChange,
     ChangeExecutor,
@@ -27,7 +30,7 @@ impl FromStr for TaskActions {
     }
 }
 
-impl From<TaskActions> for &str {
+impl<'a> From<TaskActions> for &'a str {
     fn from(action: TaskActions) -> Self {
         match action {
             TaskActions::StatusChange => "Change status",
@@ -36,6 +39,8 @@ impl From<TaskActions> for &str {
         }
     }
 }
+
+impl<'a> ButtonVariant<'a> for TaskActions {}
 
 impl TaskActions {
     /// Returns all available actions.

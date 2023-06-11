@@ -1,7 +1,6 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::{
-    event::Event,
     view::{Finder, Nameable, ViewWrapper},
     views::{Dialog, NamedView, OnEventView, ScrollView, SelectView, ViewRef},
     Cursive, View,
@@ -10,13 +9,19 @@ use rusji_derive::ViewWrapper;
 
 use crate::{
     jira::{
-        common::views::{ButtonView, JiraView, ToggleableView},
+        common::{
+            button::CallbackText,
+            views::{ButtonView, JiraView, ToggleableView},
+        },
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
     },
     jira_data::JiraData,
 };
 
-use super::enums::TaskActions;
+use super::{
+    buttons::{build_buttons, TasksActionsButtons},
+    enums::TaskActions,
+};
 
 use std::str::FromStr;
 
@@ -30,30 +35,58 @@ impl ToggleableView for ActionsView {}
 impl ActionsView {
     pub fn new(cursive: &mut Cursive) -> Self {
         Self::toggle_on_view(cursive);
-        let inner_action_view = SelectView::<String>::new()
-            .align(INNER_CENTER_TOP_VIEW_ALIGN)
-            .on_submit(|cursive: &mut Cursive, action_name: &str| {
-                let action: TaskActions =
-                    TaskActions::from_str(action_name).unwrap();
-                Self::get_view(cursive)
-                    .add_certain_action_view(cursive, action);
-            })
-            .with_all_str(TaskActions::get_actions())
-            .with_name(Self::select_view_name());
-
-        let a = OnEventView::new(inner_action_view).on_event(
-            'q',
-            |cursive: &mut Cursive| {
-                print!("YEEEEAAAAAAPPPPPPPP");
-            },
+        let select_view_callback_buttons = build_buttons(cursive);
+        let inner_select_view =
+            Self::build_select_view(&select_view_callback_buttons);
+        let on_event_view = Self::build_on_event_view(
+            inner_select_view,
+            select_view_callback_buttons,
         );
 
         Self {
             inner_view: Dialog::new()
                 .title("Available action")
-                .content(ScrollView::new(a))
+                .content(ScrollView::new(on_event_view))
                 .with_name(Self::main_dialog_name()),
         }
+    }
+
+    fn build_select_view(
+        callback_buttons: &TasksActionsButtons,
+    ) -> NamedView<SelectView> {
+        SelectView::<String>::new()
+            .align(INNER_CENTER_TOP_VIEW_ALIGN)
+            .on_submit(|cursive: &mut Cursive, action_name: &str| {
+                Self::on_submit_select_view(cursive, action_name);
+            })
+            .with_all_str(
+                callback_buttons
+                    .buttons
+                    .iter()
+                    .map(|button| button.display_text()),
+            )
+            .with_name(Self::select_view_name())
+    }
+
+    fn on_submit_select_view(cursive: &mut Cursive, action_name: &str) {
+        let action_text: &str =
+            action_name.split(" - ").collect::<Vec<&str>>()[1];
+        let action: TaskActions = TaskActions::from_str(action_text).unwrap();
+        Self::get_view(cursive).add_certain_action_view(cursive, action);
+    }
+
+    fn build_on_event_view<'a>(
+        select_view: NamedView<SelectView>,
+        callback_buttons: TasksActionsButtons<'a>,
+    ) -> OnEventView<NamedView<SelectView>> {
+        let mut on_event_view = OnEventView::new(select_view);
+
+        for button in callback_buttons.buttons.into_iter() {
+            on_event_view =
+                on_event_view.on_event(button.event, button.action_fn)
+        }
+
+        on_event_view
     }
 }
 
@@ -89,7 +122,7 @@ impl JiraView for ActionsView {
     fn add_content_to_view(&mut self, _: Vec<&str>) {}
 }
 
-impl ActionsView {
+impl<'a> ActionsView {
     /// Returns name of the SelectView in MainActionsView.
     pub fn select_view_name() -> String {
         String::from("ActionsSelectView")

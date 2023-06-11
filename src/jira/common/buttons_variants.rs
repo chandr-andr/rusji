@@ -1,3 +1,3 @@
-use std::fmt::Display;
+use std::str::FromStr;
 
-pub trait ButtonVariant<'a>: Into<&'a str> + From<&'a str> + Display {}
+pub trait ButtonVariant<'a>: Into<&'a str> + FromStr + Copy {}

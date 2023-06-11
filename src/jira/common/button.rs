@@ -62,7 +62,8 @@ where
     Variant: ButtonVariant<'a>,
 {
     fn display_text(&self) -> String {
-        format!("{} - {}", self.event, self.variant)
+        let variant_in_text: &str = self.variant.into();
+        format!("{} - {}", self.event, variant_in_text)
     }
 }
 
@@ -90,6 +91,9 @@ where
     }
 }
 
+/// Struct for not clickable callbacks.
+///
+/// This struct must be used in TextView or alternative.
 pub struct StaticCallback<'a, CursiveEvent>
 where
     CursiveEvent: Into<Event>,
