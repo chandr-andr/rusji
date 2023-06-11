@@ -10,7 +10,7 @@ use rusji_derive::ViewWrapper;
 
 use crate::{
     jira::{
-        common::views::{ActionView, JiraView, ToggleableView},
+        common::views::{ButtonView, JiraView, ToggleableView},
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
     },
     jira_data::JiraData,
@@ -120,14 +120,17 @@ pub struct ChangeTransitionActionView {
     inner_view: NamedView<Dialog>,
 }
 
-impl ActionView for ChangeTransitionActionView {
+impl ButtonView for ChangeTransitionActionView {
     /// Creates new ChangeStatusActionView view.
     ///
     /// Gets [`crate::jira_data::JiraData`] as a clone,
     /// Then gets available task statuses from selected task.
     ///
     /// After adds this task statuses to the new select view.
-    fn new(cursive: &mut Cursive) -> Self {
+    fn new(cursive: &mut Cursive) -> Self
+    where
+        Self: Sized,
+    {
         Self::toggle_on_view(cursive);
         let jira_data: Arc<RwLock<JiraData>> = cursive
             .user_data()

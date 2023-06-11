@@ -8,6 +8,12 @@ use cursive::{
 
 use crate::jira_data::JiraData;
 
+pub trait ButtonView: ViewWrapper {
+    fn new(cursive: &mut Cursive) -> Self
+    where
+        Self: Sized;
+}
+
 pub trait JiraView {
     /// Returns name of the view.
     fn view_name() -> String;
@@ -31,10 +37,6 @@ pub trait JiraView {
     ///
     /// Default implementation does nothing.
     fn add_content_to_view(&mut self, _content: Vec<&str>) {}
-}
-
-pub trait ActionView: ViewWrapper {
-    fn new(cursive: &mut Cursive) -> Self;
 }
 
 pub trait ToggleableView: JiraView {

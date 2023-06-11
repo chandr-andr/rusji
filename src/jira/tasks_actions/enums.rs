@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cursive::Cursive;
 
-use crate::jira::common::views::ActionView;
+use crate::jira::common::views::ButtonView;
 
 use super::views::ChangeTransitionActionView;
 
@@ -48,7 +48,7 @@ impl TaskActions {
     }
 
     /// Returns new action view based on `TaskActions` enum.
-    pub fn get_view(self, cursive: &mut Cursive) -> impl ActionView {
+    pub fn get_view(self, cursive: &mut Cursive) -> impl ButtonView {
         match self {
             TaskActions::StatusChange => {
                 ChangeTransitionActionView::new(cursive)

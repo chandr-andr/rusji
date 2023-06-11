@@ -1,28 +1,96 @@
 use cursive::{event::Event, Cursive};
 
-pub trait Button<'a, CursiveEvent> {
-    /// Create new button.
-    fn new<S>(
+use super::buttons_variants::ButtonVariant;
+
+/// Every callback must have display text.
+pub trait CallbackText {
+    fn display_text(&self) -> String;
+}
+
+/// Trait for all callbacks with button.
+///
+/// It means that you can click on this button or press callback key.
+/// Usually using in SelectView.
+pub trait ClickableCallback<'a, Variant, CursiveEvent>: CallbackText
+where
+    Variant: ButtonVariant<'a>,
+    CursiveEvent: Into<Event>,
+{
+    fn new<ToStr>(
+        variant: Variant,
         event: CursiveEvent,
-        name: S,
+        name: ToStr,
         action_fn: fn(&mut Cursive),
     ) -> Self
     where
         Self: Sized,
-        S: Into<&'a str>,
-        CursiveEvent: Into<CursiveEvent>;
-
-    /// Return button's full name for the bottom view.
-    fn full_name(&self) -> String;
+        ToStr: Into<&'a str>;
 }
 
-pub struct CustomizableButton<'a> {
+/// Trait for callback with small description.
+///
+/// It's not clickable, you can call callback only with key.
+pub trait ShowOnlyCallback<'a, CursiveEvent>: CallbackText
+where
+    CursiveEvent: Into<Event>,
+{
+    fn new<ToStr>(
+        event: CursiveEvent,
+        name: ToStr,
+        action_fn: fn(&mut Cursive),
+    ) -> Self
+    where
+        Self: Sized,
+        ToStr: Into<&'a str>;
+}
+
+/// Struct for clickable callbacks.
+///
+/// This struct must be used in SelectView.
+pub struct CallbackWithButton<'a, Variant>
+where
+    Variant: ButtonVariant<'a>,
+{
+    pub variant: Variant,
     pub event: char,
     pub name: &'a str,
     pub action_fn: fn(&mut Cursive),
 }
 
-struct StaticButton<'a, CursiveEvent>
+impl<'a, Variant> CallbackText for CallbackWithButton<'a, Variant>
+where
+    Variant: ButtonVariant<'a>,
+{
+    fn display_text(&self) -> String {
+        format!("{} - {}", self.event, self.variant)
+    }
+}
+
+impl<'a, Variant> ClickableCallback<'a, Variant, char>
+    for CallbackWithButton<'a, Variant>
+where
+    Variant: ButtonVariant<'a>,
+{
+    fn new<ToStr>(
+        variant: Variant,
+        event: char,
+        name: ToStr,
+        action_fn: fn(&mut Cursive),
+    ) -> Self
+    where
+        Self: Sized,
+        ToStr: Into<&'a str>,
+    {
+        Self {
+            variant,
+            event,
+            name: name.into(),
+            action_fn,
+        }
+    }
+}
+
+pub struct StaticCallback<'a, CursiveEvent>
 where
     CursiveEvent: Into<Event>,
 {
@@ -31,48 +99,33 @@ where
     pub action_fn: fn(&mut Cursive),
 }
 
-impl<'a> Button<'a, char> for CustomizableButton<'a> {
-    fn new<S>(event: char, name: S, action_fn: fn(&mut Cursive)) -> Self
-    where
-        Self: Sized,
-        S: Into<&'a str>,
-        char: Into<char>,
-    {
-        Self {
-            event: event,
-            name: name.into(),
-            action_fn: action_fn,
-        }
-    }
-
-    fn full_name(&self) -> String {
-        format!("{} - {}", self.event, self.name)
-    }
-}
-
-impl<'a, CursiveEvent> Button<'a, CursiveEvent>
-    for StaticButton<'a, CursiveEvent>
+impl<'a, CursiveEvent> CallbackText for StaticCallback<'a, CursiveEvent>
 where
     CursiveEvent: Into<Event>,
 {
-    fn new<S>(
+    fn display_text(&self) -> String {
+        self.name.into()
+    }
+}
+
+impl<'a, CursiveEvent> ShowOnlyCallback<'a, CursiveEvent>
+    for StaticCallback<'a, CursiveEvent>
+where
+    CursiveEvent: Into<Event>,
+{
+    fn new<ToStr>(
         event: CursiveEvent,
-        name: S,
+        name: ToStr,
         action_fn: fn(&mut Cursive),
     ) -> Self
     where
         Self: Sized,
-        S: Into<&'a str>,
-        CursiveEvent: Into<CursiveEvent>,
+        ToStr: Into<&'a str>,
     {
         Self {
-            event: event,
+            event,
             name: name.into(),
-            action_fn: action_fn,
+            action_fn,
         }
-    }
-
-    fn full_name(&self) -> String {
-        self.name.into()
     }
 }

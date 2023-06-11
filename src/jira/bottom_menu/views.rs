@@ -1,4 +1,5 @@
 use cursive::{
+    event::Event,
     view::ViewWrapper,
     views::{TextContent, TextView},
     View,
@@ -12,7 +13,7 @@ pub(crate) struct BottomMenuView {
     inner_view: TextView,
 }
 
-impl BottomMenuView {
+impl<'a> BottomMenuView {
     pub fn default() -> Self {
         Self {
             inner_view: TextView::new_with_content(TextContent::new(
