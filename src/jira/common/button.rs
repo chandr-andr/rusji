@@ -22,6 +22,15 @@ pub struct CustomizableButton<'a> {
     pub action_fn: fn(&mut Cursive),
 }
 
+struct StaticButton<'a, CursiveEvent>
+where
+    CursiveEvent: Into<Event>,
+{
+    pub event: CursiveEvent,
+    pub name: &'a str,
+    pub action_fn: fn(&mut Cursive),
+}
+
 impl<'a> Button<'a, char> for CustomizableButton<'a> {
     fn new<S>(event: char, name: S, action_fn: fn(&mut Cursive)) -> Self
     where
@@ -41,12 +50,29 @@ impl<'a> Button<'a, char> for CustomizableButton<'a> {
     }
 }
 
-struct StrictButton<'a, CursiveEvent>
+impl<'a, CursiveEvent> Button<'a, CursiveEvent>
+    for StaticButton<'a, CursiveEvent>
 where
     CursiveEvent: Into<Event>,
 {
-    pub event_description: &'a str,
-    pub event: CursiveEvent,
-    pub name: &'a str,
-    pub action_fn: fn(&mut Cursive),
+    fn new<S>(
+        event: CursiveEvent,
+        name: S,
+        action_fn: fn(&mut Cursive),
+    ) -> Self
+    where
+        Self: Sized,
+        S: Into<&'a str>,
+        CursiveEvent: Into<CursiveEvent>,
+    {
+        Self {
+            event: event,
+            name: name.into(),
+            action_fn: action_fn,
+        }
+    }
+
+    fn full_name(&self) -> String {
+        self.name.into()
+    }
 }
