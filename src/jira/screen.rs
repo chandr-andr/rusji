@@ -34,7 +34,6 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     let tasks_projects_layout = TasksProjectsLayout::default();
     let info_layout =
         InfoLayout::default().with_name(InfoLayout::layout_name());
-    // let actions_something_layout = ActionsLayout::default();
 
     main_layout.add_child(
         tasks_projects_layout
@@ -44,11 +43,6 @@ pub fn make_jira_screen(cursive: &mut Cursive, company_name: &str) {
     main_layout.add_child(
         info_layout.min_width(center_width).max_width(center_width),
     );
-    // main_layout.add_child(
-    //     actions_something_layout
-    //         .min_width(side_width)
-    //         .max_width(side_width),
-    // );
 
     all_layout.add_child(main_layout);
     all_layout.add_child(bottom_menu);

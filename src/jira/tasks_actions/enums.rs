@@ -6,7 +6,7 @@ use crate::jira::common::{
     buttons_variants::ButtonVariant, views::ButtonView,
 };
 
-use super::views::ChangeTransitionActionView;
+use super::change_transition_view::ChangeTransitionActionView;
 
 #[derive(Clone, Copy)] // TODO: remove Clone, Copy
 pub enum TaskActions {

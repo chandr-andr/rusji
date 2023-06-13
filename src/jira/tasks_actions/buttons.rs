@@ -1,20 +1,20 @@
 use cursive::Cursive;
 
-use crate::jira::common::{
-    button::{CallbackWithButton, ClickableCallback},
-    views::ButtonView,
-};
+use crate::jira::common::button::{CallbackWithButton, ClickableCallback};
 
-use super::{enums::TaskActions, views::ChangeTransitionActionView};
+use super::enums::TaskActions;
 
 #[derive(Default)]
 pub struct TasksActionsButtons<'a> {
     pub buttons: Vec<CallbackWithButton<'a, TaskActions>>,
 }
 
-
-
+/// Methods for actions buttons.
 impl<'a> TasksActionsButtons<'a> {
+    /// Add new button to the structure.
+    ///
+    /// TODO: Make possible to configure event param
+    /// from configuration file.
     pub fn add_button(
         &mut self,
         _: &mut Cursive,
@@ -37,7 +37,7 @@ pub fn build_buttons<'a>(cursive: &mut Cursive) -> TasksActionsButtons<'a> {
         'c',
         "Change issue status",
         |cursive: &mut Cursive| {
-            let action_view = ChangeTransitionActionView::new(cursive);
+            let action_view = TaskActions::StatusChange.get_view(cursive);
             cursive.add_layer(action_view);
         },
         TaskActions::StatusChange,
@@ -48,7 +48,7 @@ pub fn build_buttons<'a>(cursive: &mut Cursive) -> TasksActionsButtons<'a> {
         'e',
         "Change issue executor",
         |cursive: &mut Cursive| {
-            let action_view = ChangeTransitionActionView::new(cursive);
+            let action_view = TaskActions::StatusChange.get_view(cursive);
             cursive.add_layer(action_view);
         },
         TaskActions::ChangeExecutor,
@@ -59,7 +59,7 @@ pub fn build_buttons<'a>(cursive: &mut Cursive) -> TasksActionsButtons<'a> {
         'r',
         "Change issue release",
         |cursive: &mut Cursive| {
-            let action_view = ChangeTransitionActionView::new(cursive);
+            let action_view = TaskActions::StatusChange.get_view(cursive);
             cursive.add_layer(action_view);
         },
         TaskActions::ChangeRelease,
