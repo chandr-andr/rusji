@@ -1,7 +1,4 @@
-use cursive::{
-    event::{Event},
-    Cursive,
-};
+use cursive::{event::Event, Cursive};
 
 use crate::jira::{
     common::button::{CallbackText, ShowOnlyCallback, StaticCallback},
