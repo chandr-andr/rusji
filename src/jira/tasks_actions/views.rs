@@ -203,10 +203,6 @@ impl ButtonView for ChangeTransitionActionView {
             inner_view: Dialog::new()
                 .title("Choose new status")
                 .content(select_view)
-                .button("Back", |cursive: &mut Cursive| {
-                    Self::toggle_off_view(cursive);
-                    cursive.pop_layer();
-                })
                 .with_name(Self::main_dialog_name()),
         }
     }
