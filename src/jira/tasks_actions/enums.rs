@@ -1,15 +1,15 @@
 use std::str::FromStr;
 
-use cursive::Cursive;
+use cursive::{
+    views::{Dialog, NamedView, ResizedView},
+    Cursive,
+};
 
 use crate::jira::common::{
     buttons_variants::ButtonVariant, views::ButtonView,
 };
 
-use super::{
-    change_assignee_views::ChangeAssigneeSearchView,
-    change_transition_view::ChangeTransitionActionView,
-};
+use super::change_transition_view::ChangeTransitionActionView;
 
 #[derive(Clone, Copy)] // TODO: remove Clone, Copy
 pub enum TaskActions {
@@ -56,16 +56,19 @@ impl TaskActions {
     }
 
     /// Returns new action view based on `TaskActions` enum.
-    pub fn get_view(self, cursive: &mut Cursive) -> impl ButtonView {
+    pub fn get_view(
+        self,
+        cursive: &mut Cursive,
+    ) -> NamedView<ResizedView<Dialog>> {
         match self {
             TaskActions::StatusChange => {
-                ChangeTransitionActionView::new(cursive)
+                ChangeTransitionActionView::new(cursive).inner_view()
             }
             TaskActions::ChangeAssignee => {
-                ChangeTransitionActionView::new(cursive)
+                ChangeTransitionActionView::new(cursive).inner_view()
             }
             TaskActions::ChangeRelease => {
-                ChangeTransitionActionView::new(cursive)
+                ChangeTransitionActionView::new(cursive).inner_view()
             }
         }
     }

@@ -10,7 +10,8 @@ use rusji_derive::ViewWrapper;
 use crate::{
     jira::{
         common::views::{
-            ButtonView, JiraViewWithName, JiraWithDialogView, ToggleableView,
+            ButtonView, ChangeJiraView, JiraViewWithName, JiraWithDialogView,
+            ToggleableView,
         },
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
         utils::helpers::calculate_view_size,
@@ -25,14 +26,48 @@ pub struct ChangeTransitionActionView {
 
 impl ToggleableView for ChangeTransitionActionView {}
 
+impl ChangeJiraView for ChangeTransitionActionView {}
+
 impl ButtonView for ChangeTransitionActionView {
+    fn inner_view(self: Self) -> NamedView<ResizedView<Dialog>> {
+        self.inner_view
+    }
+}
+
+impl JiraViewWithName for ChangeTransitionActionView {
+    /// Returns name of the `ChangeStatusActionView`.
+    ///
+    /// It will used for `.with_name()` method.
+    fn view_name() -> String {
+        "ChangeStatusView".into()
+    }
+
+    /// Returns instance of `ChangeStatusActionView`
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+}
+
+impl JiraWithDialogView for ChangeTransitionActionView {
+    /// Returns name of the main Dialog in `ChangeStatusActionView`.
+    fn main_dialog_name() -> String {
+        "ChangeStatusDialogName".into()
+    }
+
+    /// Returns main dialog from the view.
+    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
+        self.find_name(&Self::main_dialog_name()).unwrap()
+    }
+}
+
+impl ChangeTransitionActionView {
     /// Creates new ChangeStatusActionView view.
     ///
     /// Gets [`crate::jira_data::JiraData`] as a clone,
     /// Then gets available task statuses from selected task.
     ///
     /// After adds this task statuses to the new select view.
-    fn new(cursive: &mut Cursive) -> Self
+    pub fn new(cursive: &mut Cursive) -> Self
     where
         Self: Sized,
     {
@@ -79,35 +114,7 @@ impl ButtonView for ChangeTransitionActionView {
                 .with_name(Self::main_dialog_name()),
         }
     }
-}
 
-impl JiraViewWithName for ChangeTransitionActionView {
-    /// Returns name of the `ChangeStatusActionView`.
-    ///
-    /// It will used for `.with_name()` method.
-    fn view_name() -> String {
-        "ChangeStatusView".into()
-    }
-
-    /// Returns instance of `ChangeStatusActionView`
-    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
-        cursive.find_name(Self::view_name().as_str()).unwrap()
-    }
-}
-
-impl JiraWithDialogView for ChangeTransitionActionView {
-    /// Returns name of the main Dialog in `ChangeStatusActionView`.
-    fn main_dialog_name() -> String {
-        "ChangeStatusDialogName".into()
-    }
-
-    /// Returns main dialog from the view.
-    fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
-        self.find_name(&Self::main_dialog_name()).unwrap()
-    }
-}
-
-impl ChangeTransitionActionView {
     fn change_status(cursive: &mut Cursive, transition_name: &str) {
         Self::toggle_off_view(cursive);
         let jira_data: &mut Arc<RwLock<JiraData>> =

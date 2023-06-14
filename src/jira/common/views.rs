@@ -1,17 +1,14 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::{
-    view::ViewWrapper,
-    views::{Dialog, ViewRef},
+    views::{Dialog, NamedView, ResizedView, ViewRef},
     Cursive,
 };
 
 use crate::jira_data::JiraData;
 
-pub trait ButtonView: ViewWrapper {
-    fn new(cursive: &mut Cursive) -> Self
-    where
-        Self: Sized;
+pub trait ButtonView {
+    fn inner_view(self: Self) -> NamedView<ResizedView<Dialog>>;
 }
 
 pub trait JiraViewWithName {

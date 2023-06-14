@@ -6,8 +6,7 @@ use cursive::{
 use rusji_derive::ViewWrapper;
 
 use crate::jira::common::views::{
-    ButtonView, ChangeJiraView, JiraViewWithName, JiraWithDialogView,
-    ToggleableView,
+    ChangeJiraView, JiraViewWithName, JiraWithDialogView, ToggleableView,
 };
 
 #[derive(ViewWrapper)]
@@ -113,6 +112,36 @@ impl ChangeAssigneeEditView {
                 .title(dialog_title)
                 .content(change_assignee_edit_view)
                 .with_name(Self::main_dialog_name()),
+        }
+    }
+}
+
+#[derive(ViewWrapper)]
+struct ChangeAssigneeSelectView {
+    pub inner_view: SelectView,
+}
+
+impl JiraViewWithName for ChangeAssigneeSelectView {
+    /// Returns name of the `ChangeAssigneeSelectView`.
+    ///
+    /// It will used for `.with_name()` method.
+    fn view_name() -> String {
+        "ChangeAssigneeSelectView".into()
+    }
+
+    /// Returns instance of `ChangeAssigneeSelectView`
+    fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
+        cursive.find_name(Self::view_name().as_str()).unwrap()
+    }
+}
+
+impl ChangeJiraView for ChangeAssigneeSelectView {}
+
+impl ChangeAssigneeSelectView {
+    pub fn new() -> Self {
+        let change_assignee_select_view = SelectView::new();
+        Self {
+            inner_view: change_assignee_select_view,
         }
     }
 }
