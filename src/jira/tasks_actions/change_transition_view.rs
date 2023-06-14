@@ -9,7 +9,9 @@ use rusji_derive::ViewWrapper;
 
 use crate::{
     jira::{
-        common::views::{ButtonView, JiraView, ToggleableView},
+        common::views::{
+            ButtonView, JiraViewWithName, JiraWithDialogView, ToggleableView,
+        },
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
         utils::helpers::calculate_view_size,
     },
@@ -79,7 +81,7 @@ impl ButtonView for ChangeTransitionActionView {
     }
 }
 
-impl JiraView for ChangeTransitionActionView {
+impl JiraViewWithName for ChangeTransitionActionView {
     /// Returns name of the `ChangeStatusActionView`.
     ///
     /// It will used for `.with_name()` method.
@@ -91,7 +93,9 @@ impl JiraView for ChangeTransitionActionView {
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for ChangeTransitionActionView {
     /// Returns name of the main Dialog in `ChangeStatusActionView`.
     fn main_dialog_name() -> String {
         "ChangeStatusDialogName".into()

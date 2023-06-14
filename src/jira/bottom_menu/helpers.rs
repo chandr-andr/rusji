@@ -4,7 +4,8 @@ use cursive::{view::Nameable, Cursive};
 
 use crate::{
     jira::{
-        common::views::JiraView, tasks_actions::main_view::ActionsView,
+        common::views::JiraViewWithName,
+        tasks_actions::main_view::ActionsView,
         utils::views::FailedAttemptView,
     },
     jira_data::JiraData,

@@ -5,14 +5,16 @@ use cursive::{
 };
 use rusji_derive::ViewWrapper;
 
-use crate::jira::common::views::{JiraView, ToggleableView};
+use crate::jira::common::views::{
+    JiraViewWithName, JiraWithDialogView, ToggleableView,
+};
 
 #[derive(ViewWrapper)]
 pub(crate) struct MenuView {
     inner_view: NamedView<Dialog>,
 }
 
-impl JiraView for MenuView {
+impl JiraViewWithName for MenuView {
     fn view_name() -> String {
         "MenuView".into()
     }
@@ -22,7 +24,9 @@ impl JiraView for MenuView {
     ) -> cursive::views::ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for MenuView {
     fn main_dialog_name() -> String {
         "MainViewDialogName".into()
     }

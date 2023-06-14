@@ -51,7 +51,7 @@ pub fn build_buttons<'a>(cursive: &mut Cursive) -> TasksActionsButtons<'a> {
             let action_view = TaskActions::StatusChange.get_view(cursive);
             cursive.add_layer(action_view);
         },
-        TaskActions::ChangeExecutor,
+        TaskActions::ChangeAssignee,
     );
 
     buttons.add_button(

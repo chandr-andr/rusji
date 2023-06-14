@@ -2,12 +2,13 @@ use std::sync::{Arc, RwLock};
 
 use super::{
     bottom_menu::views::BottomMenuView,
+    common::views::{ChangeJiraView, JiraViewWithName},
     global_callbacks::add_global_callbacks,
     jira_data::JiraData,
     layouts::{InfoLayout, TasksProjectsLayout},
     projects::data::JiraProjects,
 };
-use crate::jira::{common::views::JiraView, projects::views::ProjectsView};
+use crate::jira::projects::views::ProjectsView;
 
 use crate::Config;
 use cursive::{

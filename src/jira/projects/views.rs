@@ -13,10 +13,12 @@ use cursive::{
 use rusji_derive::ViewWrapper;
 
 use crate::errors::RusjiError;
+use crate::jira::common::views::{
+    ChangeJiraView, JiraViewWithName, JiraWithDialogView,
+};
 use crate::jira::tasks::data::JiraIssues;
 use crate::jira::{
-    common::views::JiraView, constance::INNER_CENTER_TOP_VIEW_ALIGN,
-    tasks::views::TasksView,
+    constance::INNER_CENTER_TOP_VIEW_ALIGN, tasks::views::TasksView,
 };
 use crate::jira_data::JiraData;
 
@@ -96,7 +98,7 @@ impl Default for ProjectsView {
     }
 }
 
-impl JiraView for ProjectsView {
+impl JiraViewWithName for ProjectsView {
     /// Returns string with name for `ProjectsView`.
     fn view_name() -> String {
         String::from("ProjectsView")
@@ -106,7 +108,9 @@ impl JiraView for ProjectsView {
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for ProjectsView {
     /// Returns name of the view with main ProjectsView layout - dialog.
     fn main_dialog_name() -> String {
         String::from("ProjectDialogView")
@@ -116,7 +120,9 @@ impl JiraView for ProjectsView {
     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
+}
 
+impl ChangeJiraView for ProjectsView {
     /// Updates the projects names in SelectView.
     ///
     /// Tries to get new vector of projects from JiraData.

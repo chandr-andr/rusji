@@ -11,7 +11,7 @@ use rusji_derive::ViewWrapper;
 use crate::jira::{
     common::{
         button::CallbackText,
-        views::{JiraView, ToggleableView},
+        views::{JiraViewWithName, JiraWithDialogView, ToggleableView},
     },
     constance::INNER_CENTER_TOP_VIEW_ALIGN,
     utils::helpers::calculate_view_size,
@@ -90,7 +90,7 @@ impl ActionsView {
     }
 }
 
-impl JiraView for ActionsView {
+impl JiraViewWithName for ActionsView {
     /// Returns name of the MainActionsView.
     fn view_name() -> String {
         "MainActionsView".into()
@@ -100,7 +100,9 @@ impl JiraView for ActionsView {
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for ActionsView {
     /// Returns name of the main Dialog in MainActionsView.
     fn main_dialog_name() -> String {
         "ActionsDialogName".into()

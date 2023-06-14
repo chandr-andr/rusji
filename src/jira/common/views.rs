@@ -14,32 +14,36 @@ pub trait ButtonView: ViewWrapper {
         Self: Sized;
 }
 
-pub trait JiraView {
+pub trait JiraViewWithName {
     /// Returns name of the view.
     fn view_name() -> String;
 
     /// Returns instance of class from cursive app.
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self>;
+}
 
+pub trait JiraWithDialogView: JiraViewWithName {
     /// Returns name of the main dialog view.
     fn main_dialog_name() -> String;
 
     /// Returns instance of main dialog view.   
     /// TODO: Change ViewRef<Dialog> to generic.
     fn get_main_dialog(&mut self) -> ViewRef<Dialog>;
+}
 
+pub trait ChangeJiraView {
     /// Updates view content from [`super::jira_data::JiraData`] data.
     ///
     /// Default implementation does nothing.
-    fn update_view_content(&mut self, _cursive: &mut Cursive) {}
+    fn update_view_content(self: &mut Self, _cursive: &mut Cursive) {}
 
     /// Extends view content with passed `content`.
     ///
     /// Default implementation does nothing.
-    fn add_content_to_view(&mut self, _content: Vec<&str>) {}
+    fn add_content_to_view(self: &mut Self, _content: Vec<&str>) {}
 }
 
-pub trait ToggleableView: JiraView {
+pub trait ToggleableView: JiraViewWithName {
     /// Toggle on view.
     ///
     /// `Toggle on` means add name of this view to

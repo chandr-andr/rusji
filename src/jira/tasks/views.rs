@@ -11,7 +11,9 @@ use cursive::{
 };
 use rusji_derive::ViewWrapper;
 
-use crate::jira::common::views::JiraView;
+use crate::jira::common::views::{
+    ChangeJiraView, JiraViewWithName, JiraWithDialogView,
+};
 use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
 use crate::jira::utils::views::FailedAttemptView;
 use crate::jira_data::JiraData;
@@ -166,7 +168,7 @@ impl Default for TasksView {
     }
 }
 
-impl JiraView for TasksView {
+impl JiraViewWithName for TasksView {
     /// Returns name of the TasksView.
     fn view_name() -> String {
         "TasksView".into()
@@ -176,7 +178,9 @@ impl JiraView for TasksView {
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for TasksView {
     /// Returns name of the main Dialog in TasksView.
     fn main_dialog_name() -> String {
         "TasksDialogName".into()
@@ -186,7 +190,9 @@ impl JiraView for TasksView {
     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
         self.find_name(&Self::main_dialog_name()).unwrap()
     }
+}
 
+impl ChangeJiraView for TasksView {
     /// Updates SelectView in TasksView with data from JiraData.
     fn update_view_content(&mut self, cursive: &mut Cursive) {
         let mut tasks_select_view: ViewRef<SelectView> =
@@ -233,7 +239,7 @@ impl Default for InfoView {
     }
 }
 
-impl JiraView for InfoView {
+impl JiraViewWithName for InfoView {
     /// Returns name of the InfoView.
     fn view_name() -> String {
         "InfoView".into()
@@ -243,7 +249,9 @@ impl JiraView for InfoView {
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
+}
 
+impl JiraWithDialogView for InfoView {
     /// Returns name of the main dialog.
     fn main_dialog_name() -> String {
         "InfoViewDialog".into()
@@ -253,7 +261,9 @@ impl JiraView for InfoView {
     fn get_main_dialog(&mut self) -> ViewRef<Dialog> {
         self.find_name(Self::main_dialog_name().as_str()).unwrap()
     }
+}
 
+impl ChangeJiraView for InfoView {
     /// Updates view with task information.
     ///
     /// In fact, just recreate InfoView without data and
@@ -275,9 +285,6 @@ impl JiraView for InfoView {
             &task.key,
         ));
     }
-
-    /// Does the same as `set_view_content` method.
-    fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
 impl InfoView {

@@ -1,5 +1,4 @@
 use crate::jira::{
-    common::views::JiraView,
     projects::views::ProjectsView,
     tasks::views::{InfoView, TasksView},
 };
@@ -9,6 +8,8 @@ use cursive::{
     View,
 };
 use rusji_derive::ViewWrapper;
+
+use super::common::views::JiraViewWithName;
 
 #[derive(ViewWrapper)]
 pub(crate) struct TasksProjectsLayout {
