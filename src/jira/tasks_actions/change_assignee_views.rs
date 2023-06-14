@@ -1,6 +1,9 @@
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
-    views::{Dialog, EditView, NamedView, ResizedView, SelectView, ViewRef},
+    views::{
+        Dialog, EditView, LinearLayout, NamedView, ResizedView, SelectView,
+        ViewRef,
+    },
     Cursive, View,
 };
 use rusji_derive::ViewWrapper;
@@ -54,6 +57,20 @@ impl Default for ChangeAssigneeSearchView {
                 // LinearLayout<Dialog<EditView><SelectView>>
                 //)
                 .with_name(Self::main_dialog_name()),
+        }
+    }
+}
+
+struct ChangeAssigneeInnerLayout {
+    inner_layout: LinearLayout,
+}
+
+impl ChangeAssigneeInnerLayout {
+    fn new() -> Self {
+        let change_assignee_inner_layout = LinearLayout::vertical();
+
+        Self {
+            inner_layout: change_assignee_inner_layout,
         }
     }
 }
