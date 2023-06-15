@@ -1,7 +1,7 @@
 use cursive::{
     view::{Finder, Nameable, ViewWrapper},
     views::{
-        Dialog, EditView, LinearLayout, NamedView, ResizedView, SelectView,
+        Dialog, EditView, LinearLayout, NamedView, SelectView,
         ViewRef,
     },
     Cursive, View,
@@ -77,8 +77,8 @@ impl ChangeAssigneeInnerLayout {
 
 impl ChangeAssigneeSearchView {
     fn build_select_view() -> SelectView {
-        let assignee_search_edit_view = SelectView::new();
-        assignee_search_edit_view
+        
+        SelectView::new()
     }
 }
 

@@ -8,7 +8,7 @@ use cursive::{
 use crate::jira_data::JiraData;
 
 pub trait ButtonView {
-    fn inner_view(self: Self) -> NamedView<ResizedView<Dialog>>;
+    fn inner_view(self) -> NamedView<ResizedView<Dialog>>;
 }
 
 pub trait JiraViewWithName {
@@ -32,12 +32,12 @@ pub trait ChangeJiraView {
     /// Updates view content from [`super::jira_data::JiraData`] data.
     ///
     /// Default implementation does nothing.
-    fn update_view_content(self: &mut Self, _cursive: &mut Cursive) {}
+    fn update_view_content(&mut self, _cursive: &mut Cursive) {}
 
     /// Extends view content with passed `content`.
     ///
     /// Default implementation does nothing.
-    fn add_content_to_view(self: &mut Self, _content: Vec<&str>) {}
+    fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
 pub trait ToggleableView: JiraViewWithName {

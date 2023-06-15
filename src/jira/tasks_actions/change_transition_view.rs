@@ -29,7 +29,7 @@ impl ToggleableView for ChangeTransitionActionView {}
 impl ChangeJiraView for ChangeTransitionActionView {}
 
 impl ButtonView for ChangeTransitionActionView {
-    fn inner_view(self: Self) -> NamedView<ResizedView<Dialog>> {
+    fn inner_view(self) -> NamedView<ResizedView<Dialog>> {
         self.inner_view
     }
 }
