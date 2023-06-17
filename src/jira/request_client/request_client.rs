@@ -95,6 +95,18 @@ impl RequestClient {
         )
     }
 
+    /// Return all users with passed username.
+    pub fn get_jira_users(
+        &self,
+        username: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        self.make_basic_request(
+            self.jira_url
+                .join(&format!("rest/api/2/user/search?username={}", username))
+                .unwrap(),
+        )
+    }
+
     /// Updates task transition.
     pub fn update_task_transition(
         &self,
