@@ -12,7 +12,7 @@ pub(crate) struct IssueTransitionData<'a> {
 
 impl<'a> IssueTransitionsReqData<'a> {
     pub fn new() -> Self {
-        IssueTransitionsReqData {
+        Self {
             transition: Default::default(),
         }
     }
@@ -21,5 +21,32 @@ impl<'a> IssueTransitionsReqData<'a> {
         self.transition =
             Option::Some(IssueTransitionData { id: transition_id });
         self
+    }
+}
+
+#[derive(Default, Serialize, Deserialize)]
+struct AssigneeData<'a> {
+    name: &'a str,
+}
+
+#[derive(Default, Serialize)]
+struct IssueFieldsReqData<'a> {
+    assignee: AssigneeData<'a>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct IssuePropertiesReqData<'a> {
+    fields: IssueFieldsReqData<'a>,
+}
+
+impl<'a> IssuePropertiesReqData<'a> {
+    pub fn new() -> Self {
+        Self {
+            fields: Default::default(),
+        }
+    }
+
+    pub fn set_assignee(&mut self, assignee_username: &'a str) {
+        self.fields.assignee.name = assignee_username;
     }
 }

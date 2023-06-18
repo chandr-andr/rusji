@@ -2,7 +2,7 @@ use crate::errors::RusjiError;
 use reqwest::blocking::{Client, RequestBuilder};
 use url::Url;
 
-use super::request_models::IssueTransitionsReqData;
+use super::request_models::{IssuePropertiesReqData, IssueTransitionsReqData};
 
 /// Struct for request response.
 ///
@@ -28,7 +28,7 @@ pub struct RequestClient {
 }
 
 impl RequestClient {
-    /// Creates new instance of `RequestClient`
+    /// Create new instance of `RequestClient`
     pub fn new(request_credentials: String, jira_url: &str) -> Self {
         Self {
             client: Client::new(),
@@ -37,14 +37,14 @@ impl RequestClient {
         }
     }
 
-    /// Returns all Jira projects.
+    /// Return all Jira projects.
     pub fn get_jira_projects(&self) -> Result<RequestResponse, RusjiError> {
         self.make_basic_request(
             self.jira_url.join("/rest/api/2/project").unwrap(),
         )
     }
 
-    /// Returns all tasks from project.
+    /// Return all tasks from project.
     pub fn get_tasks_from_project(
         &self,
         project_name: &str,
@@ -56,7 +56,7 @@ impl RequestClient {
         )
     }
 
-    /// Returns new task.
+    /// Return new task.
     pub fn get_task(
         &self,
         task_key: &str,
@@ -71,7 +71,7 @@ impl RequestClient {
         )
     }
 
-    /// Returns all available task statuses for project.
+    /// Return all available task statuses for project.
     pub fn get_task_statuses(
         &self,
         project_name: &str,
@@ -83,7 +83,7 @@ impl RequestClient {
         )
     }
 
-    /// Returns all available issue transitions for the task.
+    /// Return all available issue transitions for the task.
     pub fn get_issue_transitions(
         &self,
         issue_key: &str,
@@ -107,7 +107,7 @@ impl RequestClient {
         )
     }
 
-    /// Updates task transition.
+    /// Update task transition.
     pub fn update_task_transition(
         &self,
         issue_key: &str,
@@ -129,6 +129,30 @@ impl RequestClient {
 
         Ok(RequestResponse {
             body: response_text,
+        })
+    }
+
+    // Set new assignee to the issue.
+    pub fn update_issue_assignee(
+        &self,
+        assignee_username: &str,
+        issue_key: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        let mut request_data = IssuePropertiesReqData::new();
+        request_data.set_assignee(assignee_username);
+        let req_builder = self.post(
+            self.jira_url
+                .join(&format!("rest/api/2/issue/{}", issue_key))
+                .unwrap(),
+        );
+
+        let response_test = req_builder
+            .body(serde_json::to_string(&request_data)?)
+            .send()?
+            .text()?;
+
+        Ok(RequestResponse {
+            body: response_test,
         })
     }
 

@@ -69,9 +69,9 @@ impl ChangeAssigneeView {
         Self::toggle_on_view(cursive);
         Self {
             inner_view: Dialog::new()
-                .title("Assignee search, press <enter>")
+                .title("Assignee search, enter username and press <enter>")
                 .content(ChangeAssigneeInnerLayout::new().inner_layout)
-                .fixed_size(calculate_view_size(cursive, 5, 7))
+                .fixed_size(calculate_view_size(cursive, 3, 7))
                 .with_name(Self::main_dialog_name()),
         }
     }
@@ -158,13 +158,10 @@ impl ChangeAssigneeEditView {
                         serde_json::from_str::<JiraUsers>(response.get_body());
                     match serialized {
                         Ok(serialized) => serialized,
-                        Err(err) => {
-                            print!("{}", err);
-                            return;
-                        }
+                        Err(_) => return, // TODO: FailedAttemptView
                     }
                 }
-                Err(_) => return,
+                Err(_) => return, // TODO: FailedAttemptView
             }
         };
 
@@ -174,12 +171,7 @@ impl ChangeAssigneeEditView {
         change_assignee_select_view.update_with_data(
             users
                 .into_iter()
-                .map(|user| {
-                    format!(
-                        "{} | {} | {}",
-                        user.display_name, user.name, user.key
-                    )
-                })
+                .map(|user| format!("{} | {}", user.display_name, user.name,))
                 .collect(),
         );
     }
@@ -208,7 +200,8 @@ impl ChangeJiraView for ChangeAssigneeSelectView {}
 
 impl ChangeAssigneeSelectView {
     pub fn new() -> Self {
-        let change_assignee_select_view = SelectView::new();
+        let change_assignee_select_view =
+            SelectView::new().on_submit(Self::on_submit_select_assignee);
         Self {
             inner_view: change_assignee_select_view,
         }
@@ -219,4 +212,6 @@ impl ChangeAssigneeSelectView {
         self.inner_view.clear();
         self.inner_view.add_all_str(new_data);
     }
+
+    fn on_submit_select_assignee(cursive: &mut Cursive, assignee_name: &str) {}
 }
