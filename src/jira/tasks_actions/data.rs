@@ -26,7 +26,7 @@ pub struct JiraUser {
     pub display_name: String,
     pub active: bool,
     pub deleted: bool,
-    #[serde(alias = "displayName")]
+    #[serde(alias = "timeZone")]
     pub time_zone: String,
     pub locale: String,
 }

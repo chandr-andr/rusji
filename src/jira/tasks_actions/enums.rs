@@ -9,7 +9,10 @@ use crate::jira::common::{
     buttons_variants::ButtonVariant, views::ButtonView,
 };
 
-use super::change_transition_view::ChangeTransitionActionView;
+use super::{
+    change_assignee_views::ChangeAssigneeView,
+    change_transition_view::ChangeTransitionActionView,
+};
 
 #[derive(Clone, Copy)] // TODO: remove Clone, Copy
 pub enum TaskActions {
@@ -26,7 +29,7 @@ impl FromStr for TaskActions {
     fn from_str(str_action: &str) -> Result<Self, Self::Err> {
         match str_action {
             "Change status" => Ok(TaskActions::StatusChange),
-            "Change executor" => Ok(TaskActions::ChangeAssignee),
+            "Change assignee" => Ok(TaskActions::ChangeAssignee),
             "Change release" => Ok(TaskActions::ChangeRelease),
             _ => Err(TaskActionParseError {}),
         }
@@ -37,7 +40,7 @@ impl<'a> From<TaskActions> for &'a str {
     fn from(action: TaskActions) -> Self {
         match action {
             TaskActions::StatusChange => "Change status",
-            TaskActions::ChangeAssignee => "Change executor",
+            TaskActions::ChangeAssignee => "Change assignee",
             TaskActions::ChangeRelease => "Change release",
         }
     }
@@ -65,7 +68,7 @@ impl TaskActions {
                 ChangeTransitionActionView::new(cursive).inner_view()
             }
             TaskActions::ChangeAssignee => {
-                ChangeTransitionActionView::new(cursive).inner_view()
+                ChangeAssigneeView::new(cursive).inner_view()
             }
             TaskActions::ChangeRelease => {
                 ChangeTransitionActionView::new(cursive).inner_view()

@@ -13,7 +13,7 @@ use rusji_derive::ViewWrapper;
 use crate::{
     jira::{
         common::views::{
-            ChangeJiraView, JiraViewWithName, JiraWithDialogView,
+            ButtonView, ChangeJiraView, JiraViewWithName, JiraWithDialogView,
             ToggleableView,
         },
         utils::helpers::calculate_view_size,
@@ -58,15 +58,19 @@ impl JiraWithDialogView for ChangeAssigneeView {
 
 impl ChangeJiraView for ChangeAssigneeView {}
 
+impl ButtonView for ChangeAssigneeView {
+    fn inner_view(self) -> NamedView<ResizedView<Dialog>> {
+        self.inner_view
+    }
+}
+
 impl ChangeAssigneeView {
-    fn new(cursive: &mut Cursive) -> Self {
+    pub fn new(cursive: &mut Cursive) -> Self {
+        Self::toggle_on_view(cursive);
         Self {
             inner_view: Dialog::new()
                 .title("Assignee search, press <enter>")
                 .content(ChangeAssigneeInnerLayout::new().inner_layout)
-                // .content(
-                // LinearLayout<Dialog<EditView><SelectView>>
-                //)
                 .fixed_size(calculate_view_size(cursive, 5, 7))
                 .with_name(Self::main_dialog_name()),
         }
@@ -79,7 +83,12 @@ struct ChangeAssigneeInnerLayout {
 
 impl ChangeAssigneeInnerLayout {
     fn new() -> Self {
-        let change_assignee_inner_layout = LinearLayout::vertical();
+        let change_assignee_inner_layout = LinearLayout::vertical()
+            .child(ChangeAssigneeEditView::new("Assignee search"))
+            .child(
+                ChangeAssigneeSelectView::new()
+                    .with_name(ChangeAssigneeSelectView::view_name()),
+            );
 
         Self {
             inner_layout: change_assignee_inner_layout,
@@ -93,14 +102,14 @@ struct ChangeAssigneeEditView {
 }
 
 impl JiraViewWithName for ChangeAssigneeEditView {
-    /// Returns name of the `ChangeAssigneeSearchView`.
+    /// Returns name of the `ChangeAssigneeEditView`.
     ///
     /// It will used for `.with_name()` method.
     fn view_name() -> String {
         "ChangeAssigneeEditView".into()
     }
 
-    /// Returns instance of `ChangeAssigneeSearchView`
+    /// Returns instance of `ChangeAssigneeEditView`
     fn get_view(cursive: &mut Cursive) -> ViewRef<Self> {
         cursive.find_name(Self::view_name().as_str()).unwrap()
     }
@@ -119,10 +128,9 @@ impl JiraWithDialogView for ChangeAssigneeEditView {
 }
 
 impl ChangeAssigneeEditView {
-    fn new<ToString, Callback>(dialog_title: ToString) -> Self
+    fn new<ToString>(dialog_title: ToString) -> Self
     where
         ToString: Into<String>,
-        Callback: Fn(&mut Cursive, &str) + 'static,
     {
         let change_assignee_edit_view =
             EditView::new().on_submit(Self::on_submit_callback);
@@ -144,11 +152,20 @@ impl ChangeAssigneeEditView {
             let response =
                 request_client.read().unwrap().get_jira_users(username);
 
-            if response.is_err() {
-                return;
+            match response {
+                Ok(response) => {
+                    let serialized =
+                        serde_json::from_str::<JiraUsers>(response.get_body());
+                    match serialized {
+                        Ok(serialized) => serialized,
+                        Err(err) => {
+                            print!("{}", err);
+                            return;
+                        }
+                    }
+                }
+                Err(_) => return,
             }
-            serde_json::from_str::<JiraUsers>(response.unwrap().get_body())
-                .unwrap()
         };
 
         let mut change_assignee_select_view =
