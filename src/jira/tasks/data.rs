@@ -119,6 +119,7 @@ impl JiraIssue {
         request_client: Arc<RwLock<RequestClient>>,
         issue_key: &str,
     ) -> RusjiResult<Self> {
+        print!("{}", issue_key);
         let response = request_client.read().unwrap().get_task(issue_key)?;
         let resp_text = response.get_body();
         let task = serde_json::from_str::<Self>(resp_text)?;

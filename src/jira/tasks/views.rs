@@ -45,12 +45,17 @@ impl TasksView {
 
         {
             let mut jira_data_guard = jira_data.write().unwrap();
+            let selected_project_key =
+                jira_data_guard.get_selected_project().unwrap().key.clone();
 
             if jira_data_guard.set_selected_task(issue_key).is_none() {
                 return;
             }
-            let task =
-                JiraIssue::new(jira_data_guard.client.clone(), issue_key);
+            let task = JiraIssue::new(
+                jira_data_guard.client.clone(),
+                format!("{}-{}", selected_project_key, issue_key).as_str(),
+            );
+
             if let Ok(mut task) = task {
                 task.add_transitions(jira_data_guard.client.clone());
                 jira_data_guard.add_new_task(task);

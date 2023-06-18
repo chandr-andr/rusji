@@ -171,7 +171,7 @@ impl ChangeAssigneeEditView {
         change_assignee_select_view.update_with_data(
             users
                 .into_iter()
-                .map(|user| format!("{} | {}", user.display_name, user.name,))
+                .map(|user| format!("{} | {}", user.display_name, user.name))
                 .collect(),
         );
     }
@@ -213,5 +213,35 @@ impl ChangeAssigneeSelectView {
         self.inner_view.add_all_str(new_data);
     }
 
-    fn on_submit_select_assignee(cursive: &mut Cursive, assignee_name: &str) {}
+    fn on_submit_select_assignee(
+        cursive: &mut Cursive,
+        assignee_username: &str,
+    ) {
+        let (request_client, issue_key) = {
+            let jira_data: &mut Arc<RwLock<JiraData>> =
+                cursive.user_data().unwrap();
+            let jira_data_guard = jira_data.read().unwrap();
+            let request_client = jira_data_guard.client.clone();
+            let selected_issue_key =
+                jira_data_guard.get_selected_task().key.clone();
+
+            (request_client, selected_issue_key)
+        };
+
+        let request_result =
+            request_client.read().unwrap().update_issue_assignee(
+                assignee_username.split(" | ").collect::<Vec<&str>>()[1],
+                issue_key.as_str(),
+            );
+
+        match request_result {
+            Ok(_) => {
+                ChangeAssigneeView::toggle_off_view(cursive);
+                cursive.pop_layer();
+            }
+            Err(_) => {
+                return;
+            }
+        }
+    }
 }

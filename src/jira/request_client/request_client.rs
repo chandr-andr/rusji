@@ -140,19 +140,19 @@ impl RequestClient {
     ) -> Result<RequestResponse, RusjiError> {
         let mut request_data = IssuePropertiesReqData::new();
         request_data.set_assignee(assignee_username);
-        let req_builder = self.post(
+        let req_builder = self.put(
             self.jira_url
                 .join(&format!("rest/api/2/issue/{}", issue_key))
                 .unwrap(),
         );
 
-        let response_test = req_builder
+        let response_text = req_builder
             .body(serde_json::to_string(&request_data)?)
             .send()?
             .text()?;
 
         Ok(RequestResponse {
-            body: response_test,
+            body: response_text,
         })
     }
 
@@ -197,6 +197,11 @@ impl RequestClient {
     /// Makes request builder for `post` request.
     fn post(&self, url: Url) -> RequestBuilder {
         let builder = self.client.post(url);
+        self.builder_add_default_fields(builder)
+    }
+
+    fn put(&self, url: Url) -> RequestBuilder {
+        let builder = self.client.put(url);
         self.builder_add_default_fields(builder)
     }
 }
