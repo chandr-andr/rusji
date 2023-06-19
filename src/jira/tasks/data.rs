@@ -3,7 +3,8 @@ use std::sync::{Arc, RwLock};
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
-    errors::RusjiResult, request_client::request_client::RequestClient,
+    errors::RusjiResult, jira::tasks_actions::data::JiraUser,
+    request_client::request_client::RequestClient,
 };
 
 /// JiraIssues holds all necessary information
@@ -53,6 +54,7 @@ pub struct JiraIssue {
     pub summary: String,
     pub status: JiraIssueStatus,
     pub transitions: Option<IssueTransitions>,
+    pub assignee: Option<JiraUser>,
 }
 
 /// Creates custom Deserialize for JiraTask.
@@ -83,6 +85,7 @@ impl<'de> Deserialize<'de> for JiraIssue {
         struct Fields {
             summary: String,
             status: JiraIssueStatus,
+            assignee: Option<JiraUser>,
         }
 
         #[derive(Serialize, Deserialize, Debug)]
@@ -106,6 +109,7 @@ impl<'de> Deserialize<'de> for JiraIssue {
             summary: task.fields.summary,
             status: task.fields.status,
             transitions: Default::default(),
+            assignee: task.fields.assignee,
         })
     }
 }
@@ -188,7 +192,7 @@ pub struct JiraIssueStatus {
     description: String,
     #[serde(alias = "iconUrl")]
     icon_url: String,
-    name: String,
+    pub name: String,
 }
 
 /// Struct for single task category.

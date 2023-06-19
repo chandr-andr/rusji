@@ -14,7 +14,7 @@ impl IntoIterator for JiraUsers {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JiraUser {
     #[serde(alias = "self")]
     pub link: String,
@@ -25,8 +25,10 @@ pub struct JiraUser {
     #[serde(alias = "displayName")]
     pub display_name: String,
     pub active: bool,
-    pub deleted: bool,
     #[serde(alias = "timeZone")]
     pub time_zone: String,
-    pub locale: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deleted: Option<bool>,
 }

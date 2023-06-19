@@ -1,5 +1,8 @@
 use std::sync::{Arc, RwLock};
 
+use cursive::view::Resizable;
+use cursive::views::ResizedView;
+use cursive::View;
 use cursive::{
     view::{Finder, Nameable, Scrollable, ViewWrapper},
     views::{
@@ -8,7 +11,7 @@ use cursive::{
     },
     Cursive,
 };
-use cursive::{View, With};
+use cursive_aligned_view::Alignable;
 use rusji_derive::ViewWrapper;
 
 use crate::jira::common::views::{
@@ -290,7 +293,13 @@ pub(crate) struct InfoView {
 
 impl Default for InfoView {
     fn default() -> Self {
-        Self::new("Choose task", Default::default(), Default::default())
+        Self::new(
+            "Choose task",
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+        )
     }
 }
 
@@ -334,19 +343,37 @@ impl ChangeJiraView for InfoView {
                 .unwrap()
                 .get_task(selected_task)
         };
+        let mut assignee_name: &str = "Unassigned";
+        if let Some(assignee) = &task.assignee {
+            assignee_name = assignee.name.as_str();
+        }
         self.get_main_dialog().set_content(Self::make_inner_view(
             &task.summary,
             &task.description,
             &task.key,
+            &task.status.name,
+            assignee_name,
         ));
     }
 }
 
 impl InfoView {
-    fn new(summary: &str, description: &str, task_key: &str) -> Self {
+    fn new(
+        summary: &str,
+        description: &str,
+        task_key: &str,
+        task_status_name: &str,
+        issue_assignee: &str,
+    ) -> Self {
         let dialog = Dialog::new()
             .title("Task information")
-            .content(Self::make_inner_view(summary, description, task_key))
+            .content(Self::make_inner_view(
+                summary,
+                description,
+                task_key,
+                task_status_name,
+                issue_assignee,
+            ))
             .with_name(Self::main_dialog_name());
 
         Self { inner_view: dialog }
@@ -356,9 +383,24 @@ impl InfoView {
         summary: &str,
         description: &str,
         task_key: &str,
+        task_status_name: &str,
+        issue_assignee: &str,
     ) -> LinearLayout {
+        let top_inner_view_layout = LinearLayout::horizontal()
+            .child(
+                InfoView::make_summary_dialog(summary, task_key).full_width(),
+            )
+            .child(
+                InfoView::make_issue_main_info_dialog(
+                    task_key,
+                    task_status_name,
+                    issue_assignee,
+                )
+                .full_width(),
+            );
+
         LinearLayout::vertical()
-            .child(InfoView::make_summary_dialog(summary, task_key))
+            .child(top_inner_view_layout)
             .child(DummyView)
             .child(InfoView::make_description_dialog(description))
     }
@@ -374,6 +416,27 @@ impl InfoView {
             cursive_markup::MarkupView::html(summary)
                 .with_name("summary_task_view"),
         )
+    }
+
+    fn make_issue_main_info_dialog(
+        task_key: &str,
+        task_status_name: &str,
+        issue_assignee: &str,
+    ) -> Dialog {
+        let main_info_dialog = Dialog::new().title("Main issue information");
+        if task_key.is_empty() {
+            return main_info_dialog;
+        } else {
+            let main_info_inner_layout = LinearLayout::vertical()
+                .child(TextView::new(format!("Issue - {}", task_key)))
+                .child(TextView::new(format!("Status - {}", task_status_name)))
+                .child(TextView::new(format!(
+                    "Assignee - {}",
+                    issue_assignee,
+                )));
+
+            return main_info_dialog.content(main_info_inner_layout);
+        }
     }
 
     fn make_description_dialog(description: &str) -> Dialog {
@@ -398,10 +461,16 @@ impl InfoView {
             .unwrap()
             .get_task(task_key[0]);
 
+        let mut assignee_name: &str = "Unassigned";
+        if let Some(assignee) = &task.assignee {
+            assignee_name = assignee.name.as_str();
+        }
         self.get_main_dialog().set_content(Self::make_inner_view(
             &task.summary,
             &task.description,
             &task.key,
+            &task.status.name,
+            assignee_name,
         ));
     }
 }
