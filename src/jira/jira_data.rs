@@ -37,6 +37,20 @@ impl JiraData {
         }
     }
 
+    pub fn update_selected_issue(&mut self) {
+        let old_task_key = self.get_selected_task().key.clone();
+        let updated_issue =
+            JiraIssue::new(self.client.clone(), old_task_key.as_str())
+                .unwrap();
+
+        let selected_project = self.get_mut_selected_project();
+        selected_project
+            .tasks
+            .as_mut()
+            .unwrap()
+            .insert(old_task_key.into(), updated_issue);
+    }
+
     /// Sets new selected project.
     pub fn set_selected_project(&mut self, selected_project: &str) {
         self.selected_project = selected_project.to_string();

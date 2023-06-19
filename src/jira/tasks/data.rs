@@ -111,7 +111,7 @@ impl<'de> Deserialize<'de> for JiraIssue {
 }
 
 impl JiraIssue {
-    /// Creates new instance of JiraTask.
+    /// Create new instance of JiraIssue.
     ///
     /// Makes request to Jira API.
     /// Can return `RusjiError`.
@@ -125,6 +125,10 @@ impl JiraIssue {
         Ok(task)
     }
 
+    /// Add transitions to the JiraIssue instance.
+    ///
+    /// It is necessary because issue status can be changed in time,
+    /// so here transitions get in real time.
     pub fn add_transitions(
         &mut self,
         request_client: Arc<RwLock<RequestClient>>,

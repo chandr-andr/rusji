@@ -234,6 +234,13 @@ impl ChangeAssigneeSelectView {
                 issue_key.as_str(),
             );
 
+        {
+            let jira_data: &mut Arc<RwLock<JiraData>> =
+                cursive.user_data().unwrap();
+            let mut jira_data_guard = jira_data.write().unwrap();
+            jira_data_guard.update_selected_issue();
+        }
+
         match request_result {
             Ok(_) => {
                 ChangeAssigneeView::toggle_off_view(cursive);
