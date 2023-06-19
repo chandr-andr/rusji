@@ -16,6 +16,7 @@ use crate::{
             ButtonView, ChangeJiraView, JiraViewWithName, JiraWithDialogView,
             ToggleableView,
         },
+        tasks::views::InfoView,
         utils::helpers::calculate_view_size,
     },
     jira_data::JiraData,
@@ -243,6 +244,7 @@ impl ChangeAssigneeSelectView {
 
         match request_result {
             Ok(_) => {
+                InfoView::get_view(cursive).update_view_content(cursive);
                 ChangeAssigneeView::toggle_off_view(cursive);
                 cursive.pop_layer();
             }

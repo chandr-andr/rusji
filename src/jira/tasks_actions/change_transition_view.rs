@@ -14,6 +14,7 @@ use crate::{
             ToggleableView,
         },
         constance::INNER_CENTER_TOP_VIEW_ALIGN,
+        tasks::views::InfoView,
         utils::helpers::calculate_view_size,
     },
     jira_data::JiraData,
@@ -80,22 +81,33 @@ impl ChangeTransitionActionView {
 
         let jira_task = jira_data_guard.get_selected_task();
 
-        let mut select_view = SelectView::<String>::new()
+        let mut select_view = SelectView::<String>::new() // TODO: Review as separate view.
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, transaction_name: &str| {
-                Self::change_status(cursive, transaction_name);
-                cursive.pop_layer();
-
-                let jira_data: &mut Arc<RwLock<JiraData>> =
-                    cursive.user_data().unwrap();
-                let mut jira_data_guard = jira_data.write().unwrap();
                 {
-                    let client = jira_data_guard.client.clone();
+                    Self::change_status(cursive, transaction_name);
+                    cursive.pop_layer();
 
-                    jira_data_guard
-                        .get_mut_selected_task()
-                        .add_transitions(client)
+                    let jira_data: &mut Arc<RwLock<JiraData>> =
+                        cursive.user_data().unwrap();
+                    let mut jira_data_guard = jira_data.write().unwrap();
+                    {
+                        let client = jira_data_guard.client.clone();
+
+                        jira_data_guard
+                            .get_mut_selected_task()
+                            .add_transitions(client)
+                    }
                 }
+
+                {
+                    let jira_data: &mut Arc<RwLock<JiraData>> =
+                        cursive.user_data().unwrap();
+                    let mut jira_data_guard = jira_data.write().unwrap();
+                    jira_data_guard.update_selected_issue();
+                }
+
+                InfoView::get_view(cursive).update_view_content(cursive);
             });
 
         select_view.add_all_str(
