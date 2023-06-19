@@ -70,7 +70,6 @@ impl Default for ProjectsView {
 
                     jira_guard.update_tasks(jira_tasks_result);
                 }
-
                 TasksView::get_view(cursive).update_view_content(cursive);
             })
             .with_name(Self::select_view_name());
