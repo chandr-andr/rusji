@@ -390,14 +390,11 @@ impl InfoView {
             .child(
                 InfoView::make_summary_dialog(summary, task_key).full_width(),
             )
-            .child(
-                InfoView::make_issue_main_info_dialog(
-                    task_key,
-                    task_status_name,
-                    issue_assignee,
-                )
-                .full_width(),
-            );
+            .child(InfoView::make_issue_main_info_dialog(
+                task_key,
+                task_status_name,
+                issue_assignee,
+            ));
 
         LinearLayout::vertical()
             .child(top_inner_view_layout)

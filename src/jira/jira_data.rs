@@ -39,9 +39,10 @@ impl JiraData {
 
     pub fn update_selected_issue(&mut self) {
         let old_task_key = self.get_selected_task().key.clone();
-        let updated_issue =
+        let mut updated_issue =
             JiraIssue::new(self.client.clone(), old_task_key.as_str())
                 .unwrap();
+        updated_issue.add_transitions(self.client.clone());
 
         let selected_project = self.get_mut_selected_project();
         selected_project

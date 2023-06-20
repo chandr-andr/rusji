@@ -59,7 +59,6 @@ impl JiraProject {
 
     pub fn tasks_names(&self) -> Option<Vec<String>> {
         let mut tasks_names: Vec<String> = Vec::default();
-        print!("1");
         if let Some(tasks) = self.tasks.as_ref() {
             for task in tasks.values() {
                 tasks_names
@@ -67,7 +66,6 @@ impl JiraProject {
             }
             return Some(tasks_names);
         }
-        print!("2");
         None
     }
 }

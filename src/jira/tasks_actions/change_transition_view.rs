@@ -77,11 +77,12 @@ impl ChangeTransitionActionView {
             .user_data()
             .map(|jira_data: &mut Arc<RwLock<JiraData>>| Arc::clone(jira_data))
             .unwrap();
+
         let jira_data_guard = jira_data.read().unwrap();
 
         let jira_task = jira_data_guard.get_selected_task();
 
-        let mut select_view = SelectView::<String>::new() // TODO: Review as separate view.
+        let mut select_view = SelectView::<String>::new() // TODO: Rewrite as a separate view.
             .align(INNER_CENTER_TOP_VIEW_ALIGN)
             .on_submit(|cursive: &mut Cursive, transaction_name: &str| {
                 {
