@@ -123,7 +123,7 @@ impl ChangeTransitionActionView {
             inner_view: Dialog::new()
                 .title("Choose new status")
                 .content(select_view)
-                .fixed_size(calculate_view_size(cursive, 5, 7))
+                .fixed_size(calculate_view_size(cursive, 3, 7))
                 .with_name(Self::main_dialog_name()),
         }
     }
