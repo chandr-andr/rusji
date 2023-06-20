@@ -249,7 +249,6 @@ impl ChangeAssigneeSelectView {
                 cursive.pop_layer();
             }
             Err(_) => {
-                return;
             }
         }
     }

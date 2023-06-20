@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use cursive::view::Resizable;
-use cursive::views::ResizedView;
+
 use cursive::View;
 use cursive::{
     view::{Finder, Nameable, Scrollable, ViewWrapper},
@@ -11,7 +11,7 @@ use cursive::{
     },
     Cursive,
 };
-use cursive_aligned_view::Alignable;
+
 use rusji_derive::ViewWrapper;
 
 use crate::jira::common::views::{
@@ -425,7 +425,7 @@ impl InfoView {
     ) -> Dialog {
         let main_info_dialog = Dialog::new().title("Main issue information");
         if task_key.is_empty() {
-            return main_info_dialog;
+            main_info_dialog
         } else {
             let main_info_inner_layout = LinearLayout::vertical()
                 .child(TextView::new(format!("Issue - {}", task_key)))
@@ -435,7 +435,7 @@ impl InfoView {
                     issue_assignee,
                 )));
 
-            return main_info_dialog.content(main_info_inner_layout);
+            main_info_dialog.content(main_info_inner_layout)
         }
     }
 

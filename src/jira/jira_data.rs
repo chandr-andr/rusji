@@ -48,7 +48,7 @@ impl JiraData {
             .tasks
             .as_mut()
             .unwrap()
-            .insert(old_task_key.into(), updated_issue);
+            .insert(old_task_key, updated_issue);
     }
 
     /// Sets new selected project.
