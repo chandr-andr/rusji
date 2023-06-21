@@ -248,8 +248,7 @@ impl ChangeAssigneeSelectView {
                 ChangeAssigneeView::toggle_off_view(cursive);
                 cursive.pop_layer();
             }
-            Err(_) => {
-            }
+            Err(_) => {}
         }
     }
 }
