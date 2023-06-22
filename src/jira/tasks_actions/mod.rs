@@ -1,5 +1,6 @@
 pub mod buttons;
 pub mod change_assignee_views;
+pub mod change_story_points_view;
 pub mod change_transition_view;
 pub mod data;
 pub mod enums;
