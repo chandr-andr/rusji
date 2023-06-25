@@ -40,6 +40,7 @@ pub trait ChangeJiraView {
     fn add_content_to_view(&mut self, _content: Vec<&str>) {}
 }
 
+// TODO: Move ToggleableView into derive.
 pub trait ToggleableView: JiraViewWithName {
     /// Toggle on view.
     ///
