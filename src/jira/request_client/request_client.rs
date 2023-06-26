@@ -95,6 +95,17 @@ impl RequestClient {
         )
     }
 
+    pub fn get_issue_metadata(
+        &self,
+        issue_key: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        self.make_basic_request(
+            self.jira_url
+                .join(&format!("rest/api/2/issue/{}/editmeta", issue_key))
+                .unwrap(),
+        )
+    }
+
     /// Return all users with passed username.
     pub fn get_jira_users(
         &self,

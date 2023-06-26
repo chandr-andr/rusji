@@ -29,9 +29,21 @@ struct AssigneeData<'a> {
     name: &'a str,
 }
 
+impl<'a> AssigneeData<'a> {
+    fn new(assignee_username: &'a str) -> Self {
+        Self {
+            name: assignee_username,
+        }
+    }
+}
+
 #[derive(Default, Serialize)]
 struct IssueFieldsReqData<'a> {
-    assignee: AssigneeData<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    assignee: Option<AssigneeData<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "Story Points")]
+    story_points: Option<usize>,
 }
 
 #[derive(Serialize)]
@@ -47,6 +59,7 @@ impl<'a> IssuePropertiesReqData<'a> {
     }
 
     pub fn set_assignee(&mut self, assignee_username: &'a str) {
-        self.fields.assignee.name = assignee_username;
+        let assignee_data = Some(AssigneeData::new(assignee_username));
+        self.fields.assignee = assignee_data;
     }
 }
