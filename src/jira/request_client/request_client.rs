@@ -1,5 +1,6 @@
-use crate::errors::RusjiError;
+use crate::{errors::RusjiError, jira::tasks::data::IssueMetaData};
 use reqwest::blocking::{Client, RequestBuilder};
+use serde_json::{Map, Number, Value};
 use url::Url;
 
 use super::request_models::{IssuePropertiesReqData, IssueTransitionsReqData};
@@ -159,6 +160,48 @@ impl RequestClient {
 
         let response_text = req_builder
             .body(serde_json::to_string(&request_data)?)
+            .send()?
+            .text()?;
+
+        Ok(RequestResponse {
+            body: response_text,
+        })
+    }
+
+    pub fn update_issue_story_points(
+        &self,
+        new_story_points: usize,
+        issue_key: &str,
+    ) -> Result<RequestResponse, RusjiError> {
+        let issue_metadata_response = self.get_issue_metadata(issue_key)?;
+        let issue_metadata = serde_json::from_str::<IssueMetaData>(
+            &issue_metadata_response.get_body(),
+        )?;
+        let mut story_point_field_id =
+            issue_metadata.get_story_points_field_id();
+        if story_point_field_id.is_none() {
+            story_point_field_id = Some("Story Points".into())
+        }
+
+        let request_data = IssuePropertiesReqData::new();
+
+        let final_request_body = request_data
+            .add_story_points_and_return_as_string(
+                new_story_points,
+                story_point_field_id.unwrap(),
+            );
+
+        let req_builder = self.put(
+            self.jira_url
+                .join(&format!(
+                    "http://jira.chandr.net/rest/api/2/{}/FRE-1",
+                    issue_key
+                ))
+                .unwrap(),
+        );
+
+        let response_text = req_builder
+            .body(serde_json::to_string(&final_request_body)?)
             .send()?
             .text()?;
 

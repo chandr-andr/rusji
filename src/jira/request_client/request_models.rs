@@ -62,4 +62,31 @@ impl<'a> IssuePropertiesReqData<'a> {
         let assignee_data = Some(AssigneeData::new(assignee_username));
         self.fields.assignee = assignee_data;
     }
+
+    pub fn add_story_points_and_return_as_string(
+        self,
+        new_story_points: usize,
+        story_point_field_id: String,
+    ) -> String {
+        let mut value_data = self.data_as_value();
+        let fields = value_data.get_mut("fields").unwrap();
+
+        if let serde_json::Value::Object(fields_data) = fields {
+            let mut new_field = serde_json::Map::new();
+            new_field.insert(
+                story_point_field_id,
+                serde_json::Value::Number(serde_json::Number::from(
+                    new_story_points,
+                )),
+            );
+            fields_data.append(&mut new_field);
+        }
+
+        serde_json::to_string(&value_data).unwrap()
+    }
+
+    fn data_as_value(self) -> serde_json::Value {
+        let str_data: String = serde_json::to_string(&self).unwrap();
+        serde_json::from_str(str_data.as_str()).unwrap()
+    }
 }
