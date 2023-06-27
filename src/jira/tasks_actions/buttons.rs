@@ -59,10 +59,10 @@ pub fn build_buttons<'a>(cursive: &mut Cursive) -> TasksActionsButtons<'a> {
         'r',
         "Change issue release",
         |cursive: &mut Cursive| {
-            let action_view = TaskActions::StatusChange.get_view(cursive);
+            let action_view = TaskActions::ChangeStoryPoints.get_view(cursive);
             cursive.add_layer(action_view);
         },
-        TaskActions::ChangeRelease,
+        TaskActions::ChangeStoryPoints,
     );
 
     buttons

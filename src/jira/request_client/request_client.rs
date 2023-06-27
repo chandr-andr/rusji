@@ -193,17 +193,12 @@ impl RequestClient {
 
         let req_builder = self.put(
             self.jira_url
-                .join(&format!(
-                    "http://jira.chandr.net/rest/api/2/{}/FRE-1",
-                    issue_key
-                ))
+                .join(&format!("rest/api/2/issue/{}", issue_key))
                 .unwrap(),
         );
 
-        let response_text = req_builder
-            .body(serde_json::to_string(&final_request_body)?)
-            .send()?
-            .text()?;
+        let response_text =
+            req_builder.body(final_request_body).send()?.text()?;
 
         Ok(RequestResponse {
             body: response_text,

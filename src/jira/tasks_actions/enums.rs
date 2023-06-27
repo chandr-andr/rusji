@@ -11,6 +11,7 @@ use crate::jira::common::{
 
 use super::{
     change_assignee_views::ChangeAssigneeView,
+    change_story_points_view::ChangeSPView,
     change_transition_view::ChangeTransitionActionView,
 };
 
@@ -18,7 +19,7 @@ use super::{
 pub enum TaskActions {
     StatusChange,
     ChangeAssignee,
-    ChangeRelease,
+    ChangeStoryPoints,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -30,7 +31,7 @@ impl FromStr for TaskActions {
         match str_action {
             "Change status" => Ok(TaskActions::StatusChange),
             "Change assignee" => Ok(TaskActions::ChangeAssignee),
-            "Change release" => Ok(TaskActions::ChangeRelease),
+            "Change story points" => Ok(TaskActions::ChangeStoryPoints),
             _ => Err(TaskActionParseError {}),
         }
     }
@@ -41,7 +42,7 @@ impl<'a> From<TaskActions> for &'a str {
         match action {
             TaskActions::StatusChange => "Change status",
             TaskActions::ChangeAssignee => "Change assignee",
-            TaskActions::ChangeRelease => "Change release",
+            TaskActions::ChangeStoryPoints => "Change story points",
         }
     }
 }
@@ -54,7 +55,7 @@ impl TaskActions {
         vec![
             Self::StatusChange.into(),
             Self::ChangeAssignee.into(),
-            Self::ChangeRelease.into(),
+            Self::ChangeStoryPoints.into(),
         ]
     }
 
@@ -70,8 +71,8 @@ impl TaskActions {
             TaskActions::ChangeAssignee => {
                 ChangeAssigneeView::new(cursive).inner_view()
             }
-            TaskActions::ChangeRelease => {
-                ChangeTransitionActionView::new(cursive).inner_view()
+            TaskActions::ChangeStoryPoints => {
+                ChangeSPView::new(cursive).inner_view()
             }
         }
     }
