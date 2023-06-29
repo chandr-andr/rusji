@@ -255,6 +255,48 @@ impl IssueMetaData {
     }
 }
 
+#[derive(Default)]
+pub struct IssueBaseInfoField<'a> {
+    pub display_name: &'a str,
+    pub inner_value: &'a str,
+}
+
+impl<'a> IssueBaseInfoField<'a> {
+    pub fn new(display_name: &'a str, inner_value: &'a str) -> Self {
+        Self {
+            display_name,
+            inner_value,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct IssueBaseInfo<'a> {
+    pub summary: IssueBaseInfoField<'a>,
+    pub description: IssueBaseInfoField<'a>,
+    pub task_key: IssueBaseInfoField<'a>,
+    pub task_status_name: IssueBaseInfoField<'a>,
+    pub issue_assignee: IssueBaseInfoField<'a>,
+}
+
+impl<'a> IssueBaseInfo<'a> {
+    pub fn new(
+        summary: IssueBaseInfoField<'a>,
+        description: IssueBaseInfoField<'a>,
+        task_key: IssueBaseInfoField<'a>,
+        task_status_name: IssueBaseInfoField<'a>,
+        issue_assignee: IssueBaseInfoField<'a>,
+    ) -> Self {
+        Self {
+            summary,
+            description,
+            task_key,
+            task_status_name,
+            issue_assignee,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

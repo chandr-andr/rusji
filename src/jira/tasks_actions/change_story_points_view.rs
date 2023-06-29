@@ -105,11 +105,24 @@ impl ChangeSPEditView {
 
             (request_client, selected_issue_key)
         };
-        print!("12313123");
+
         let request_result =
             request_client.read().unwrap().update_issue_story_points(
                 story_point_in_usize.unwrap(),
                 issue_key.as_str(),
             );
+
+        if let Err(_) = request_result {
+            cursive.add_layer(FailedAttemptView::new(
+                format!(
+                    "Can't change story points for some reason. Try again",
+                )
+                .as_str(),
+            ));
+            cursive.pop_layer();
+            return;
+        }
+
+        cursive.pop_layer();
     }
 }

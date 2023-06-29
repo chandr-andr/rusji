@@ -21,7 +21,7 @@ use crate::jira::constance::INNER_LEFT_TOP_VIEW_ALIGN;
 use crate::jira::utils::views::FailedAttemptView;
 use crate::jira_data::JiraData;
 
-use super::data::JiraIssue;
+use super::data::{IssueBaseInfo, IssueBaseInfoField, JiraIssue};
 
 #[derive(ViewWrapper)]
 pub(crate) struct TasksView {
@@ -293,13 +293,7 @@ pub(crate) struct InfoView {
 
 impl Default for InfoView {
     fn default() -> Self {
-        Self::new(
-            "Choose task",
-            Default::default(),
-            Default::default(),
-            Default::default(),
-            Default::default(),
-        )
+        Self::new(IssueBaseInfo::default())
     }
 }
 
@@ -347,102 +341,95 @@ impl ChangeJiraView for InfoView {
         if let Some(assignee) = &task.assignee {
             assignee_name = assignee.name.as_str();
         }
-        self.get_main_dialog().set_content(Self::make_inner_view(
-            &task.summary,
-            &task.description,
-            &task.key,
-            &task.status.name,
-            assignee_name,
-        ));
+        let issue_base_info = IssueBaseInfo::new(
+            IssueBaseInfoField::new("Summary", &task.summary),
+            IssueBaseInfoField::new("Description", &task.description),
+            IssueBaseInfoField::new("Issue", &task.key),
+            IssueBaseInfoField::new("Status", &task.status.name),
+            IssueBaseInfoField::new("Assignee", assignee_name),
+        );
+        self.get_main_dialog()
+            .set_content(Self::make_inner_view(issue_base_info));
     }
 }
 
 impl InfoView {
-    fn new(
-        summary: &str,
-        description: &str,
-        task_key: &str,
-        task_status_name: &str,
-        issue_assignee: &str,
-    ) -> Self {
+    fn new(issue_base_info: IssueBaseInfo) -> Self {
         let dialog = Dialog::new()
             .title("Task information")
-            .content(Self::make_inner_view(
-                summary,
-                description,
-                task_key,
-                task_status_name,
-                issue_assignee,
-            ))
+            .content(Self::make_inner_view(issue_base_info))
             .with_name(Self::main_dialog_name());
 
         Self { inner_view: dialog }
     }
 
-    fn make_inner_view(
-        summary: &str,
-        description: &str,
-        task_key: &str,
-        task_status_name: &str,
-        issue_assignee: &str,
-    ) -> LinearLayout {
+    fn make_inner_view(issue_base_info: IssueBaseInfo) -> LinearLayout {
         let top_inner_view_layout = LinearLayout::horizontal()
             .child(
-                InfoView::make_summary_dialog(summary, task_key).full_width(),
+                InfoView::make_summary_dialog(&issue_base_info).full_width(),
             )
-            .child(InfoView::make_issue_main_info_dialog(
-                task_key,
-                task_status_name,
-                issue_assignee,
-            ));
+            .child(InfoView::make_issue_main_info_dialog(&issue_base_info));
 
         LinearLayout::vertical()
             .child(top_inner_view_layout)
             .child(DummyView)
-            .child(InfoView::make_description_dialog(description))
+            .child(InfoView::make_description_dialog(issue_base_info))
     }
 
-    fn make_summary_dialog(summary: &str, task_key: &str) -> Dialog {
+    fn make_summary_dialog(issue_base_info: &IssueBaseInfo) -> Dialog {
         let title: String;
-        if task_key.is_empty() {
+        if issue_base_info.task_key.inner_value.is_empty() {
             title = "No task selected".into();
         } else {
-            title = format!("Task - {}", task_key);
+            title = format!(
+                "{} - {}",
+                issue_base_info.task_key.display_name,
+                issue_base_info.task_key.inner_value
+            );
         }
         Dialog::new().title(title).content(
-            cursive_markup::MarkupView::html(summary)
-                .with_name("summary_task_view"),
+            cursive_markup::MarkupView::html(
+                issue_base_info.summary.inner_value,
+            )
+            .with_name("summary_task_view"),
         )
     }
 
-    fn make_issue_main_info_dialog(
-        task_key: &str,
-        task_status_name: &str,
-        issue_assignee: &str,
-    ) -> Dialog {
+    fn make_issue_main_info_dialog(issue_base_info: &IssueBaseInfo) -> Dialog {
         let main_info_dialog = Dialog::new().title("Main issue information");
-        if task_key.is_empty() {
+        if issue_base_info.task_key.inner_value.is_empty() {
             main_info_dialog
         } else {
             let main_info_inner_layout = LinearLayout::vertical()
-                .child(TextView::new(format!("Issue - {}", task_key)))
-                .child(TextView::new(format!("Status - {}", task_status_name)))
                 .child(TextView::new(format!(
-                    "Assignee - {}",
-                    issue_assignee,
+                    "{} - {}",
+                    issue_base_info.task_key.display_name,
+                    issue_base_info.task_key.inner_value
+                )))
+                .child(TextView::new(format!(
+                    "{} - {}",
+                    issue_base_info.task_status_name.display_name,
+                    issue_base_info.task_status_name.inner_value
+                )))
+                .child(TextView::new(format!(
+                    "{} - {}",
+                    issue_base_info.issue_assignee.display_name,
+                    issue_base_info.issue_assignee.inner_value,
                 )));
 
             main_info_dialog.content(main_info_inner_layout)
         }
     }
 
-    fn make_description_dialog(description: &str) -> Dialog {
+    fn make_description_dialog(issue_base_info: IssueBaseInfo) -> Dialog {
         Dialog::new()
             .title("Description")
             .padding_lrtb(1, 1, 1, 1)
             .content(ScrollView::new(
-                cursive_markup::MarkupView::html(description)
-                    .with_name("description_task_view"),
+                cursive_markup::MarkupView::html(
+                    issue_base_info.description.inner_value,
+                )
+                .with_name("description_task_view"),
             ))
     }
 
@@ -462,12 +449,14 @@ impl InfoView {
         if let Some(assignee) = &task.assignee {
             assignee_name = assignee.name.as_str();
         }
-        self.get_main_dialog().set_content(Self::make_inner_view(
-            &task.summary,
-            &task.description,
-            &task.key,
-            &task.status.name,
-            assignee_name,
-        ));
+        let issue_base_info = IssueBaseInfo::new(
+            IssueBaseInfoField::new("Summary", &task.summary),
+            IssueBaseInfoField::new("Description", &task.description),
+            IssueBaseInfoField::new("Issue", &task.key),
+            IssueBaseInfoField::new("Status", &task.status.name),
+            IssueBaseInfoField::new("Assignee", assignee_name),
+        );
+        self.get_main_dialog()
+            .set_content(Self::make_inner_view(issue_base_info));
     }
 }

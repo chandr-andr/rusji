@@ -1,6 +1,5 @@
 use crate::{errors::RusjiError, jira::tasks::data::IssueMetaData};
 use reqwest::blocking::{Client, RequestBuilder};
-use serde_json::{Map, Number, Value};
 use url::Url;
 
 use super::request_models::{IssuePropertiesReqData, IssueTransitionsReqData};
