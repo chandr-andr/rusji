@@ -86,7 +86,7 @@ impl ChangeSPEditView {
         story_points: &str,
     ) {
         let story_point_in_usize = story_points.parse::<usize>();
-        if let Err(_) = story_point_in_usize {
+        if story_point_in_usize.is_err() {
             cursive.pop_layer();
             let bad_story_points_type_view = FailedAttemptView::new(
                 "You must specify story points as an integer",
@@ -114,9 +114,7 @@ impl ChangeSPEditView {
 
         if let Err(_) = request_result {
             cursive.add_layer(FailedAttemptView::new(
-                format!(
-                    "Can't change story points for some reason. Try again",
-                )
+                "Can't change story points for some reason. Try again".to_string()
                 .as_str(),
             ));
             cursive.pop_layer();

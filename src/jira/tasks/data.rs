@@ -251,7 +251,7 @@ impl IssueMetaData {
             _ => {}
         }
 
-        return None;
+        None
     }
 }
 

@@ -174,7 +174,7 @@ impl RequestClient {
     ) -> Result<RequestResponse, RusjiError> {
         let issue_metadata_response = self.get_issue_metadata(issue_key)?;
         let issue_metadata = serde_json::from_str::<IssueMetaData>(
-            &issue_metadata_response.get_body(),
+            issue_metadata_response.get_body(),
         )?;
         let mut story_point_field_id =
             issue_metadata.get_story_points_field_id();
