@@ -228,7 +228,7 @@ impl RequestClient {
         builder: RequestBuilder,
     ) -> RequestBuilder {
         builder
-            .timeout(std::time::Duration::from_micros(5000000))
+            .timeout(std::time::Duration::from_secs(15))
             .header(
                 "Authorization",
                 format!("Basic {}", self.request_credentials),

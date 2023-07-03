@@ -381,11 +381,7 @@ impl InfoView {
         if issue_base_info.task_key.inner_value.is_empty() {
             title = "No task selected".into();
         } else {
-            title = format!(
-                "{} - {}",
-                issue_base_info.task_key.display_name,
-                issue_base_info.task_key.inner_value
-            );
+            title = "Issue title".into()
         }
         Dialog::new().title(title).content(
             cursive_markup::MarkupView::html(
